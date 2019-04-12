@@ -1,0 +1,5 @@
+.idea/
+*~
+_vizdoom*
+__pycache__/
+*.egg-info/
