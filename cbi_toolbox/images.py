@@ -13,38 +13,44 @@ def erase_corners(image_array, corner_size=300):
 
 
 def transmission_to_absorption(image_array, max_value=4096):
-    scale_factor = max_value / np.log(max_value)
 
-    scaled = np.log(max_value / (image_array + 1)) * scale_factor
+    scaled_array = image_array / max_value
 
-    return scaled.astype(image_array.dtype)
+    absorption = np.log(1 / scaled_array)
+
+    return absorption
 
 
-def remove_background_illumination(image_array, threshold=250, morph_open_size=250, morph_dilate_size=100):
+def remove_background_illumination(image_array, threshold=0.5, hole_size=250, margin_size=100):
     mask_bool = image_array < threshold
     mask_int = mask_bool.astype(np.uint8)
 
-    kernel_open = np.ones((morph_open_size, morph_open_size), dtype=np.uint8)
-    kernel_dilate = np.ones((morph_dilate_size, morph_dilate_size), dtype=np.uint8)
+    kernel_open = np.ones((hole_size, hole_size), dtype=np.uint8)
+    kernel_dilate = np.ones((margin_size, margin_size), dtype=np.uint8)
 
     for plane_idx, plane_mask in enumerate(mask_int):
+        find_contours = cv2.findContours(plane_mask, mode=cv2.RETR_EXTERNAL, method=cv2.CHAIN_APPROX_NONE)
 
-        _, contours, _ = cv2.findContours(plane_mask, mode=cv2.RETR_EXTERNAL, method=cv2.CHAIN_APPROX_NONE)
-        plane_mask.fill(1)
+        major = cv2.__version__.split('.')[0]
+        if major == '2':
+            contours = find_contours[1]
+        else:
+            contours = find_contours[0]
+
+        plane_mask.fill(0)
 
         for index, contour in enumerate(contours):
             if len(contour) > 500 and (contour[..., 0].max() == image_array.shape[1] - 1 or contour[..., 0].min() == 0):
-                temp_mask = np.ones_like(mask_int[plane_idx, ...])
-                cv2.drawContours(temp_mask, contours, index, 0, cv2.FILLED)
+                temp_mask = np.zeros_like(mask_int[plane_idx, ...])
+                cv2.drawContours(temp_mask, contours, index, 1, cv2.FILLED)
 
-                temp_mask = cv2.morphologyEx(temp_mask, cv2.MORPH_OPEN, kernel_open)
-                mask_int[plane_idx, ...] &= temp_mask
+                temp_mask = cv2.morphologyEx(temp_mask, cv2.MORPH_CLOSE, kernel_open)
+                mask_int[plane_idx, ...] |= temp_mask
 
-        mask_int[plane_idx, ...] = cv2.morphologyEx(mask_int[plane_idx, ...], cv2.MORPH_DILATE, kernel_dilate)
+        mask_int[plane_idx, ...] = cv2.morphologyEx(mask_int[plane_idx, ...], cv2.MORPH_ERODE, kernel_dilate)
 
-    mask = mask_int.astype(np.uint16)
-    mask *= (2 ** 16 - 1)
-    image_array &= mask
+    mask_bool = mask_int.astype(bool)
+    image_array[mask_bool] = 0
 
     return image_array
 
