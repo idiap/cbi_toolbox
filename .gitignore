@@ -3,3 +3,7 @@
 _vizdoom*
 __pycache__/
 *.egg-info/
+build/
+*.so
+CMakeLists.txt
+tmp/
