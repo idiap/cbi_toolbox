@@ -33,8 +33,11 @@ class get_pybind_include(object):
 
 ext_modules = [
     Extension(
-        'cbi_toolbox.splineradon',
-        ['cbi_toolbox/splineradon/src/splineradon.cpp'],
+        'cbi_toolbox.csplineradon',
+        [
+            'cbi_toolbox/splineradon/src/splineradon.cpp',
+            'cbi_toolbox/splineradon/src/tomography.cpp',
+        ],
         include_dirs=[
             # Path to pybind11 headers
             get_pybind_include(),
