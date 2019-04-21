@@ -12,7 +12,7 @@ def fft_trikernel(Nt, a, n1, n2, n3, h1, h2, h3, pad_fact):
     trikernel_hat = np.power(np.sinc(np.outer(nu, h1)), (n1 + 1)) * np.power(
         np.sinc(np.outer(nu, h2)), (n2 + 1)) * np.power(np.sinc(np.outer(nu, h3)), (n3 + 1))
 
-    kernel = np.abs(trikernel_hat)
+    kernel = np.abs(np.fft.fft(trikernel_hat, axis=0))
 
     return kernel[0:Nt, :] / (T * Nt * pad_fact)
 
