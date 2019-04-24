@@ -8,7 +8,6 @@ from cbi_toolbox.splineradon import filter_sinogram
 
 def fft_trikernel(nt, a, n1, n2, n3, h1, h2, h3, pad_fact):
     T = a / (nt - 1)
-    # TODO check this with Michael
     dnu = 1 / (T * (pad_fact * nt - 1))
     nu = -1 / (2 * T) + np.arange(pad_fact * nt) * dnu
 
@@ -47,7 +46,6 @@ def splradon(image, theta=np.arange(180), angledeg=True, n=None,
     ni = b_spline_deg[0]
     ns = b_spline_deg[1]
 
-    # TODO what is this nc?
     shape = np.array(image.shape)
     nc = 2 * int(np.ceil(np.linalg.norm(shape - np.floor((shape - 1) / 2) - 1))) + 3
 
@@ -63,7 +61,6 @@ def splradon(image, theta=np.arange(180), angledeg=True, n=None,
 
     if kernel is None:
         nt = 200
-        # TODO why the -theta?
         kernel = get_kernel_table(nt, ni, ns, h, s, -theta)
 
     if angledeg:
@@ -76,7 +73,6 @@ def splradon(image, theta=np.arange(180), angledeg=True, n=None,
         ni,
         center[1],
         center[0],
-        # TODO why?
         -theta,
         kernel[0],
         kernel[1],
@@ -128,7 +124,6 @@ def spliradon(sinogram, theta=None, angledeg=True, n=None, filter_type='RAM-LAK'
 
     if kernel is None:
         nt = 200
-        # TODO again
         kernel = get_kernel_table(nt, ni, ns, h, s, -theta)
 
     sinogram, pre_filter = filter_sinogram.filter_sinogram(sinogram, filter_type, ns)
