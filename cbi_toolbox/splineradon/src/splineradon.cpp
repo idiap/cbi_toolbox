@@ -66,19 +66,19 @@ py::array_t<double> radon(
 
 
     radontransform(
-            Input,     /* Input image */
+            Input,      /* Input image */
             Nx,         /* Size of image */
             Ny,
             h,          /* Sampling step on the image */
             nI,         /* Interpolation degree on the Image */
             x0,         /* Rotation center */
             y0,
-            Theta,    /* Projection angles in radian */
+            Theta,      /* Projection angles in radian */
             Nangles,    /* Number of projection angles */
-            Kernel,    /* Kernel table of size Nt x Nangles */
+            Kernel,     /* Kernel table of size Nt x Nangles */
             Nt,         /* Number of samples in the kernel table*/
             a,          /* Maximal argument of the kernel table (0 to a) */
-            Sinogram,  /* Output sinogram of size Nc x Nangles */
+            Sinogram,   /* Output sinogram of size Nc x Nangles */
             Nc,         /* Number of captors */
             s,          /* Sampling step of the captors */
             nS,         /* Interpolation degree on the Sinogram */
@@ -147,21 +147,21 @@ py::array_t<double> iradon(
     auto Image = (double *) image_info.ptr;
 
     backprojection(
-            Sinogram,    /* Output sinogram of size Nc x Nangles */
+            Sinogram,      /* Output sinogram of size Nc x Nangles */
             Nc,            /* Number of captors */
-            Nangles,    /* Number of projection angles */
-            s,            /* Sampling step of the captors */
+            Nangles,       /* Number of projection angles */
+            s,             /* Sampling step of the captors */
             nS,            /* Interpolation degree on the Sinogram */
             t0,            /* projection of rotation center*/
-            Theta,        /* Projection angles in radian */
-            h,            /* Sampling step on the image */
+            Theta,         /* Projection angles in radian */
+            h,             /* Sampling step on the image */
             nI,            /* Interpolation degree on the Image */
             x0,            /* Rotation center */
             y0,
             Kernel,        /* Kernel table of size Nt x Nangles */
             Nt,            /* Number of samples in the kernel table*/
-            a,            /* Maximal argument of the kernel table (0 to a) */
-            Image,        /* Output image */
+            a,             /* Maximal argument of the kernel table (0 to a) */
+            Image,         /* Output image */
             Nx,            /* Size of image */
             Ny
     );
