@@ -13,7 +13,6 @@ def erase_corners(image_array, corner_size=300):
 
 
 def transmission_to_absorption(image_array, max_value=4096):
-
     scaled_array = image_array / max_value
 
     absorption = np.log(1 / scaled_array)
@@ -21,12 +20,17 @@ def transmission_to_absorption(image_array, max_value=4096):
     return absorption
 
 
-def remove_background_illumination(image_array, threshold=0.5, hole_size=250, margin_size=100):
+def remove_background_illumination(image_array, threshold=0.5, hole_size=250, margin_size=100, border_axis=-1):
     mask_bool = image_array < threshold
     mask_int = mask_bool.astype(np.uint8)
 
     kernel_open = np.ones((hole_size, hole_size), dtype=np.uint8)
     kernel_dilate = np.ones((margin_size, margin_size), dtype=np.uint8)
+
+    if border_axis < 0:
+        contour_border_axis = border_axis
+    else:
+        contour_border_axis = border_axis - 1
 
     for plane_idx, plane_mask in enumerate(mask_int):
         find_contours = cv2.findContours(plane_mask, mode=cv2.RETR_EXTERNAL, method=cv2.CHAIN_APPROX_NONE)
@@ -40,7 +44,9 @@ def remove_background_illumination(image_array, threshold=0.5, hole_size=250, ma
         plane_mask.fill(0)
 
         for index, contour in enumerate(contours):
-            if len(contour) > 500 and (contour[..., 0].max() == image_array.shape[1] - 1 or contour[..., 0].min() == 0):
+            if len(contour) > 500 and (
+                    contour[..., contour_border_axis].max() == image_array.shape[border_axis] - 1 or (
+                    contour[..., contour_border_axis].min() == 0)):
                 temp_mask = np.zeros_like(mask_int[plane_idx, ...])
                 cv2.drawContours(temp_mask, contours, index, 1, cv2.FILLED)
 
@@ -53,7 +59,6 @@ def remove_background_illumination(image_array, threshold=0.5, hole_size=250, ma
     image_array[mask_bool] = 0
 
     return image_array
-
 
 # def shift_axis_correlation(image, project_axis, padding=100, max_shift=100, rel_corr_threshold=0.5):
 #     project = image.sum(project_axis)
