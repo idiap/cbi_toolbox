@@ -24,3 +24,14 @@ def center_of_mass(array, axis=1):
     transposed = np.transpose(array, dims)
 
     return pos.dot(transposed) / array.sum(axis)
+
+
+def make_broadcastable(array, target):
+    """append the required amount of dimensions to an array to make it broadcastable with respect to another"""
+
+    assert array.ndim <= target.ndim
+
+    broadcast_shape = np.ones(target.ndim, dtype=int)
+    for ax, dim in enumerate(array.shape):
+        broadcast_shape[ax] = dim
+    return array.reshape(broadcast_shape)

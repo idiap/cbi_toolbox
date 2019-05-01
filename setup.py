@@ -1,10 +1,11 @@
 import sys
 
+import os
 import setuptools
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 
-__version__ = '0.0.1'
+__version__ = '0.1'
 
 requires = [
     'numpy',
@@ -13,6 +14,7 @@ requires = [
     'python-bioformats',
     'javabridge',
     'pybind11>=2.2',
+    'scipy'
 
 ]
 
@@ -31,6 +33,20 @@ class get_pybind_include(object):
         return pybind11.get_include(self.user)
 
 
+class get_numpy_include(object):
+    """Helper class to determine the numpy include path
+    The purpose of this class is to postpone importing numpy
+    until it is actually installed, so that the ``get_include()``
+    method can be invoked. """
+
+    def __init__(self):
+        pass
+
+    def __str__(self):
+        import numpy as np
+        return np.get_include()
+
+
 ext_modules = [
     Extension(
         'cbi_toolbox.csplineradon',
@@ -41,7 +57,10 @@ ext_modules = [
         include_dirs=[
             # Path to pybind11 headers
             get_pybind_include(),
-            get_pybind_include(user=True)
+            get_pybind_include(user=True),
+            get_numpy_include(),
+            os.path.join(sys.prefix, 'include'),
+            os.path.join(sys.prefix, 'Library', 'include')
         ],
         language='c++'
     ),
@@ -70,11 +89,8 @@ def cpp_flag(compiler):
     """
     if has_flag(compiler, '-std=c++14'):
         return '-std=c++14'
-    elif has_flag(compiler, '-std=c++11'):
-        return '-std=c++11'
     else:
-        raise RuntimeError('Unsupported compiler -- at least C++11 support '
-                           'is needed!')
+        raise RuntimeError('C++14 support is required by xtensor!')
 
 
 class BuildExt(build_ext):

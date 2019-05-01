@@ -1,117 +1,150 @@
 # B-spline interpolation function for degree up to 7
 # Christian Jaques, june 2016, Computational Bioimaging Group, Idiap
+# Francois Marelli, may 2019, Computational Bioimaging Group, Idiap
 # This code is a translation of Michael Liebling's matlab code,
 # which was already largely based on a C-library written by Philippe
 # Thevenaz, BIG, EPFL
 
-from math import sqrt, ceil, log
+import math
 
-from numpy import flipud
-from scipy.signal import lfilter
+import numpy as np
+from scipy import signal
 
-from cbi_toolbox.splineradon.convert_to_samples import *
+from cbi_toolbox.arrays import make_broadcastable
 
 
 def initial_causal_coefficient(coeff, z, tolerance, boundary_condition='Mirror'):
+    """
+        Computes the initial causal coefficient from an array of coefficients
+        In the input array, signals are considered to be along the first dimension (1D computations)
+    """
     n = coeff.shape[0]
-    if len(coeff.shape) > 1:
-        m = coeff.shape[1]
-    else:
-        m = 1
 
     # mirror boundaries condition (mirror is on last sample)
     horizon = n
     if tolerance > 0.0:
-        horizon = int(ceil(log(tolerance) / log(abs(z))))
+        horizon = int(math.ceil(math.log(tolerance) / math.log(abs(z))))
 
     if boundary_condition.upper() == 'MIRROR':
         if horizon >= n:
             horizon = n
             # vectorization of exponentials of z
-            z_powers = np.vstack(np.arange(horizon - 2) + 1)
-            z_exp = np.ones((horizon - 2, m)) * z
+            z_powers = np.arange(horizon - 2) + 1
+            z_exp = np.ones(horizon - 2) * z
             z_exp = np.power(z_exp, z_powers)
             # the whole signal is taken into account, boundary conditions
             # have to be taken into account. Mirror conditions -->
-            z_exp_mirror = np.ones((horizon - 2, m)) * z
-            z_powers = np.vstack(np.arange(2 * n - 3, n - 1, -1))
+            z_exp_mirror = np.ones(horizon - 2) * z
+            z_powers = np.arange(2 * n - 3, n - 1, -1)
             z_exp_mirror = np.power(z_exp_mirror, z_powers)
             z_exp = z_exp + z_exp_mirror
+
+            z_exp = make_broadcastable(z_exp, coeff)
+
             # compute sum c[k]*z**k
-            c = np.sum(coeff[1:horizon - 1, :] * z_exp, axis=0)
+            c = np.sum(coeff[1:horizon - 1, ...] * z_exp, axis=0)
             c = c / (1 - z ** (2 * n - 1))
-            c = c + coeff[0, :] + coeff[-1, :] * z ** (n - 1)
+            c = c + coeff[0, ...] + coeff[-1, ...] * z ** (n - 1)
         else:
             # vectorization of exponentials of z
-            z_powers = np.vstack(np.arange(horizon))
-            z_exp = np.ones((horizon, m)) * z
+            z_powers = np.arange(horizon)
+            z_exp = np.ones(horizon) * z
             z_exp = np.power(z_exp, z_powers)
+
+            z_exp = make_broadcastable(z_exp, coeff)
+
             # compute sum c[k]*z**k
-            c = np.sum(coeff[:horizon, :] * z_exp, axis=0)
+            c = np.sum(coeff[:horizon, ...] * z_exp, axis=0)
 
     elif boundary_condition.upper() == 'PERIODIC':
-        temp = np.ones((1, m))
-        temp[0] = coeff[0]
-        c1 = np.concatenate((temp, coeff[-1:0:-1, :]), axis=0)
+        temp_shape = list(coeff.shape)
+        temp_shape[0] = 1
+        temp = np.ones(temp_shape)
+        temp[0, ...] = coeff[0, ...]
+        c1 = np.concatenate((temp, coeff[-1:0:-1, ...]), axis=0)
         if tolerance > 0.0:
             horizon2 = np.mod(np.arange(horizon), n)
             # vectorization of exponentials of z
-            z_powers = np.vstack(np.arange(horizon))
-            z_exp = np.ones((horizon, m)) * z
+            z_powers = np.arange(horizon)
+            z_exp = np.ones(horizon) * z
             z_exp = np.power(z_exp, z_powers)
             # the whole signal is taken into account, boundary conditions
             # have to be taken into account. Periodic conditions -->
+            z_exp = make_broadcastable(z_exp, c1)
+
             # compute sum c[k]*z**k
-            c = np.sum(c1[horizon2, :] * z_exp, axis=0)
+            c = np.sum(c1[horizon2, ...] * z_exp, axis=0)
         else:
             # vectorization of exponentials of z
-            z_powers = np.vstack(np.arange(horizon - 1) + 1)
-            z_exp = np.ones((horizon - 1, m)) * z
+            z_powers = np.arange(horizon - 1) + 1
+            z_exp = np.ones(horizon - 1) * z
             z_exp = np.power(z_exp, z_powers)
+            z_exp = make_broadcastable(z_exp, c1)
+
             # compute sum c[k]*z**k
-            c = c1[0, :] + np.sum(np.multiply(c1[1:, :], z_exp), axis=0) / (1 - z ** n)
+            c = c1[0, ...] + np.sum(np.multiply(c1[1:, ...], z_exp), axis=0) / (1 - z ** n)
+
+    else:
+        raise ValueError('Illegal boundary condition: {}'.format(boundary_condition.upper()))
 
     return c
 
 
 def initial_anticausal_coefficient(c, z, boundary_condition='Mirror'):
+    """
+        Computes the initial anti-causal coefficient from an array of coefficients
+        In the input array, signals are considered to be along the first dimension (1D computations)
+    """
     if boundary_condition.upper() == 'MIRROR':
-        c0 = -z * (c[-1, :] + z * c[-2, :]) / (1 - z ** 2)
+        c0 = -z * (c[-1, ...] + z * c[-2, ...]) / (1 - z ** 2)
     elif boundary_condition.upper() == 'PERIODIC':
-        n, m = c.shape
-        z_exp = np.ones((n, m)) * z
-        z_power = np.vstack(np.arange(n, 0, -1))
+        n = c.shape[0]
+        z_exp = np.ones(n) * z
+        z_power = np.arange(n, 0, -1)
         z_exp = np.power(z_exp, z_power)
-        temp = np.ones((1, m))
-        temp[0] = c[-1, :]
-        c1 = np.concatenate((c[-2::-1, :], temp), axis=0)
-        c0 = (1. / (z ** n - 1.)) * np.sum(np.multiply(c1, z_exp), axis=0)
 
+        temp_shape = list(c.shape)
+        temp_shape[0] = 1
+        temp = np.ones(temp_shape)
+
+        temp[0] = c[-1, ...]
+        c1 = np.concatenate((c[-2::-1, ...], temp), axis=0)
+
+        z_exp = make_broadcastable(z_exp, c1)
+
+        c0 = (1. / (z ** n - 1.)) * np.sum(np.multiply(c1, z_exp), axis=0)
+    else:
+        raise ValueError('Illegal boundary condition: {}'.format(boundary_condition.upper()))
     return c0
 
 
 def convert_to_interpolation_coefficients(c, degree, tolerance, boundary_condition='Mirror'):
+    """
+        Computes the b-spline interpolation coefficients of a signal
+        In the input array, the signals are considered along the first dimension (1D computations)
+    """
+
     if degree == 0 or degree == 1:
         return c
 
     n = c.shape[0]
     # this is a bit of a hack, better way to process vectors of shape (n,) ?
-    if len(c.shape) == 1:
-        c = np.vstack(c)
+    # if len(c.shape) == 1:
+    #     c = c[..., np.newaxis]
 
     if n == 1:
         return c
 
     if degree == 2:
-        z = sqrt(8.) - 3.
+        z = math.sqrt(8.) - 3.
     elif degree == 3:
-        z = sqrt(3.0) - 2.0
+        z = math.sqrt(3.0) - 2.0
     elif degree == 4:
-        z = [sqrt(664.0 - sqrt(438976.0)) + sqrt(304.0) - 19.0,
-             sqrt(664.0 + sqrt(438976.0)) - sqrt(304.0) - 19.0]
+        z = [math.sqrt(664.0 - math.sqrt(438976.0)) + math.sqrt(304.0) - 19.0,
+             math.sqrt(664.0 + math.sqrt(438976.0)) - math.sqrt(304.0) - 19.0]
     elif degree == 5:
-        z = [sqrt(135.0 / 2.0 - sqrt(17745.0 / 4.0)) + sqrt(105.0 / 4.0) - 13.0 / 2.0,
-             sqrt(135.0 / 2.0 + sqrt(17745.0 / 4.0)) - sqrt(105.0 / 4.0) - 13.0 / 2.0]
+        z = [math.sqrt(135.0 / 2.0 - math.sqrt(17745.0 / 4.0)) + math.sqrt(105.0 / 4.0) - 13.0 / 2.0,
+             math.sqrt(135.0 / 2.0 + math.sqrt(17745.0 / 4.0)) - math.sqrt(105.0 / 4.0) - 13.0 / 2.0]
     elif degree == 6:
         z = [-0.488294589303044755130118038883789062112279161239377608394,
              -0.081679271076237512597937765737059080653379610398148178525368,
@@ -145,29 +178,24 @@ def convert_to_interpolation_coefficients(c, degree, tolerance, boundary_conditi
         raise ValueError("Invalid spline degree {0}".format(degree))
 
     # compute overall gain
-    if isinstance(z, float):
-        z = np.array([z])
-    nb_poles = len(z)
-    lmbda = 1.
-    for k in range(nb_poles):
-        lmbda *= (1.0 - z[k]) * (1.0 - 1. / z[k])
+    z = np.atleast_1d(z)
     # apply gain to coeffs
-    c = c * lmbda
+    c = c * np.prod((1 - z) * (1 - 1 / z))
 
     # loop over all poles
-    for k in range(nb_poles):
+    for pole in z:
         # causal initialization
-        c[0, :] = initial_causal_coefficient(c, z[k], tolerance, boundary_condition)
+        c[0, ...] = initial_causal_coefficient(c, pole, tolerance, boundary_condition)
         # causal filter
-        zinit = np.array(z[k] * c[0, :])
-        zinit = zinit[:, np.newaxis]
-        c[1:, :], zf = lfilter([1], [1, -z[k]], c[1:, :], axis=0, zi=np.transpose(zinit))
+        zinit = pole * c[0, ...]
+        zinit = zinit[np.newaxis, ...]
+        c[1:, ...], zf = signal.lfilter([1], [1, -pole], c[1:, ...], axis=0, zi=zinit)
         # anticausal initialization
-        c[-1, :] = initial_anticausal_coefficient(c, z[k], boundary_condition=boundary_condition)
+        c[-1, ...] = initial_anticausal_coefficient(c, pole, boundary_condition=boundary_condition)
         # anticausal filter
-        zinit = z[k] * c[-1, :]
-        zinit = zinit[:, np.newaxis]
-        c[:-1], zf = lfilter([-z[k]], [1, -z[k]], flipud(c[0:-1, :]), axis=0, zi=np.transpose(zinit))
-        c[:-1] = flipud(c[:-1])
+        zinit = pole * c[-1, ...]
+        zinit = zinit[np.newaxis, ...]
+        c[:-1], zf = signal.lfilter([-pole], [1, -pole], np.flipud(c[0:-1, ...]), axis=0, zi=zinit)
+        c[:-1] = np.flipud(c[:-1])
 
     return c

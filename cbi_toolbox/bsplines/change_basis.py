@@ -1,13 +1,15 @@
 # B-spline interpolation function for degree up to 7
 # Christian Jaques, june 2016, Computational Bioimaging Group, Idiap
-# This code is a translation of Michael Liebling's matlab code, 
-# which was already largely based on a C-library written by Philippe 
+# This code is a translation of Michael Liebling's matlab code,
+# which was already largely based on a C-library written by Philippe
 # Thevenaz, BIG, EPFL
 
-from cbi_toolbox.splineradon.convert_to_interpolation_coefficients import *
+from numpy import transpose
+
+from cbi_toolbox.bsplines.convert_to_interpolation_coefficients import *
 
 
-def change_basis_columns(c, from_basis, to_basis, degree, boundary_condition='Mirror'):
+def change_basis(c, from_basis, to_basis, degree, boundary_condition='Mirror'):
     tolerance = 1e-8
 
     # avoids errors when calling function with 'b-spline' instead of 'B-spline'
@@ -20,11 +22,14 @@ def change_basis_columns(c, from_basis, to_basis, degree, boundary_condition='Mi
         elif to_basis == 'B-SPLINE':
             c = convert_to_interpolation_coefficients(c, degree,
                                                       tolerance, boundary_condition=boundary_condition)
+            c = transpose(convert_to_interpolation_coefficients(
+                transpose(c), degree,
+                tolerance, boundary_condition=boundary_condition))
         elif to_basis == 'DUAL':
-            c = change_basis_columns(c, 'cardinal', 'c-spline', degree,
-                                     boundary_condition=boundary_condition)
-            c = change_basis_columns(c, 'b-spline', 'dual', degree,
-                                     boundary_condition=boundary_condition)
+            c = change_basis(c, 'cardinal', 'b-spline', degree,
+                             boundary_condition=boundary_condition)
+            c = change_basis(c, 'b-spline', 'dual', degree,
+                             boundary_condition=boundary_condition)
         else:
             raise ValueError("Illegal to_basis : {0}".format(to_basis))
 
@@ -32,23 +37,26 @@ def change_basis_columns(c, from_basis, to_basis, degree, boundary_condition='Mi
         if to_basis == 'CARDINAL':
             c = convert_to_samples(c, degree,
                                    boundary_condition=boundary_condition)
+            c = transpose(convert_to_samples(
+                transpose(c), degree,
+                boundary_condition=boundary_condition))
         elif to_basis == 'B-SPLINE':
             return c
         elif to_basis == 'DUAL':
-            c = change_basis_columns(c, 'b-spline', 'cardinal', degree,
-                                     boundary_condition=boundary_condition)
+            c = change_basis(c, 'b-spline', 'cardinal', 2 * degree + 1,
+                             boundary_condition=boundary_condition)
         else:
             raise ValueError("Illegal to_basis : {0}".format(to_basis))
 
     elif from_basis == 'DUAL':
         if to_basis == 'CARDINAL':
-            c = change_basis_columns(c, 'dual', 'b-spline', degree,
-                                     boundary_condition=boundary_condition)
-            c = change_basis_columns(c, 'b-spline', 'cardinal', degree,
-                                     boundary_condition=boundary_condition)
+            c = change_basis(c, 'dual', 'b-spline', degree,
+                             boundary_condition=boundary_condition)
+            c = change_basis(c, 'b-spline', 'cardinal', degree,
+                             boundary_condition=boundary_condition)
         elif to_basis == 'B-SPLINE':
-            c = change_basis_columns(c, 'cardinal', 'b-spline', 2 * degree + 1,
-                                     boundary_condition=boundary_condition)
+            c = change_basis(c, 'cardinal', 'b-spline', 2 * degree + 1,
+                             boundary_condition=boundary_condition)
         elif to_basis == 'DUAL':
             return c
         else:
@@ -63,7 +71,12 @@ if __name__ == "__main__":
                      [1, 5, -3, 4, 2, 6]])
     data = np.array([1, 5, -3, 4, 2, 6])
     data = np.vstack(data)
-    c = change_basis_columns(data, 'Cardinal', 'b-spline', 3)
-    ar = change_basis_columns(c, 'b-spline', 'Cardinal', 3)
+    # c = change_basis(data, 'Cardinal', 'b-spline', 3)
+    # ar = change_basis(c, 'b-spline', 'Cardinal', 3)
+    c = change_basis(data, 'cardinal', 'dual', 3, 'Mirror')
+    ar = change_basis(c, 'dual', 'cardinal', 3, 'Mirror')
     print('Relative error is ', np.sum(np.abs(np.subtract(data, ar))) / np.sum(np.abs(data)))
     print('are samples back to signal? ', np.allclose(data, ar))
+
+    print(c)
+    print(ar)
