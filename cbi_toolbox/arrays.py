@@ -27,7 +27,7 @@ def center_of_mass(array, axis=1):
 
 
 def make_broadcastable(array, target):
-    """append the required amount of dimensions to an array to make it broadcastable with respect to another"""
+    """Append the required amount of dimensions to an array to make it broadcastable with respect to another"""
 
     assert array.ndim <= target.ndim
 
@@ -35,3 +35,11 @@ def make_broadcastable(array, target):
     for ax, dim in enumerate(array.shape):
         broadcast_shape[ax] = dim
     return array.reshape(broadcast_shape)
+
+
+def transpose_dim_to(array, src_dim, target_dim):
+    """Transpose the array so that the given dim goes to the target and the order of the rest is unchanged"""
+    dims = list(range(array.ndim))
+    dims.remove(src_dim)
+    dims.insert(target_dim, src_dim)
+    return np.transpose(array, dims)

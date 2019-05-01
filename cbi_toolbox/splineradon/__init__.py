@@ -1,7 +1,7 @@
 import cbi_toolbox.csplineradon as cspline
 import numpy as np
 
-from cbi_toolbox.bsplines import change_basis, change_basis_columns
+from cbi_toolbox.bsplines import change_basis
 from cbi_toolbox.splineradon import filter_sinogram
 
 
@@ -65,7 +65,7 @@ def splradon(image, theta=np.arange(180), angledeg=True, n=None,
     if angledeg:
         theta = np.deg2rad(theta)
 
-    spline_image = change_basis.change_basis(image, 'cardinal', 'b-spline', ni)
+    spline_image = change_basis(image, 'cardinal', 'b-spline', ni)
 
     # FIXME
     spline_image = spline_image[..., np.newaxis]
@@ -89,7 +89,7 @@ def splradon(image, theta=np.arange(180), angledeg=True, n=None,
     sinogram = np.squeeze(sinogram)
 
     if ns > -1:
-        sinogram = change_basis_columns.change_basis_columns(sinogram, 'dual', 'cardinal', ns)
+        sinogram = change_basis_columns(sinogram, 'dual', 'cardinal', ns)
 
     return sinogram
 
@@ -135,7 +135,7 @@ def spliradon(sinogram, theta=None, angledeg=True, n=None, filter_type='RAM-LAK'
     sinogram, pre_filter = filter_sinogram.filter_sinogram(sinogram, filter_type, ns)
 
     if pre_filter:
-        sinogram = change_basis_columns.change_basis_columns(sinogram, 'CARDINAL', 'B-SPLINE', ns)
+        sinogram = change_basis_columns(sinogram, 'CARDINAL', 'B-SPLINE', ns)
 
     if angledeg:
         theta = np.deg2rad(theta)
@@ -157,7 +157,7 @@ def spliradon(sinogram, theta=None, angledeg=True, n=None, filter_type='RAM-LAK'
     )
 
     if ni > -1:
-        image = change_basis.change_basis(image, 'DUAL', 'CARDINAL', ni)
+        image = change_basis(image, 'DUAL', 'CARDINAL', ni)
 
     if theta.size > 1:
         image = image * np.pi / theta.size

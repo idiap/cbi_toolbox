@@ -10,25 +10,55 @@ def test_convert(signal, degree, tolerance, condition):
     return np.allclose(signal, r_signal, rtol=tolerance * 10)
 
 
+def test_basis(data, from_b, to_b, degree, axes, tolerance, condition):
+    c_out = bsplines.change_basis(data, from_b, to_b, degree, axes, tolerance, condition)
+    ar = bsplines.change_basis(c_out, to_b, from_b, degree, axes, tolerance, condition)
+
+    return np.allclose(data, ar, rtol=tolerance * 10)
+
+
 class TestBsplines(unittest.TestCase):
     def test_convert(self):
         print('Testing sample/interpolation conversion')
         tolerance = 1e-15
         data_size = 20
+        condition_list = ['mirror', 'periodic']
+        data_size_list = [(data_size,), (data_size, 2), (data_size, 2, 2)]
+
         for degree in range(8):
-            print('Spline degree: {}'.format(degree))
+            print('\tSpline degree: {}'.format(degree))
+            for size in data_size_list:
+                signal = np.random.rand(*size)
+                print('\t\tData size: {}'.format(signal.shape))
+                for condition in condition_list:
+                    print('\t\t\tCondition: {}'.format(condition))
+                    self.assertTrue(test_convert(signal, degree, tolerance, condition))
 
-            signal = np.random.rand(data_size, 2, 2)
-            self.assertTrue(test_convert(signal, degree, tolerance, 'mirror'))
-            self.assertTrue(test_convert(signal, degree, tolerance, 'periodic'))
+    def test_basis(self):
+        print('Testing basis change')
+        tolerance = 1e-15
+        data_size = 20
+        condition_list = ['mirror', 'periodic']
+        data_size_list = [(data_size, 2), (data_size, 2, 2)]
+        axes_list = [(0,), (0, 1)]
+        bases_list = [('cardinal', 'b-spline'), ('cardinal', 'dual')]
 
-            signal = np.random.rand(data_size, 2)
-            self.assertTrue(test_convert(signal, degree, tolerance, 'mirror'))
-            self.assertTrue(test_convert(signal, degree, tolerance, 'periodic'))
+        for degree in range(8):
+            print('\tSpline degree: {}'.format(degree))
+            for size in data_size_list:
+                signal = np.random.rand(*size)
+                print('\t\tData size: {}'.format(signal.shape))
+                for condition in condition_list:
+                    print('\t\t\tCondition: {}'.format(condition))
+                    for axis in axes_list:
+                        print('\t\t\t\tAxis: {}'.format(axis))
+                        for base in bases_list:
+                            print('\t\t\t\t\tBases: {}'.format(base))
+                            from_b, to_b = base
+                            self.assertTrue(test_basis(signal, from_b, to_b, degree, axis, tolerance, condition))
 
-            signal = np.random.rand(data_size)
-            self.assertTrue(test_convert(signal, degree, tolerance, 'mirror'))
-            self.assertTrue(test_convert(signal, degree, tolerance, 'periodic'))
+
+
 
 
 if __name__ == '__main__':
