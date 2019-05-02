@@ -52,12 +52,13 @@ def get_filter(n, filter_name: str, degree):
     return filter_f, pre_filter
 
 
+# FIXME sinogram axis
 def filter_sinogram(sinogram, filter_name, degree):
-    length = sinogram.shape[0]
+    length = sinogram.shape[1]
     n = np.power(2, np.ceil(np.log2(4 * length)))
 
     filter_f, pre_filter = get_filter(n, filter_name, degree)
-    filtered = np.fft.fft(sinogram, n, axis=0)
+    filtered = np.fft.fft(sinogram, n, axis=1)
     filtered = np.real(np.fft.ifft(filtered * filter_f))
     filtered = filtered[:length, :]
 

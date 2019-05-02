@@ -1,39 +1,18 @@
-extern void radontransform(
-	double	*Input, 	/* Input image */
-	long	Nx,			/* Size of image */
-	long	Ny,
-	double	h,			/* Sampling step on the image */
-	long	nI,			/* Interpolation degree on the Image */
-	double	x0,			/* Rotation center */
-	double	y0,
-	double	theta[],	/* Projection angles in radian */
-	long	Nangles,	/* Number of projection angles */
-	double	*kernel,	/* Kernel table of size Nt x Nangles */
-	long	Nt,			/* Number of samples in the kernel table*/
-	double	a,			/* Maximal argument of the kernel table (0 to a) */
-	double	*Sinogram,	/* Output sinogram of size Nc x Nangles */
-	long	Nc,			/* Number of captors */
-	double	s,			/* Sampling step of the captors */
-	long	nS,			/* Interpolation degree on the Sinogram */
-	double	t0			/* projection of rotation center*/
-);
+#include <xtensor-python/pytensor.hpp>
+// pyarray can be changed to xarray if not using python/numpy
 
-extern void backprojection(
-	double	*Sinogram,	/* Output sinogram of size Nc x Nangles */
-	long	Nc,			/* Number of captors */
-	long	Nangles,	/* Number of projection angles */
-	double	s,			/* Sampling step of the captors */
-	long	nS,			/* Interpolation degree on the Sinogram */
-	double	t0,			/* projection of rotation center*/
-	double	theta[],	/* Projection angles in radian */
-	double	h,			/* Sampling step on the image */
-	long	nI,			/* Interpolation degree on the Image */
-	double	x0,			/* Rotation center */
-	double	y0,
-	double	*kernel,	/* Kernel table of size Nt x Nangles */
-	long	Nt,			/* Number of samples in the kernel table*/
-	double	a,			/* Maximal argument of the kernel table (0 to a) */
-	double	*Image, 	/* Output image */
-	long	Nx,			/* Size of image */
-	long	Ny
+extern void radontransform(
+        xt::pytensor<double, 3> &image,      /* Input image */
+        double h,                            /* Sampling step on the image (pixel size) */
+        long nI,                             /* Interpolation degree on the Image */
+        double x0,                           /* Rotation center in image coordinates */
+        double y0,
+        xt::pytensor<double, 3> &sinogram,   /* Output sinogram of size Nangles x Nc x Nlayers*/
+        double s,                            /* Sampling step of the captors (sinogram "pixel size") */
+        long nS,                             /* Interpolation degree on the sinogram */
+        double t0,                           /* Projection of rotation center */
+        xt::pytensor<double, 1> &theta,      /* Projection angles in radian */
+        xt::pytensor<double, 2> &kernel,     /* Kernel table of size Nt x Nangles */
+        double a,                            /* Maximal argument of the kernel table (0 to a) */
+        bool backprojection                  /* Perform a back-projection */
 );
