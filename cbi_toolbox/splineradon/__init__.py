@@ -2,42 +2,13 @@ import cbi_toolbox.csplineradon as cspline
 import numpy as np
 
 from cbi_toolbox.bsplines import change_basis
-from cbi_toolbox.splineradon import filter_sinogram
-
-
-def fft_trikernel(nt, a, n1, n2, n3, h1, h2, h3, pad_fact):
-    T = a / (nt - 1)
-    dnu = 1 / (T * (pad_fact * nt - 1))
-    nu = -1 / (2 * T) + np.arange(pad_fact * nt) * dnu
-
-    trikernel_hat = np.power(np.sinc(np.outer(nu, h1)), (n1 + 1)) * np.power(
-        np.sinc(np.outer(nu, h2)), (n2 + 1)) * np.power(np.sinc(np.outer(nu, h3)), (n3 + 1))
-
-    kernel = np.abs(np.fft.fft(trikernel_hat, axis=0))
-
-    return kernel[0:nt, :] / (T * nt * pad_fact)
-
-
-def get_kernel_table(nt, n1, n2, h, s, angles, degree=True):
-    pad_fact = 4
-    angles = np.atleast_1d(angles)
-
-    if degree:
-        angles = np.deg2rad(angles)
-
-    h1 = np.abs(np.sin(angles) * h)
-    h2 = np.abs(np.cos(angles) * h)
-
-    a = np.max(h1 * (n1 + 1) / 2 + h2 * (n1 + 1) / 2 + s * (n2 + 1) / 2)
-
-    table = fft_trikernel(nt, a, n1, n1, n2, h1, h2, s, pad_fact)
-
-    return table, a
+from cbi_toolbox.splineradon import filter_sinogram, spline_kernels
 
 
 def splradon(image, theta=np.arange(180), angledeg=True, n=None,
              b_spline_deg=(1, 3), sampling_steps=(1, 1),
              center=None, captors_center=None, kernel=None):
+    # TODO check what could fail with dimensions
     nx = image.shape[1]
     ny = image.shape[0]
     h = sampling_steps[0]
@@ -60,15 +31,18 @@ def splradon(image, theta=np.arange(180), angledeg=True, n=None,
 
     if kernel is None:
         nt = 200
-        kernel = get_kernel_table(nt, ni, ns, h, s, -theta)
+        kernel = spline_kernels.get_kernel_table(nt, ni, ns, h, s, -theta)
 
     if angledeg:
         theta = np.deg2rad(theta)
 
-    spline_image = change_basis(image, 'cardinal', 'b-spline', ni)
+    spline_image = change_basis(image, 'cardinal', 'b-spline', ni, (0, 1),
+                                boundary_condition='periodic')
 
-    # FIXME
-    spline_image = spline_image[..., np.newaxis]
+    squeeze = False
+    if spline_image.ndim < 3:
+        spline_image = spline_image[..., np.newaxis]
+        squeeze = True
 
     sinogram = cspline.radon(
         spline_image,
@@ -83,13 +57,13 @@ def splradon(image, theta=np.arange(180), angledeg=True, n=None,
         s,
         ns,
         captors_center
-    )
+        )
 
-    # FIXME
-    sinogram = np.squeeze(sinogram)
+    if squeeze:
+        sinogram = np.squeeze(sinogram)
 
     if ns > -1:
-        sinogram = change_basis_columns(sinogram, 'dual', 'cardinal', ns)
+        sinogram = change_basis(sinogram, 'dual', 'cardinal', ns, 1, boundary_condition='periodic')
 
     return sinogram
 
@@ -97,8 +71,8 @@ def splradon(image, theta=np.arange(180), angledeg=True, n=None,
 def spliradon(sinogram, theta=None, angledeg=True, n=None, filter_type='RAM-LAK',
               b_spline_deg=(-1, 1), sampling_steps=(1, 1),
               center=None, captors_center=None, kernel=None):
-    nc = sinogram.shape[0]
-    na = sinogram.shape[1]
+    nc = sinogram.shape[1]
+    na = sinogram.shape[0]
 
     ni = b_spline_deg[0]
     ns = b_spline_deg[1]
@@ -111,9 +85,6 @@ def spliradon(sinogram, theta=None, angledeg=True, n=None, filter_type='RAM-LAK'
 
     if theta.size == 1 and na > 1:
         theta = np.arange(na) * theta
-
-    if len(theta) != na:
-        raise ValueError("Theta does not match the number of projections in the provided sinogram.")
 
     nx = 2 * np.floor(sinogram.shape[0] / (2 * np.sqrt(2)))
     ny = nx
@@ -130,15 +101,21 @@ def spliradon(sinogram, theta=None, angledeg=True, n=None, filter_type='RAM-LAK'
 
     if kernel is None:
         nt = 200
-        kernel = get_kernel_table(nt, ni, ns, h, s, -theta)
+        kernel = spline_kernels.get_kernel_table(nt, ni, ns, h, s, -theta)
 
     sinogram, pre_filter = filter_sinogram.filter_sinogram(sinogram, filter_type, ns)
 
     if pre_filter:
-        sinogram = change_basis_columns(sinogram, 'CARDINAL', 'B-SPLINE', ns)
+        sinogram = change_basis(sinogram, 'CARDINAL', 'B-SPLINE', ns, 1,
+                                boundary_condition='periodic')
 
     if angledeg:
         theta = np.deg2rad(theta)
+
+    squeeze = False
+    if sinogram.ndim < 3:
+        sinogram = sinogram[..., np.newaxis]
+        squeeze = True
 
     image = cspline.iradon(
         sinogram,
@@ -154,10 +131,13 @@ def spliradon(sinogram, theta=None, angledeg=True, n=None, filter_type='RAM-LAK'
         kernel[1],
         nx,
         ny
-    )
+        )
+
+    if squeeze:
+        image = np.squeeze(image)
 
     if ni > -1:
-        image = change_basis(image, 'DUAL', 'CARDINAL', ni)
+        image = change_basis(image, 'DUAL', 'CARDINAL', ni, (0, 1), boundary_condition='periodic')
 
     if theta.size > 1:
         image = image * np.pi / theta.size
