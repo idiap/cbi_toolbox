@@ -1,5 +1,5 @@
 import numpy as np
-
+from cbi_toolbox.arrays import make_broadcastable
 
 def get_filter(n, filter_name: str, degree):
     nu = np.concatenate((np.arange((n + 1) / 2), np.arange(-(n / 2 - 1), 0)))
@@ -59,7 +59,8 @@ def filter_sinogram(sinogram, filter_name, degree):
 
     filter_f, pre_filter = get_filter(n, filter_name, degree)
     filtered = np.fft.fft(sinogram, n, axis=1)
-    filtered = np.real(np.fft.ifft(filtered * filter_f))
-    filtered = filtered[:length, :]
+    filter_f = make_broadcastable(filter_f[np.newaxis, ...], filtered)
+    filtered = np.real(np.fft.ifft(filtered * filter_f, axis=1))
+    filtered = filtered[:, :length]
 
     return filtered, pre_filter

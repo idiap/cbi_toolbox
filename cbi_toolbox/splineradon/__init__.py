@@ -65,10 +65,12 @@ def splradon(image, theta=np.arange(180), angledeg=True, n=None,
     if angledeg:
         theta = np.deg2rad(theta)
 
-    spline_image = change_basis(image, 'cardinal', 'b-spline', ni)
+    spline_image = change_basis(image, 'cardinal', 'b-spline', ni, (0, 1))
 
-    # FIXME
-    spline_image = spline_image[..., np.newaxis]
+    squeeze = False
+    if spline_image.ndim < 3:
+        spline_image = spline_image[..., np.newaxis]
+        squeeze = True
 
     sinogram = cspline.radon(
         spline_image,
@@ -85,20 +87,21 @@ def splradon(image, theta=np.arange(180), angledeg=True, n=None,
         captors_center
     )
 
-    # FIXME
-    sinogram = np.squeeze(sinogram)
+    if squeeze:
+        sinogram = np.squeeze(sinogram)
 
     if ns > -1:
-        sinogram = change_basis_columns(sinogram, 'dual', 'cardinal', ns)
+        sinogram = change_basis(sinogram, 'dual', 'cardinal', ns, 1)
 
     return sinogram
 
 
+# TODO ask ML about the n
 def spliradon(sinogram, theta=None, angledeg=True, n=None, filter_type='RAM-LAK',
-              b_spline_deg=(-1, 1), sampling_steps=(1, 1),
+              b_spline_deg=(1, 2), sampling_steps=(1, 1),
               center=None, captors_center=None, kernel=None):
-    nc = sinogram.shape[0]
-    na = sinogram.shape[1]
+    nc = sinogram.shape[1]
+    na = sinogram.shape[0]
 
     ni = b_spline_deg[0]
     ns = b_spline_deg[1]
@@ -107,6 +110,8 @@ def spliradon(sinogram, theta=None, angledeg=True, n=None, filter_type='RAM-LAK'
 
     if theta is None:
         theta = np.pi / na
+        angledeg = False
+
     theta = np.atleast_1d(theta)
 
     if theta.size == 1 and na > 1:
@@ -115,7 +120,8 @@ def spliradon(sinogram, theta=None, angledeg=True, n=None, filter_type='RAM-LAK'
     if len(theta) != na:
         raise ValueError("Theta does not match the number of projections in the provided sinogram.")
 
-    nx = 2 * np.floor(sinogram.shape[0] / (2 * np.sqrt(2)))
+    # TODO ask ML about this
+    nx = int(2 * np.floor(nc / (2 * np.sqrt(2))))
     ny = nx
 
     if n is not None:
@@ -135,10 +141,15 @@ def spliradon(sinogram, theta=None, angledeg=True, n=None, filter_type='RAM-LAK'
     sinogram, pre_filter = filter_sinogram.filter_sinogram(sinogram, filter_type, ns)
 
     if pre_filter:
-        sinogram = change_basis_columns(sinogram, 'CARDINAL', 'B-SPLINE', ns)
+        sinogram = change_basis(sinogram, 'CARDINAL', 'B-SPLINE', ns, 1)
 
     if angledeg:
         theta = np.deg2rad(theta)
+
+    squeeze = False
+    if sinogram.ndim < 3:
+        sinogram = sinogram[..., np.newaxis]
+        squeeze = True
 
     image = cspline.iradon(
         sinogram,
@@ -156,8 +167,11 @@ def spliradon(sinogram, theta=None, angledeg=True, n=None, filter_type='RAM-LAK'
         ny
     )
 
+    if squeeze:
+        image = np.squeeze(image)
+
     if ni > -1:
-        image = change_basis(image, 'DUAL', 'CARDINAL', ni)
+        image = change_basis(image, 'DUAL', 'CARDINAL', ni, (0, 1))
 
     if theta.size > 1:
         image = image * np.pi / theta.size
