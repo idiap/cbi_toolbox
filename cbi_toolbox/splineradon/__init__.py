@@ -89,7 +89,7 @@ def spliradon(sinogram, theta=None, angledeg=True, n=None, filter_type='RAM-LAK'
     if theta.size == 1 and na > 1:
         theta = np.arange(na) * theta
 
-    nx = 2 * np.floor(sinogram.shape[0] / (2 * np.sqrt(2)))
+    nx = int(2 * np.floor(nc / (2 * np.sqrt(2))))
     ny = nx
 
     if n is not None:
