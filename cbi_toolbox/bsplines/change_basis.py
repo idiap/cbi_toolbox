@@ -77,7 +77,7 @@ def change_basis_inner(in_array, from_basis, to_basis, degree, tolerance=1e-9, b
 
 if __name__ == "__main__":
 
-    data = np.random.rand(20, 2)
+    data = np.random.rand(20, 20)
     toleranc = 1e-8
     degre = 1
     axe = (0, 1)

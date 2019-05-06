@@ -5,7 +5,8 @@ from cbi_toolbox import bsplines
 
 
 def test_convert(signal, degree, tolerance, condition):
-    coeffs = bsplines.convert_to_interpolation_coefficients(signal, degree, tolerance, boundary_condition=condition)
+    coeffs = bsplines.convert_to_interpolation_coefficients(signal, degree, tolerance,
+                                                            boundary_condition=condition)
     r_signal = bsplines.convert_to_samples(coeffs, degree, condition)
     return np.allclose(signal, r_signal, rtol=tolerance * 10)
 
@@ -39,11 +40,11 @@ class TestBsplines(unittest.TestCase):
         tolerance = 1e-15
         data_size = 20
         condition_list = ['mirror', 'periodic']
-        data_size_list = [(data_size, 2), (data_size, 2, 2)]
+        data_size_list = [(data_size, data_size), (data_size, data_size, 2)]
         axes_list = [(0,), (0, 1)]
         bases_list = [('cardinal', 'b-spline'), ('cardinal', 'dual')]
 
-        for degree in range(8):
+        for degree in range(4):
             print('\tSpline degree: {}'.format(degree))
             for size in data_size_list:
                 signal = np.random.rand(*size)
@@ -55,10 +56,9 @@ class TestBsplines(unittest.TestCase):
                         for base in bases_list:
                             print('\t\t\t\t\tBases: {}'.format(base))
                             from_b, to_b = base
-                            self.assertTrue(test_basis(signal, from_b, to_b, degree, axis, tolerance, condition))
-
-
-
+                            self.assertTrue(
+                                test_basis(signal, from_b, to_b, degree, axis, tolerance,
+                                           condition))
 
 
 if __name__ == '__main__':
