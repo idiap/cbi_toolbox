@@ -38,7 +38,7 @@ class TestBsplines(unittest.TestCase):
     def test_convert(self):
         print('Testing sample/interpolation conversion')
         tolerance = 1e-15
-        data_size = 20
+        data_size = 50
         condition_list = ['mirror', 'periodic']
         data_size_list = [(data_size,), (data_size, 2), (data_size, 2, 2)]
 
@@ -54,7 +54,7 @@ class TestBsplines(unittest.TestCase):
     def test_basis(self):
         print('Testing basis change')
         tolerance = 1e-15
-        data_size = 20
+        data_size = 50
         condition_list = ['mirror', 'periodic']
         data_size_list = [(data_size, data_size), (data_size, data_size, 2)]
         axes_list = [(0,), (0, 1)]
@@ -78,7 +78,7 @@ class TestBsplines(unittest.TestCase):
     def test_dims(self):
         print('Testing dimension stability')
         tolerance = 1e-16
-        data_size = 20
+        data_size = 50
         condition_list = ['mirror', 'periodic']
         data_size_list = [(data_size, data_size, 2)]
         axes_list = [(0,), (0, 1)]
