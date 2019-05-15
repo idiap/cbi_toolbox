@@ -37,3 +37,6 @@ class TestSplradon(unittest.TestCase):
         out_2d = cbi_toolbox.spliradon(spline_2d)
 
         self.assertTrue(np.allclose(out_2d, out_3d[..., 0], rtol=1e-9, atol=1e-12))
+
+if __name__ == "__main__":
+    unittest.main()
