@@ -29,12 +29,12 @@ def splradon(image, theta=np.arange(180), angledeg=True, n=None,
     if captors_center is None:
         captors_center = s * (nc - 1) / 2
 
-    if kernel is None:
-        nt = 200
-        kernel = spline_kernels.get_kernel_table(nt, ni, ns, h, s, -theta)
-
     if angledeg:
         theta = np.deg2rad(theta)
+
+    if kernel is None:
+        nt = 200
+        kernel = spline_kernels.get_kernel_table(nt, ni, ns, h, s, -theta, degree=False)
 
     spline_image = change_basis(image, 'cardinal', 'b-spline', ni, (0, 1),
                                 boundary_condition='periodic')
@@ -89,9 +89,17 @@ def spliradon(sinogram, theta=None, angledeg=True, n=None, filter_type='RAM-LAK'
     if theta.size == 1 and na > 1:
         theta = np.arange(na) * theta
 
+    if angledeg:
+        theta = np.deg2rad(theta)
+
+    if kernel is None:
+        nt = 200
+        kernel = spline_kernels.get_kernel_table(nt, ni, ns, h, s, -theta, degree=False)
+
     nx = int(2 * np.floor(nc / (2 * np.sqrt(2))))
     ny = nx
 
+    # TODO check this?? nc!
     if n is not None:
         s = (nc - 1) / (n - 1)
         nc = n
@@ -102,18 +110,11 @@ def spliradon(sinogram, theta=None, angledeg=True, n=None, filter_type='RAM-LAK'
     if captors_center is None:
         captors_center = s * (nc - 1) / 2
 
-    if kernel is None:
-        nt = 200
-        kernel = spline_kernels.get_kernel_table(nt, ni, ns, h, s, -theta)
-
     sinogram, pre_filter = filter_sinogram.filter_sinogram(sinogram, filter_type, ns)
 
     if pre_filter:
         sinogram = change_basis(sinogram, 'CARDINAL', 'B-SPLINE', ns, 1,
                                 boundary_condition='periodic')
-
-    if angledeg:
-        theta = np.deg2rad(theta)
 
     squeeze = False
     if sinogram.ndim < 3:

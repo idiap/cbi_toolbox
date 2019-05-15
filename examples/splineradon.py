@@ -5,15 +5,25 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 
-image = np.zeros((50, 70))
-image[10, 3] = 1
+image = np.zeros((70, 70, 3))
+image[10, 3, 0] = 1
+image[10, 50, 0] = 1
+image[50, 50, 1] = 1
+image[60, 20, 1] = 1
+image[30, 60, 2] = 1
+image[30, 50, 2] = 1
 
 plt.figure()
 plt.imshow(image)
 plt.show()
 
-sinogram = srad.splradon(image, n=1000, b_spline_deg=(1, 1))
+sinogram = srad.splradon(image)
+
+reconstruct = srad.spliradon(sinogram)
+
+reconstruct -= reconstruct.min()
+reconstruct /= reconstruct.max()
 
 plt.figure()
-plt.imshow(np.reshape(sinogram,(sinogram.shape[1], sinogram.shape[0])))
+plt.imshow(reconstruct)
 plt.show()
