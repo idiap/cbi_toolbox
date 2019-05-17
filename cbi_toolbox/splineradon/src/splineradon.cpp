@@ -45,25 +45,25 @@ xt::pytensor<double, 3> radon(
 
     const long Nangles = theta.shape()[0];
 
-    if (Nangles != kernel.shape()[1]) {
+    if (Nangles != kernel.shape()[0]) {
         throw py::value_error("The kernel must have Nangle rows.");
     }
 
     auto sinogram = xt::pytensor<double, 3>({Nangles, Nc, image.shape()[2]});
 
     radontransform(
-            image,      /* Input image */
-            h,          /* Sampling step on the image */
-            nI,         /* Interpolation degree on the Image */
-            x0,         /* Rotation center */
+            image,
+            h,
+            nI,
+            x0,
             y0,
-            sinogram,   /* Output sinogram of size Nc x Nangles */
-            s,          /* Sampling step of the captors */
-            nS,         /* Interpolation degree on the Sinogram */
-            t0,         /* projection of rotation center*/
-            theta,      /* Projection angles in radian */
-            kernel,     /* Kernel table of size Nt x Nangles */
-            a,          /* Maximal argument of the kernel table (0 to a) */
+            sinogram,
+            s,
+            nS,
+            t0,
+            theta,
+            kernel,
+            a,
             false
     );
 
@@ -100,8 +100,8 @@ xt::pytensor<double, 3> iradon(
         throw py::value_error("nI must be greater or equal to -1.");
     }
 
-    if (Nangles != kernel.shape()[1]) {
-        throw py::value_error("The kernel table must have Nangle columns.");
+    if (Nangles != kernel.shape()[0]) {
+        throw py::value_error("The kernel table must have Nangle rows.");
     }
 
     if (a < 0) {
@@ -118,18 +118,18 @@ xt::pytensor<double, 3> iradon(
     xt::pytensor<double, 3> image = xt::pytensor<double, 3>({Ny, Nx, sinogram.shape()[2]});
 
     radontransform(
-            image,      /* Input image */
-            h,          /* Sampling step on the image */
-            nI,         /* Interpolation degree on the Image */
-            x0,         /* Rotation center */
+            image,
+            h,
+            nI,
+            x0,
             y0,
-            sinogram,   /* Output sinogram of size Nc x Nangles */
-            s,          /* Sampling step of the captors */
-            nS,         /* Interpolation degree on the Sinogram */
-            t0,         /* projection of rotation center*/
-            theta,      /* Projection angles in radian */
-            kernel,     /* Kernel table of size Nt x Nangles */
-            a,          /* Maximal argument of the kernel table (0 to a) */
+            sinogram,
+            s,
+            nS,
+            t0,
+            theta,
+            kernel,
+            a,
             true
     );
 

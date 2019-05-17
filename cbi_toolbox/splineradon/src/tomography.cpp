@@ -8,23 +8,23 @@
 #define MIN(A, B)  ((A) < (B) ? (A) : (B))
 
 extern void radontransform(
-        xt::pytensor<double, 3> &image,      /* Input image */
-        double h,                            /* Sampling step on the image (pixel size) */
-        long nI,                             /* Interpolation degree on the Image */
-        double x0,                           /* Rotation center in image coordinates */
+        xt::pytensor<double, 3> &image,
+        double h,
+        long nI,
+        double x0,
         double y0,
-        xt::pytensor<double, 3> &sinogram,   /* Output sinogram of size Nangles x Nc x Nlayers*/
-        double s,                            /* Sampling step of the captors (sinogram "pixel size") */
-        long nS,                             /* Interpolation degree on the sinogram */
-        double t0,                           /* Projection of rotation center */
-        xt::pytensor<double, 1> &theta,      /* Projection angles in radian */
-        xt::pytensor<double, 2> &kernel,     /* Kernel table of size Nt x Nangles */
-        double a,                            /* Maximal argument of the kernel table (0 to a) */
-        bool backprojection                  /* Perform a back-projection */
+        xt::pytensor<double, 3> &sinogram,
+        double s,
+        long nS,
+        double t0,
+        xt::pytensor<double, 1> &theta,
+        xt::pytensor<double, 2> &kernel,
+        double a,
+        bool backprojection
 ) {
 
     long Nc = sinogram.shape()[1];
-    long Nt = kernel.shape()[0];
+    long Nt = kernel.shape()[1];
     long Nangles = theta.size();
 
     long Nx = image.shape()[1];
@@ -86,10 +86,10 @@ extern void radontransform(
 
                         if (backprojection) {
                             // update the image
-                            image_view = image_view + kernel(idx, i_angle) * sino_view;
+                            image_view = image_view + kernel(i_angle, idx) * sino_view;
                         } else {
                             // update the sinogram
-                            sino_view = sino_view + kernel(idx, i_angle) * image_view;
+                            sino_view = sino_view + kernel(i_angle, idx) * image_view;
                         }
                     }
                 }
