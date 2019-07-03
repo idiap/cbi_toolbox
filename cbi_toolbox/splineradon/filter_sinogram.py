@@ -1,5 +1,7 @@
 import numpy as np
+
 from cbi_toolbox.arrays import make_broadcastable
+
 
 def get_filter(n, filter_name: str, degree):
     nu = np.concatenate((np.arange((n + 1) / 2), np.arange(-(n / 2 - 1), 0)))
@@ -52,7 +54,6 @@ def get_filter(n, filter_name: str, degree):
     return filter_f, pre_filter
 
 
-# FIXME sinogram axis
 def filter_sinogram(sinogram, filter_name, degree):
     length = sinogram.shape[1]
     n = np.power(2, np.ceil(np.log2(4 * length)))

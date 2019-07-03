@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def roll_array(array, shifts, axis=None):
+def roll_array(array, shifts, axis):
     axis -= 1
     rolled = np.empty_like(array)
 

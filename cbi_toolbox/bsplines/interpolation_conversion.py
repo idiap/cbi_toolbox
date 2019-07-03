@@ -228,7 +228,6 @@ def convert_to_samples(c, deg, boundary_condition='Mirror'):
 
     kernel = make_broadcastable(kernel, c)
 
-    # TODO check with christian that convolve 2D is not required
     c = signal.fftconvolve(c, kernel, 'valid', axes=(0,))
 
     return c

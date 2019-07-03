@@ -68,7 +68,6 @@ extern void radontransform(
                 double y = i_y * h;
                 double t = ttemp + (y - y0) * si;
 
-                // TODO ask ML about kernel width and border conditions
                 // if the projection is in the sinogram (depends on the alignment of the centers {x0, y0} and t0
                 if ((t > 0.0) && (t <= tmax)) {
                     // compute the range of sinogram elements impacted by this point and its spline kernel

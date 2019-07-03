@@ -13,16 +13,15 @@ from cbi_toolbox.arrays import transpose_dim_to
 
 def change_basis(in_array, from_basis, to_basis, degree, axes=(0,), tolerance=1e-9, boundary_condition='Mirror'):
     """Change the basis along the provided axes (e.g. to convert a 2D signal, use axes=(0, 1))"""
-    temp = in_array
     try:
-        for ax in axes:
-            temp = change_basis(temp, from_basis, to_basis, degree, ax, tolerance, boundary_condition)
+       for ax in axes:
+            in_array = change_basis(in_array, from_basis, to_basis, degree, ax, tolerance, boundary_condition)
     except TypeError:
-        temp = transpose_dim_to(temp, axes, 0)
-        temp = change_basis_inner(temp, from_basis, to_basis, degree, tolerance, boundary_condition)
-        temp = transpose_dim_to(temp, 0, axes)
+        in_array = transpose_dim_to(in_array, axes, 0)
+        in_array = change_basis_inner(in_array, from_basis, to_basis, degree, tolerance, boundary_condition)
+        in_array = transpose_dim_to(in_array, 0, axes)
 
-    return temp
+    return in_array
 
 
 def change_basis_inner(in_array, from_basis, to_basis, degree, tolerance=1e-9, boundary_condition='Mirror'):
