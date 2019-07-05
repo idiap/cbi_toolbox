@@ -5,6 +5,7 @@
 #define FORCE_IMPORT_ARRAY
 
 #include "tomography.h"
+#include "tomography_cuda.h"
 
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
@@ -136,6 +137,10 @@ xt::pytensor<double, 3> iradon(
     return image;
 }
 
+int test(){
+   return 1;
+}
+
 PYBIND11_MODULE(csplineradon, m) {
     xt::import_numpy();
 
@@ -143,4 +148,7 @@ PYBIND11_MODULE(csplineradon, m) {
 
     m.def("radon", &radon, "Perform radon transform of an image");
     m.def("iradon", &iradon, "Perform inverse radon transform of a sinogram");
+
+    m.def("test", &test, "test");
+    m.def("test_cuda", &test_cuda, "TEST cuda");
 }
