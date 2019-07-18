@@ -29,21 +29,6 @@ class CMakeExtension(Extension):
 
 
 class CMakeBuild(build_ext):
-
-    @staticmethod
-    def get_pybind_include(user):
-        import pybind11
-        return pybind11.get_include(user)
-
-    @staticmethod
-    def get_numpy_include():
-        import numpy as np
-        return np.get_include()
-
-    @staticmethod
-    def get_xtensor_include():
-        return os.path.join(sys.prefix, 'include')
-
     def run(self):
         try:
             out = subprocess.check_output(['cmake', '--version'])
@@ -61,9 +46,9 @@ class CMakeBuild(build_ext):
 
     def build_extension(self, ext):
         extdir = os.path.abspath(os.path.dirname(self.get_ext_fullpath(ext.name)))
+
         cmake_args = ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + extdir,
-                      '-DPYTHON_EXECUTABLE=' + sys.executable,
-                      '-DPYTHON_INCLUDES=' + ';'.join((self.get_numpy_include(), self.get_pybind_include(False), self.get_pybind_include(True), self.get_xtensor_include()))]
+                      ]
 
         cfg = 'Debug' if self.debug else 'Release'
         build_args = ['--config', cfg]
@@ -80,8 +65,12 @@ class CMakeBuild(build_ext):
         env = os.environ.copy()
         env['CXXFLAGS'] = '{} -DVERSION_INFO=\\"{}\\"'.format(env.get('CXXFLAGS', ''),
                                                               self.distribution.get_version())
-        if not os.path.exists(self.build_temp):
-            os.makedirs(self.build_temp)
+        if os.path.exists(self.build_temp):
+            import shutil
+            shutil.rmtree(self.build_temp)
+
+        os.makedirs(self.build_temp)
+
         subprocess.check_call(['cmake', ext.sourcedir] + cmake_args, cwd=self.build_temp, env=env)
         subprocess.check_call(['cmake', '--build', '.'] + build_args, cwd=self.build_temp)
 
@@ -93,7 +82,7 @@ setup(
     author_email='francois.marelli@idiap.ch',
     description='A python toolbox for computational bioimaging',
     long_description='',
-    ext_modules=[CMakeExtension('cbi_toolbox.csplineradon')],
+    ext_modules=[CMakeExtension('cbi_toolbox/splineradon')],
     install_requires=requires,
     cmdclass={'build_ext': CMakeBuild},
     zip_safe=False,
