@@ -96,16 +96,12 @@ void cuda_radontransform(
     // iterate over the projection angles
     for (long i_angle = blockIdx.x; i_angle < Nangles; i_angle += gridDim.x) {
 
-        sinogram[1] = theta[1];
-        return;
-
         //TODO compute this only once??
         double co = cos(theta[i_angle]);
         double si = sin(theta[i_angle]);
 
 
         double atheta = (double) (nI + 1L) / 2.0 * (fabs(si) + fabs(co)) * h + (double) (nS + 1L) / 2.0 * s;
-
 
 
         // TODO parallelize this?
@@ -141,15 +137,15 @@ void cuda_radontransform(
 
                             auto image_index = i_y * Nx * Nz + i_x * Nz + i_z;
                             auto kernel_index = i_angle * Nt + idx;
-                            auto sinogram_index = i_angle * Nc * Nz + i_sino * Nz + Nz;
+                            auto sinogram_index = i_angle * Nc * Nz + i_sino * Nz + i_z;
+
 
                             if (backprojection) {
                                 // update the image
-//                                atomicAdd(image + image_index, kernel[kernel_index] * sinogram[sinogram_index]);
+                                atomicAdd(image + image_index, kernel[kernel_index] * sinogram[sinogram_index]);
                             } else {
                                 // update the sinogram
-//                                atomicAdd(sinogram + sinogram_index, kernel[kernel_index] * image[image_index]);
-//                                atomicAdd(sinogram + sinogram_index, kernel[kernel_index] * image[image_index]);
+                                atomicAdd(sinogram + sinogram_index, kernel[kernel_index] * image[image_index]);
                             }
                         }
                     }
@@ -246,9 +242,7 @@ py::array_t<double, py::array::c_style> radon_cuda(
         }
     }
 
-    // TODO remove debug
-    n_threads = 1;
-    cuda_radontransform << < 1, n_threads >> > (
+    cuda_radontransform << < Nangles, n_threads >> > (
             cuda_image,
                     image_info.shape[1],
                     image_info.shape[0],

@@ -5,6 +5,7 @@ import os
 
 import cbi_toolbox as cbi
 from cbi_toolbox import parallel
+import cbi_toolbox.splineradon
 
 PREPROCESS_SUFFIX = 'pre'
 THETA_SUFFIX = 'theta'
@@ -47,7 +48,7 @@ def reconstruct(args, out_file_name, output_dir, sino_file, theta_file, radon_pa
     theta = theta[start_i:stop_i]
 
     print('Performing inverse radon')
-    image, _ = cbi.steps.spliradon_inner(sinogram, theta, **radon_params)
+    image, _ = cbi.splineradon.steps.spliradon_inner(sinogram, theta, **radon_params)
 
     print('Saving to {}'.format(output_file))
     os.makedirs(output_dir, exist_ok=True)

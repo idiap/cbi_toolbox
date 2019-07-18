@@ -4,6 +4,9 @@ import numpy as np
 import os
 
 import cbi_toolbox as cbi
+import cbi_toolbox.files
+import cbi_toolbox.images
+import cbi_toolbox.arrays
 
 SINO_SUFFIX = 'sino'
 THETA_SUFFIX = 'theta'
@@ -46,10 +49,10 @@ output_file = os.path.join(output_dir, '{}_{}.npy'.format(name, SINO_SUFFIX))
 
 print('Loading images')
 
-sinogram, metadata = cbi.load_mm_ome_tiff(image_path)
+sinogram, metadata = cbi.files.load_mm_ome_tiff(image_path)
 angle_step = metadata['Summary']['UserData']['AngleStep']['PropVal']
 
-reference, ref_metadata = cbi.load_mm_ome_tiff(reference_path, True)
+reference, ref_metadata = cbi.files.load_mm_ome_tiff(reference_path, True)
 
 sinogram = np.squeeze(sinogram)
 sinogram = np.ascontiguousarray(np.transpose(sinogram, (2, 1, 0)))
@@ -61,19 +64,19 @@ reference = np.ascontiguousarray(np.transpose(reference, (2, 1, 0)))
 # Preprocess the image
 print('Preprocessing')
 sinogram = reference - sinogram
-sinogram = cbi.erase_corners(sinogram, 100)
-sinogram = cbi.remove_background_illumination(sinogram, threshold=500, hole_size=50, margin_size=300)
+sinogram = cbi.images.erase_corners(sinogram, 100)
+sinogram = cbi.images.remove_background_illumination(sinogram, threshold=500, hole_size=50, margin_size=300)
 
 # Compensate lateral shift
 print('Compensating lateral shift')
 x_project = sinogram.sum(-1)
 x_center = sinogram.shape[-1] / 2
 
-x_com = cbi.center_of_mass(x_project)
+x_com = cbi.arrays.center_of_mass(x_project)
 x_com = x_com - x_center
 x_com = np.round(x_com).astype(int)
 
-sinogram = cbi.roll_array(sinogram, -x_com, axis=1)
+sinogram = cbi.arrays.roll_array(sinogram, -x_com, axis=1)
 
 print('Padding')
 sinogram = sinogram[:, padding:-padding, ...]
