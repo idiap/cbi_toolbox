@@ -1,10 +1,3 @@
-from pkg_resources import get_distribution
+import pkg_resources
 
-__version__ = get_distribution('cbi_toolbox').version
-
-from cbi_toolbox.arrays import *
-from cbi_toolbox.files import *
-from cbi_toolbox.plotting import *
-from cbi_toolbox.splineradon import *
-from cbi_toolbox.images import *
-from cbi_toolbox.arrays import *
+__version__ = pkg_resources.get_distribution('cbi_toolbox').version
