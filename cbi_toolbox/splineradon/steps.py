@@ -183,14 +183,14 @@ def spliradon_inner(sinogram_filtered, theta=None, angledeg=True,
         ns,
         captors_center,
         -theta,
-        h,
-        ni,
-        center[1],
-        center[0],
         kernel[0],
         kernel[1],
         nx,
-        ny
+        ny,
+        h,
+        ni,
+        center[1],
+        center[0]
     )
 
     if squeeze:

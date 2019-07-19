@@ -30,8 +30,6 @@ extern void radontransform(
     long Nx = image.shape()[1];
     long Ny = image.shape()[0];
 
-    double tmax = s * ((double) (Nc - 1L));
-
     double tabfact = (double) (Nt - 1L) / a;
 
     if (backprojection) {
@@ -68,28 +66,25 @@ extern void radontransform(
                 double y = i_y * h;
                 double t = ttemp + (y - y0) * si;
 
-                // if the projection is in the sinogram (depends on the alignment of the centers {x0, y0} and t0
-                if ((t > 0.0) && (t <= tmax)) {
-                    // compute the range of sinogram elements impacted by this point and its spline kernel
-                    long imin = MAX(0L, (long) (ceil((t - atheta) / s)));
-                    long imax = MIN(Nc - 1L, (long) (floor((t + atheta) / s)));
+                // compute the range of sinogram elements impacted by this point and its spline kernel
+                long imin = MAX(0L, (long) (ceil((t - atheta) / s)));
+                long imax = MIN(Nc - 1L, (long) (floor((t + atheta) / s)));
 
-                    // iterate over the affected sinogram values
-                    for (long i_sino = imin; i_sino <= imax; i_sino++) {
-                        // compute the position of the point in its spline kernel
-                        double xi = fabs((double) i_sino * s - t);
-                        long idx = (long) (floor(xi * tabfact + 0.5));
+                // iterate over the affected sinogram values
+                for (long i_sino = imin; i_sino <= imax; i_sino++) {
+                    // compute the position of the point in its spline kernel
+                    double xi = fabs((double) i_sino * s - t);
+                    long idx = (long) (floor(xi * tabfact + 0.5));
 
-                        auto sino_view = xt::view(sinogram, i_angle, i_sino);
-                        auto image_view = xt::view(image, i_y, i_x);
+                    auto sino_view = xt::view(sinogram, i_angle, i_sino);
+                    auto image_view = xt::view(image, i_y, i_x);
 
-                        if (backprojection) {
-                            // update the image
-                            image_view = image_view + kernel(i_angle, idx) * sino_view;
-                        } else {
-                            // update the sinogram
-                            sino_view = sino_view + kernel(i_angle, idx) * image_view;
-                        }
+                    if (backprojection) {
+                        // update the image
+                        image_view = image_view + kernel(i_angle, idx) * sino_view;
+                    } else {
+                        // update the sinogram
+                        sino_view = sino_view + kernel(i_angle, idx) * image_view;
                     }
                 }
             }

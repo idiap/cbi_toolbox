@@ -70,20 +70,21 @@ xt::pytensor<double, 3> radon(
     return sinogram;
 }
 
+// TODO change the order of parameters in multithreaded version for consistency
 xt::pytensor<double, 3> iradon(
-        xt::pytensor<double, 3> sinogram,
+        xt::pytensor<double, 3> &sinogram,
         double s,
         long nS,
         double t0,
-        xt::pytensor<double, 1> theta,
+        xt::pytensor<double, 1> &theta,
+        xt::pytensor<double, 2> &kernel,
+        double a,
+        long Nx,
+        long Ny,
         double h,
         long nI,
         double x0,
-        double y0,
-        xt::pytensor<double, 2> kernel,
-        double a,
-        long Nx,
-        long Ny
+        double y0
 ) {
 
     const long Nangles = sinogram.shape()[0];
@@ -143,5 +144,5 @@ PYBIND11_MODULE(csplineradon, m) {
     m.doc() = "Radon transform (and inverse) using spline convolutions discretization";
 
     m.def("radon", &radon, "Perform radon transform of an image");
-    m.def("iradon", &iradon, "Perform inverse radon transform of a sinogram");
+    m.def("iradon", &iradon, "Perform inverse radon transform (back-projection) of a sinogram");
 }
