@@ -5,6 +5,16 @@ This package implements radon and inverse radon transforms using b-spline interp
 import numpy as np
 
 from cbi_toolbox.splineradon import filter_sinogram, spline_kernels, steps
+from cbi_toolbox.cudaradon import is_cuda_available as _cuda_available
+
+
+def is_cuda_available(verbose=False):
+    try:
+        return _cuda_available()
+    except Exception as e:
+        if verbose:
+            print(e)
+        return False
 
 
 def splradon(image, theta=np.arange(180), angledeg=True, n=None,
