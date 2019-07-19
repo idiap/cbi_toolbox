@@ -1,7 +1,8 @@
 import numpy as np
 
 from cbi_toolbox.bsplines import change_basis
-import cbi_toolbox.csplineradon as cspline
+import cbi_toolbox.csplineradon as cradon
+import cbi_toolbox.cudaradon as cudaradon
 from cbi_toolbox.splineradon import filter_sinogram
 from cbi_toolbox.splineradon import spline_kernels
 
@@ -21,7 +22,7 @@ def splradon_pre(image, b_spline_deg=(1, 3)):
 
 def splradon_inner(spline_image, theta=np.arange(180), angledeg=True, n=None,
                    b_spline_deg=(1, 3), sampling_steps=(1, 1),
-                   center=None, captors_center=None, kernel=None):
+                   center=None, captors_center=None, kernel=None, use_cuda=False):
     """
     Raw radon transform, require pre and post-processing. This can be run in parallel by splitting theta.
 
@@ -34,6 +35,7 @@ def splradon_inner(spline_image, theta=np.arange(180), angledeg=True, n=None,
     :param center:
     :param captors_center:
     :param kernel:
+    :param use_cuda:
     :return:
     """
     nx = spline_image.shape[1]
@@ -68,20 +70,36 @@ def splradon_inner(spline_image, theta=np.arange(180), angledeg=True, n=None,
         spline_image = spline_image[..., np.newaxis]
         squeeze = True
 
-    sinogram = cspline.radon(
-        spline_image,
-        h,
-        ni,
-        center[1],
-        center[0],
-        -theta,
-        kernel[0],
-        kernel[1],
-        nc,
-        s,
-        ns,
-        captors_center
-    )
+    if not use_cuda:
+        sinogram = cradon.radon(
+            spline_image,
+            h,
+            ni,
+            center[1],
+            center[0],
+            -theta,
+            kernel[0],
+            kernel[1],
+            nc,
+            s,
+            ns,
+            captors_center
+        )
+    else:
+        sinogram = cudaradon.radon_cuda(
+            spline_image,
+            h,
+            ni,
+            center[1],
+            center[0],
+            -theta,
+            kernel[0],
+            kernel[1],
+            nc,
+            s,
+            ns,
+            captors_center
+        )
 
     if squeeze:
         sinogram = np.squeeze(sinogram)
@@ -124,7 +142,7 @@ def spliradon_pre(sinogram, b_spline_deg=(1, 2), filter_type='RAM-LAK'):
 
 def spliradon_inner(sinogram_filtered, theta=None, angledeg=True,
                     b_spline_deg=(1, 2), sampling_steps=(1, 1),
-                    center=None, captors_center=None, kernel=None):
+                    center=None, captors_center=None, kernel=None, use_cuda=False):
     """
     Raw inverse radon transform, requires pre and post-processing. Can be run in parallel by splitting the sinogram and theta.
 
@@ -137,6 +155,7 @@ def spliradon_inner(sinogram_filtered, theta=None, angledeg=True,
     :param center:
     :param captors_center:
     :param kernel:
+    :param use_cuda:
     :return:
     """
     nc = sinogram_filtered.shape[1]
@@ -177,21 +196,38 @@ def spliradon_inner(sinogram_filtered, theta=None, angledeg=True,
         sinogram_filtered = sinogram_filtered[..., np.newaxis]
         squeeze = True
 
-    image = cspline.iradon(
-        sinogram_filtered,
-        s,
-        ns,
-        captors_center,
-        -theta,
-        kernel[0],
-        kernel[1],
-        nx,
-        ny,
-        h,
-        ni,
-        center[1],
-        center[0]
-    )
+    if not use_cuda:
+        image = cradon.iradon(
+            sinogram_filtered,
+            s,
+            ns,
+            captors_center,
+            -theta,
+            kernel[0],
+            kernel[1],
+            nx,
+            ny,
+            h,
+            ni,
+            center[1],
+            center[0]
+        )
+    else:
+        image = cudaradon.iradon_cuda(
+            sinogram_filtered,
+            s,
+            ns,
+            captors_center,
+            -theta,
+            kernel[0],
+            kernel[1],
+            nx,
+            ny,
+            h,
+            ni,
+            center[1],
+            center[0]
+        )
 
     if squeeze:
         image = np.squeeze(image)
