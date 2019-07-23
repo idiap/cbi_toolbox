@@ -1,6 +1,5 @@
 import cbi_toolbox as cbi
 import cbi_toolbox.splineradon
-from cbi_toolbox.cudaradon import is_cuda_available
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
@@ -14,7 +13,7 @@ image[60, 20, 1] = 1
 image[30, 60, 2] = 1
 image[30, 50, 2] = 1
 
-use_cuda = is_cuda_available()
+use_cuda = cbi.splineradon.is_cuda_available()
 if use_cuda:
     print('Running with GPU acceleration')
 else:

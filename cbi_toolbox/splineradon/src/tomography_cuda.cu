@@ -73,14 +73,7 @@ py::array_t<double, py::array::c_style> cuda_to_numpy(py::array::ShapeContainer 
 }
 
 int optimal_threads(int max_threads, int job_size) {
-    auto n_threads = max_threads;
-    if (max_threads > job_size) {
-        n_threads = (job_size / 32) * 32;
-        if (!n_threads) {
-            n_threads = job_size;
-        }
-    }
-    return n_threads;
+    return MIN(max_threads, job_size);
 }
 
 /*
@@ -523,7 +516,6 @@ py::array_t<double, py::array::c_style> iradon_cuda(
 
     checkCuda(cudaMalloc(&cuda_image, image_bytes));
     checkCuda(cudaMemset(cuda_image, 0, image_bytes));
-
 
     cuda_radontransform << < Nangles, n_threads >> > (
             cuda_image,
