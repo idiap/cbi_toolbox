@@ -56,7 +56,7 @@ def get_filter(n, filter_name: str, degree):
 
 def filter_sinogram(sinogram, filter_name, degree):
     length = sinogram.shape[1]
-    n = np.power(2, np.ceil(np.log2(4 * length)))
+    n = np.power(2, int(np.ceil(np.log2(4 * length))))
 
     filter_f, pre_filter = get_filter(n, filter_name, degree)
     filtered = np.fft.fft(sinogram, n, axis=1)

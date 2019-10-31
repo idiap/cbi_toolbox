@@ -1,8 +1,9 @@
 import numpy as np
 
 from cbi_toolbox.bsplines import change_basis
-import cbi_toolbox.csplineradon as cradon
-import cbi_toolbox.cudaradon as cudaradon
+import cbi_toolbox.ompsplineradon as cradon
+# import cbi_toolbox.csplineradon as cradon
+# import cbi_toolbox.cudaradon as cudaradon
 from cbi_toolbox.splineradon import filter_sinogram
 from cbi_toolbox.splineradon import spline_kernels
 
