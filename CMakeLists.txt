@@ -35,7 +35,7 @@ if(CMAKE_CUDA_COMPILER)
 
   set_property(TARGET cudaradon PROPERTY CXX_STANDARD 14)
   target_include_directories(cudaradon PRIVATE ${pybind11_INCLUDE_DIRS})
-  target_compile_options(csplineradon PRIVATE $<$<COMPILE_LANGUAGE:CXX>: -fvisibility=hidden -std=c++14 -flto -fno-fat-lto-objects>)
+  target_compile_options(cudaradon PRIVATE $<$<COMPILE_LANGUAGE:CXX>: -fvisibility=hidden -std=c++14 -flto -fno-fat-lto-objects>)
 
   set_target_properties(cudaradon PROPERTIES PREFIX "${PYTHON_MODULE_PREFIX}")
   set_target_properties(cudaradon PROPERTIES SUFFIX "${PYTHON_MODULE_EXTENSION}")  
