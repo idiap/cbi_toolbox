@@ -25,25 +25,25 @@ void fill(
 
 
 void radon_inner(
-        double *image_ptr,            /* Image (shape {Ny, Nx, Nz})*/
-        const long &Nx,
-        const long &Ny,
-        const long &Nz,
-        const double &x0,             /* Rotation center X in image coordinates */
-        const double &y0,             /* Rotation center Y in image coordinates */
-        const double &h,              /* Sampling step on the image (pixel size) */
-        const long &nI,               /* Interpolation degree on the Image */
-        double *sinogram_ptr,         /* Sinogram (shape (Nangles, Nc, Nz)*/
-        const long &Nangles,
-        const long &Nc,
-        const double &t0,             /* Projection of rotation center */
-        const double &s,              /* Sampling step of the captors (sinogram "pixel size") */
-        const long &nS,               /* Interpolation degree on the sinogram */
-        double *kernel_ptr,           /* Kernel table (shape {Nangles, Nt}) */
-        const long &Nt,
-        const double &tabfact,        /* Sampling step of the kernel */
-        double *theta_ptr,            /* Projection angles in radian */
-        bool backprojection           /* Perform a back-projection */
+        double *image_ptr,           /* Image (shape {Ny, Nx, Nz})*/
+        const long Nx,
+        const long Ny,
+        const long Nz,
+        const double x0,             /* Rotation center X in image coordinates */
+        const double y0,             /* Rotation center Y in image coordinates */
+        const double h,              /* Sampling step on the image (pixel size) */
+        const long nI,               /* Interpolation degree on the Image */
+        double *sinogram_ptr,        /* Sinogram (shape (Nangles, Nc, Nz)*/
+        const long Nangles,
+        const long Nc,
+        const double t0,             /* Projection of rotation center */
+        const double s,              /* Sampling step of the captors (sinogram "pixel size") */
+        const long nS,               /* Interpolation degree on the sinogram */
+        double *kernel_ptr,          /* Kernel table (shape {Nangles, Nt}) */
+        const long Nt,
+        const double tabfact,        /* Sampling step of the kernel */
+        double *theta_ptr,           /* Projection angles in radian */
+        bool backprojection          /* Perform a back-projection */
 ) {
 
 #pragma omp parallel for
