@@ -280,9 +280,9 @@ py::array_t<double, py::array::c_style> iradon(
 }
 
 
-PYBIND11_MODULE(ompsplineradon, m) {
+PYBIND11_MODULE(ompradon, m) {
    
-    m.doc() = "Radon transform (and inverse) using spline convolutions discretization";
+    m.doc() = "Radon transform (and inverse) using spline convolutions discretization and OMP acceleration.";
 
     m.def("radon", &radon, "Perform radon transform of an image");
     m.def("iradon", &iradon, "Perform inverse radon transform (back-projection) of a sinogram");

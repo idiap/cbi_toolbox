@@ -1,7 +1,7 @@
 //
 // Created by fmarelli on 05/07/19.
 //
-#include "tomography_cuda.h"
+#include "cudaradon.h"
 
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>

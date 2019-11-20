@@ -31,7 +31,7 @@ if(CMAKE_CUDA_COMPILER)
 
   string(APPEND CMAKE_CUDA_FLAGS " -gencode arch=compute_60,code=sm_60")
   
-  add_library(cudaradon SHARED cbi_toolbox/splineradon/src/cudaradon.cpp cbi_toolbox/splineradon/src/tomography_cuda.h cbi_toolbox/splineradon/src/tomography_cuda.cu)
+  add_library(cudaradon SHARED cbi_toolbox/splineradon/src/cudaradon.cpp cbi_toolbox/splineradon/src/cudaradon.h cbi_toolbox/splineradon/src/cudaradon.cu)
 
   set_property(TARGET cudaradon PROPERTY CXX_STANDARD 14)
   target_include_directories(cudaradon PRIVATE ${pybind11_INCLUDE_DIRS})
@@ -41,5 +41,5 @@ if(CMAKE_CUDA_COMPILER)
   set_target_properties(cudaradon PROPERTIES SUFFIX "${PYTHON_MODULE_EXTENSION}")  
 endif()
 
-pybind11_add_module(ompsplineradon cbi_toolbox/splineradon/src/ompsplineradon.cpp)
-target_compile_options(ompsplineradon PRIVATE ${OpenMP_CXX_FLAGS})
+pybind11_add_module(ompradon cbi_toolbox/splineradon/src/ompradon.cpp)
+target_compile_options(ompradon PRIVATE ${OpenMP_CXX_FLAGS})

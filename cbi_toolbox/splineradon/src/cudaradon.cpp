@@ -2,7 +2,7 @@
 // Created by fmarelli on 18/07/19.
 //
 
-#include "tomography_cuda.h"
+#include "cudaradon.h"
 
 
 bool is_cuda_available() {

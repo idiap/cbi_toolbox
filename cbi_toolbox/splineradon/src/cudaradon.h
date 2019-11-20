@@ -2,8 +2,8 @@
 // Created by fmarelli on 05/07/19.
 //
 
-#ifndef CSPLINERADON_TOMOGRAPHY_CUDA_H
-#define CSPLINERADON_TOMOGRAPHY_CUDA_H
+#ifndef CUDARADON_H
+#define CUDARADON_H
 
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
@@ -45,4 +45,4 @@ py::array_t<double, py::array::c_style> iradon_cuda(
 std::vector<int> compatible_cuda_devices();
 
 
-#endif //CSPLINERADON_TOMOGRAPHY_CUDA_H
+#endif //CUDARADON_H
