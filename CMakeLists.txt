@@ -19,7 +19,7 @@ endif()
 
 # Find python inside virtual environment first, pass it to pybind11
 set(Python3_FIND_STRATEGY LOCATION)
-find_package(Python3 COMPONENTS Interpreter NumPy REQUIRED)
+find_package(Python3 COMPONENTS Interpreter REQUIRED)
 set(PYTHON_EXECUTABLE ${Python3_EXECUTABLE})
 
 find_package(pybind11 REQUIRED)
