@@ -1,27 +1,45 @@
-cmake_minimum_required(VERSION 3.14)
-project(splineradon LANGUAGES CXX CUDA)
+cmake_minimum_required(VERSION 3.15)
 
-find_package (Python3 COMPONENTS Interpreter Development NumPy)
+project(splineradon LANGUAGES CXX)
 
-message(${Python3_NumPy_INCLUDE_DIRS})
-message(${Python3_LIBRARY_DIRS})
+include(CheckLanguage)
+check_language(CUDA)
 
-include_directories(
-        # for pybind11
-        ${Python3_INCLUDE_DIRS}
-        # for xtensor
-        ${Python3_INCLUDE_DIRS}/..
-        # for xtensor-numpy
-        ${Python3_NumPy_INCLUDE_DIRS}
-)
+if(CMAKE_CUDA_COMPILER)
+  enable_language(CUDA)
+else()
+  message(STATUS "No CUDA support, GPU support disabled.")
+endif()
 
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall")
+# set(CMAKE_VERBOSE_MAKEFILE TRUE)
 
-add_library(cudaradon SHARED cbi_toolbox/splineradon/src/cudaradon.cpp cbi_toolbox/splineradon/src/tomography_cuda.h cbi_toolbox/splineradon/src/tomography_cuda.cu)
-set_target_properties(cudaradon PROPERTIES PREFIX "")
+if(NOT CMAKE_BUILD_TYPE) 
+    set(CMAKE_BUILD_TYPE Release)
+endif()
 
-add_library(csplineradon SHARED cbi_toolbox/splineradon/src/csplineradon.cpp cbi_toolbox/splineradon/src/tomography.h cbi_toolbox/splineradon/src/tomography.cpp)
-set_target_properties(csplineradon PROPERTIES PREFIX "")
+# Find python inside virtual environment first, pass it to pybind11
+set(Python3_FIND_STRATEGY LOCATION)
+find_package(Python3 COMPONENTS Interpreter REQUIRED)
+set(PYTHON_EXECUTABLE ${Python3_EXECUTABLE})
 
-string(APPEND CMAKE_CUDA_FLAGS " -gencode arch=compute_60,code=sm_60")
+find_package(pybind11 REQUIRED)
+find_package(OpenMP 4.5 REQUIRED)
+
+string(APPEND CMAKE_CXX_FLAGS " -Wall -Wextra -pedantic")
+
+if(CMAKE_CUDA_COMPILER)
+
+  string(APPEND CMAKE_CUDA_FLAGS " -gencode arch=compute_60,code=sm_60")
+  
+  add_library(cudaradon SHARED cbi_toolbox/splineradon/src/cudaradon.cpp cbi_toolbox/splineradon/src/cudaradon.h cbi_toolbox/splineradon/src/cudaradon.cu)
+
+  set_property(TARGET cudaradon PROPERTY CXX_STANDARD 14)
+  target_include_directories(cudaradon PRIVATE ${pybind11_INCLUDE_DIRS})
+  target_compile_options(cudaradon PRIVATE $<$<COMPILE_LANGUAGE:CXX>: -fvisibility=hidden -std=c++14 -flto -fno-fat-lto-objects>)
+
+  set_target_properties(cudaradon PROPERTIES PREFIX "${PYTHON_MODULE_PREFIX}")
+  set_target_properties(cudaradon PROPERTIES SUFFIX "${PYTHON_MODULE_EXTENSION}")  
+endif()
+
+pybind11_add_module(ompradon cbi_toolbox/splineradon/src/ompradon.cpp)
+target_compile_options(ompradon PRIVATE ${OpenMP_CXX_FLAGS})

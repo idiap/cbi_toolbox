@@ -1,7 +1,7 @@
 //
 // Created by fmarelli on 05/07/19.
 //
-#include "tomography_cuda.h"
+#include "cudaradon.h"
 
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
@@ -52,7 +52,7 @@ double *numpy_to_cuda(py::buffer_info &array_info) {
     double *cuda_ptr;
     double *cpu_ptr = reinterpret_cast<double *>(array_info.ptr);
 
-    size_t bytes = array_info.size * sizeof(double);
+    long bytes = array_info.size * sizeof(double);
 
     checkCuda(cudaMalloc(&cuda_ptr, bytes));
     checkCuda(cudaMemcpy(cuda_ptr, cpu_ptr, bytes, cudaMemcpyHostToDevice));
@@ -66,7 +66,7 @@ py::array_t<double, py::array::c_style> cuda_to_numpy(py::array::ShapeContainer 
 
     double *cpu_ptr = reinterpret_cast<double *>(array_info.ptr);
 
-    size_t bytes = array_info.size * sizeof(double);
+    long bytes = array_info.size * sizeof(double);
     checkCuda(cudaMemcpy(cpu_ptr, cuda_ptr, bytes, cudaMemcpyDeviceToHost));
 
     return numpy_array;
@@ -83,13 +83,13 @@ int optimal_threads(int max_threads, int job_size) {
  */
 __global__
 void precompute_trigo(
-        double h,                           /* Sampling step on the image (pixel size) */
-        long nI,                            /* Interpolation degree on the Image */
-        size_t Nangles,                     /* Number of angles in the sinogram (shape[0]) */
-        double s,                           /* Sampling step of the captors (sinogram "pixel size") */
-        long nS,                            /* Interpolation degree on the sinogram */
-        double *theta,                      /* Projection angles in radian */
-        double *trigo                       /* Array containing cosine, sine and atheta for each angle shape {Nangles, 3}*/
+        const double h,            /* Sampling step on the image (pixel size) */
+        const long nI,             /* Interpolation degree on the Image */
+        const long Nangles,        /* Number of angles in the sinogram (shape[0]) */
+        const double s,            /* Sampling step of the captors (sinogram "pixel size") */
+        const long nS,             /* Interpolation degree on the sinogram */
+        double *theta,             /* Projection angles in radian */
+        double *trigo              /* Array containing cosine, sine and atheta for each angle shape {Nangles, 3}*/
 ) {
 
     // iterate over the projection angles using blocks and threads alike
@@ -115,18 +115,18 @@ void precompute_trigo(
  */
 __global__
 void precompute_radon(
-        size_t Nx,                          /* Image X size (shape[1]) */
-        size_t Ny,                          /* Image Y size (shape[0]) */
-        double h,                           /* Sampling step on the image (pixel size) */
-        double x0,                          /* Rotation center X in image coordinates */
-        double y0,                          /* Rotation center Y in image coordinates */
-        size_t Nangles,                     /* Number of angles in the sinogram (shape[0]) */
-        size_t Nc,                          /* Number of captors in the sinogram (shape[1]) */
-        double s,                           /* Sampling step of the captors (sinogram "pixel size") */
-        double t0,                          /* Projection of rotation center */
-        double *trigo,                      /* Array containing cosine, sine and atheta for each angle (shape {Nangles, 3}) */
-        long *sino_bounds,                  /* Indexes of sinogram impact for all pixels in the image (shape {A, x, y, 2}) */
-        double *t_coords                   /* Projected coordinates on the sinogram (shape {A, x, y}) */
+        const long Nx,             /* Image X size (shape[1]) */
+        const long Ny,             /* Image Y size (shape[0]) */
+        const double h,            /* Sampling step on the image (pixel size) */
+        const double x0,           /* Rotation center X in image coordinates */
+        const double y0,           /* Rotation center Y in image coordinates */
+        const long Nangles,        /* Number of angles in the sinogram (shape[0]) */
+        const long Nc,             /* Number of captors in the sinogram (shape[1]) */
+        const double s,            /* Sampling step of the captors (sinogram "pixel size") */
+        const double t0,           /* Projection of rotation center */
+        double *trigo,             /* Array containing cosine, sine and atheta for each angle (shape {Nangles, 3}) */
+        long *sino_bounds,         /* Indexes of sinogram impact for all pixels in the image (shape {A, x, y, 2}) */
+        double *t_coords           /* Projected coordinates on the sinogram (shape {A, x, y}) */
 ) {
 
     // iterate over the projection angles using blocks
@@ -170,20 +170,20 @@ void precompute_radon(
  */
 __global__
 void cuda_radontransform(
-        double *image,                      /* Image (shape {Ny, Nx, Nz})*/
-        size_t Nx,
-        size_t Ny,
-        size_t Nz,
-        double *sinogram,                   /* Sinogram (shape (Nangles, Nc, Nz)*/
-        size_t Nangles,
-        size_t Nc,
-        double s,                           /* Sampling step of the captors (sinogram "pixel size") */
-        double *kernel,                     /* Kernel table (shape {Nangles, Nt}) */
-        size_t Nt,
-        double tabfact,                     /* Sampling step of the kernel */
-        long *sino_bounds,                  /* Indexes of sinogram impact for all pixels in the image (shape {A, x, y, 2}) */
-        double *t_coords,                   /* Projected coordinates on the sinogram (shape {A, x, y}) */
-        bool backprojection                 /* Perform a back-projection */
+        double *image,               /* Image (shape {Ny, Nx, Nz})*/
+        const long Nx,
+        const long Ny,
+        const long Nz,
+        double *sinogram,            /* Sinogram (shape (Nangles, Nc, Nz)*/
+        const long Nangles,
+        const long Nc,
+        const double s,              /* Sampling step of the captors (sinogram "pixel size") */
+        double *kernel,              /* Kernel table (shape {Nangles, Nt}) */
+        const long Nt,
+        const double tabfact,        /* Sampling step of the kernel */
+        long *sino_bounds,           /* Indexes of sinogram impact for all pixels in the image (shape {A, x, y, 2}) */
+        double *t_coords,            /* Projected coordinates on the sinogram (shape {A, x, y}) */
+        bool backprojection          /* Perform a back-projection */
 ) {
 
     // iterate over the projection angles
@@ -233,17 +233,17 @@ void cuda_radontransform(
 
 py::array_t<double, py::array::c_style> radon_cuda(
         py::array_t<double, py::array::c_style> &image,
-        double h,
-        long nI,
-        double x0,
-        double y0,
+        const double h,
+        const long nI,
+        const double x0,
+        const double y0,
         py::array_t<double, py::array::c_style> &theta,
         py::array_t<double, py::array::c_style> &kernel,
-        double a,
+        const double a,
         const long Nc,
-        double s,
-        long nS,
-        double t0
+        const double s,
+        const long nS,
+        const double t0
 ) {
 
     auto image_info = image.request();
@@ -341,7 +341,7 @@ py::array_t<double, py::array::c_style> radon_cuda(
     n_threads = optimal_threads(max_threads, Nz);
 
     double *cuda_sinogram;
-    size_t sinogram_bytes = Nangles * Nc * image_info.shape[2] * sizeof(double);
+    long sinogram_bytes = Nangles * Nc * image_info.shape[2] * sizeof(double);
     auto Nt = kernel_info.shape[1];
     double tabfact = (double) (Nt - 1L) / a;
 
@@ -388,18 +388,18 @@ py::array_t<double, py::array::c_style> radon_cuda(
 
 py::array_t<double, py::array::c_style> iradon_cuda(
         py::array_t<double, py::array::c_style> &sinogram,
-        double s,
-        long nS,
-        double t0,
+        const double s,
+        const long nS,
+        const double t0,
         py::array_t<double, py::array::c_style> &theta,
         py::array_t<double, py::array::c_style> &kernel,
-        double a,
-        long Nx,
-        long Ny,
-        double h,
-        long nI,
-        double x0,
-        double y0
+        const double a,
+        const long Nx,
+        const long Ny,
+        const double h,
+        const long nI,
+        const double x0,
+        const double y0
 ) {
 
     auto sinogram_info = sinogram.request();
@@ -504,7 +504,7 @@ py::array_t<double, py::array::c_style> iradon_cuda(
     n_threads = optimal_threads(max_threads, Nz);
 
     double *cuda_image;
-    size_t image_bytes = Ny * Nx * sinogram_info.shape[2] * sizeof(double);
+    long image_bytes = Ny * Nx * sinogram_info.shape[2] * sizeof(double);
     auto Nt = kernel_info.shape[1];
     double tabfact = (double) (Nt - 1L) / a;
 
