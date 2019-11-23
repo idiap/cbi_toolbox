@@ -1,12 +1,10 @@
 import os
-import re
-import sys
 import platform
 import subprocess
+import sys
 
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
-from distutils.version import LooseVersion
 
 __version__ = '0.1'
 
@@ -17,8 +15,7 @@ requires = [
     'python-bioformats',
     'javabridge',
     'pybind11>=2.2',
-    'scipy'
-
+    'scipy>=1.2.0',
 ]
 
 
@@ -35,11 +32,6 @@ class CMakeBuild(build_ext):
         except OSError:
             raise RuntimeError("CMake must be installed to build the following extensions: " +
                                ", ".join(e.name for e in self.extensions))
-
-        if platform.system() == "Windows":
-            cmake_version = LooseVersion(re.search(r'version\s*([\d.]+)', out.decode()).group(1))
-            if cmake_version < '3.1.0':
-                raise RuntimeError("CMake >= 3.1.0 is required on Windows")
 
         for ext in self.extensions:
             self.build_extension(ext)

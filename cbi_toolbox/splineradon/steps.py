@@ -1,11 +1,14 @@
 import numpy as np
 
 from cbi_toolbox.bsplines import change_basis
-import cbi_toolbox.ompsplineradon as cradon
-# import cbi_toolbox.csplineradon as cradon
-import cbi_toolbox.cudaradon as cudaradon
+import cbi_toolbox.ompradon as ompradon
 from cbi_toolbox.splineradon import filter_sinogram
 from cbi_toolbox.splineradon import spline_kernels
+
+try:
+    import cbi_toolbox.cudaradon as cudaradon
+except ImportError:
+    pass
 
 
 def splradon_pre(image, b_spline_deg=(1, 3)):
@@ -72,7 +75,7 @@ def splradon_inner(spline_image, theta=np.arange(180), angledeg=True, n=None,
         squeeze = True
 
     if not use_cuda:
-        sinogram = cradon.radon(
+        sinogram = ompradon.radon(
             spline_image,
             h,
             ni,
@@ -198,7 +201,7 @@ def spliradon_inner(sinogram_filtered, theta=None, angledeg=True,
         squeeze = True
 
     if not use_cuda:
-        image = cradon.iradon(
+        image = ompradon.iradon(
             sinogram_filtered,
             s,
             ns,
