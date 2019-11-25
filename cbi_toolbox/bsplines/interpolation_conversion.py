@@ -9,6 +9,7 @@ import math
 
 import numpy as np
 from scipy import signal
+from scipy import ndimage
 
 from cbi_toolbox.arrays import make_broadcastable
 from cbi_toolbox.bsplines import compute_bspline
@@ -38,14 +39,14 @@ def initial_causal_coefficient(coeff, z, tolerance, boundary_condition='Mirror')
             z_exp_mirror = np.ones(horizon - 2) * z
             z_powers = np.arange(2 * n - 3, n - 1, -1)
             z_exp_mirror = np.power(z_exp_mirror, z_powers)
-            z_exp = z_exp + z_exp_mirror
+            z_exp += z_exp_mirror
 
             z_exp = make_broadcastable(z_exp, coeff)
 
             # compute sum c[k]*z**k
             c = np.sum(coeff[1:horizon - 1, ...] * z_exp, axis=0)
-            c = c / (1 - z ** (2 * n - 1))
-            c = c + coeff[0, ...] + coeff[-1, ...] * z ** (n - 1)
+            c /= (1 - z ** (2 * n - 1))
+            c += coeff[0, ...] + coeff[-1, ...] * z ** (n - 1)
         else:
             # vectorization of exponentials of z
             z_powers = np.arange(horizon)
@@ -181,7 +182,7 @@ def convert_to_interpolation_coefficients(c, degree, tolerance, boundary_conditi
     # compute overall gain
     z = np.atleast_1d(z)
     # apply gain to coeffs
-    c = c * np.prod((1 - z) * (1 - 1 / z))
+    c *= np.prod((1 - z) * (1 - 1 / z))
 
     # loop over all poles
     for pole in z:
@@ -215,19 +216,18 @@ def convert_to_samples(c, deg, boundary_condition='Mirror'):
 
     k = -math.floor(deg / 2.) + np.arange(kerlen)
     kernel = compute_bspline(deg, k)
-    # add boundaries to signal, extend it
-    extens = int(math.floor(deg / 2.))
 
     # different extensions based on boundary condition
     if boundary_condition.upper() == 'MIRROR':
-        c = np.concatenate((c[extens:0:-1, ...], c, c[n - 2:n - extens - 2:-1, ...]))
+        boundary = 'mirror'
     elif boundary_condition.upper() == 'PERIODIC':
-        c = np.concatenate((c[n - extens:, ...], c, c[0:extens, ...]))
+        boundary = 'wrap'
     else:
         raise ValueError('Illegal boundary condition: {}'.format(boundary_condition.upper()))
 
     kernel = make_broadcastable(kernel, c)
 
-    c = signal.fftconvolve(c, kernel, 'valid', axes=(0,))
+    source = c.copy()
+    ndimage.convolve(source, kernel, output=c, mode=boundary)
 
     return c

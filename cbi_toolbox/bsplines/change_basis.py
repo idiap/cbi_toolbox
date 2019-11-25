@@ -11,8 +11,13 @@ from cbi_toolbox.bsplines.interpolation_conversion import convert_to_samples, co
 from cbi_toolbox.arrays import transpose_dim_to
 
 
-def change_basis(in_array, from_basis, to_basis, degree, axes=(0,), tolerance=1e-9, boundary_condition='Mirror'):
+def change_basis(in_array, from_basis, to_basis, degree, axes=(0,), tolerance=1e-9, boundary_condition='Mirror',
+                 in_place=True):
     """Change the basis along the provided axes (e.g. to convert a 2D signal, use axes=(0, 1))"""
+
+    if not in_place:
+        in_array = in_array.copy()
+
     try:
        for ax in axes:
             in_array = change_basis(in_array, from_basis, to_basis, degree, ax, tolerance, boundary_condition)
@@ -76,13 +81,14 @@ def change_basis_inner(in_array, from_basis, to_basis, degree, tolerance=1e-9, b
 
 if __name__ == "__main__":
 
-    data = np.random.rand(20, 20)
-    toleranc = 1e-8
-    degre = 1
+    data = np.random.rand(100, 100)
+    toleranc = 1e-12
+    degre = 3
     axe = (0, 1)
-    condition = 'mirror'
+    condition = 'periodic'
 
-    c_out = change_basis(data, 'cardinal', 'dual', degre, axes=axe, tolerance=toleranc, boundary_condition=condition)
+    c_out = change_basis(data, 'cardinal', 'dual', degre, axes=axe, tolerance=toleranc, boundary_condition=condition,
+                         in_place=False)
     ar = change_basis(c_out, 'dual', 'cardinal', degre, axes=axe, tolerance=toleranc, boundary_condition=condition)
 
     print('Relative error is ', np.max(np.linalg.norm((data - ar) / np.abs(data))))
