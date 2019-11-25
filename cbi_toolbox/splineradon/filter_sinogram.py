@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.fftpack as fftpack
 
 from cbi_toolbox.arrays import make_broadcastable
 
@@ -59,9 +60,9 @@ def filter_sinogram(sinogram, filter_name, degree):
     n = np.power(2, int(np.ceil(np.log2(4 * length))))
 
     filter_f, pre_filter = get_filter(n, filter_name, degree)
-    filtered = np.fft.fft(sinogram, n, axis=1)
+    filtered = fftpack.fft(sinogram, n, axis=1)
     filter_f = make_broadcastable(filter_f[np.newaxis, ...], filtered)
-    filtered = np.real(np.fft.ifft(filtered * filter_f, axis=1))
-    filtered = filtered[:, :length]
+    filtered *= filter_f
+    filtered = np.real(fftpack.ifft(filtered, axis=1, overwrite_x=True))
 
-    return filtered, pre_filter
+    return filtered[:, :length], pre_filter
