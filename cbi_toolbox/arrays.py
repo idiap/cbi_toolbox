@@ -43,3 +43,20 @@ def transpose_dim_to(array, src_dim, target_dim):
     dims.remove(src_dim)
     dims.insert(target_dim, src_dim)
     return np.transpose(array, dims)
+
+
+def positive_axis(axis, ndims):
+    """
+    Return the positive axis number.
+
+    :param axis:
+    :param ndims:
+    :return:
+    """
+    if not (-ndims <= axis < ndims):
+        raise ValueError("Invalid axis {} for array of ndim {}".format(axis, ndims))
+
+    if axis < 0:
+        axis = ndims + axis
+
+    return axis
