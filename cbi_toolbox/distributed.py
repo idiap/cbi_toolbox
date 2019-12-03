@@ -63,9 +63,9 @@ def to_mpi_datatype(np_datatype):
         raise NotImplementedError('Type not in conversion table: {}'.format(dtype))
 
 
-def create_full_vector_type(axis, array=None, shape=None, dtype=None):
+def create_slice_view(axis, n_slices, array=None, shape=None, dtype=None):
     """
-    Create a MPI vector datatype to access a non distributed array.
+    Create a MPI vector datatype to access given slices of a non distributed array.
 
     :param axis:
     :param array:
@@ -82,9 +82,9 @@ def create_full_vector_type(axis, array=None, shape=None, dtype=None):
         raise ValueError("array, or shape and dtype must be not None")
 
     base_type = to_mpi_datatype(dtype)
-    stride = np.prod(shape[axis:])
-    block = np.prod(shape[axis + 1:])
-    count = np.prod(shape[:axis])
+    stride = np.prod(shape[axis:], dtype=int)
+    block = np.prod(shape[axis + 1:], dtype=int) * n_slices
+    count = np.prod(shape[:axis], dtype=int)
     extent = block * base_type.Get_extent()[1]
 
     return base_type.Create_vector(count, block, stride).Create_resized(0, extent)
@@ -182,25 +182,28 @@ def load(file_name, axis, mpi_comm):
         axis = len(full_shape) + axis
 
     i_start, bin_size = distribute_bin(full_shape[axis], mpi_comm)
-
+ 
     l_shape = list(full_shape)
     l_shape[axis] = bin_size
 
     l_array = np.empty(l_shape, dtype=dtype)
 
-    src_strided_type = create_full_vector_type(axis, shape=full_shape, dtype=dtype)
-    tgt_strided_type = create_full_vector_type(axis, l_array)
-    src_strided_type.Commit()
-    tgt_strided_type.Commit()
+    slice_type = create_slice_view(axis, bin_size, shape=full_shape, dtype=dtype)
+    slice_type.Commit()
 
-    displacement = header_offset + i_start * src_strided_type.Get_extent()[1]
+    single_slice_extent = slice_type.Get_extent()[1]
+    if bin_size != 0:
+        single_slice_extent /= bin_size
+    
+    displacement = header_offset + i_start * single_slice_extent
+    base_type = to_mpi_datatype(l_array.dtype)
+    
     fh = MPI.File.Open(mpi_comm, file_name, MPI.MODE_RDONLY)
-    fh.Set_view(displacement, MPI.BYTE, src_strided_type)
+    fh.Set_view(displacement, filetype=slice_type)
 
-    fh.Read_all([l_array, bin_size, tgt_strided_type])
+    fh.Read_all([l_array, l_array.size, base_type])
     fh.Close()
-    src_strided_type.Free()
-    tgt_strided_type.Free()
+    slice_type.Free()
 
     return l_array, full_shape
 
@@ -238,7 +241,7 @@ source_array = np.load('source.npy')
 # exit(0)
 
 file_name = 'source.npy'
-axis = 2
+axis = 3
 comm = MPI.COMM_WORLD
 
 from cbi_toolbox import arrays
