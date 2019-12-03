@@ -16,6 +16,7 @@ requires = [
     'javabridge',
     'pybind11>=2.2',
     'scipy>=1.2.0',
+    'mpi4py',
 ]
 
 
