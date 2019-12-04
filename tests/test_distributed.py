@@ -4,11 +4,6 @@ from cbi_toolbox import arrays
 import os
 import unittest
 
-print('!!!!!!!!!!!!!!!!!!!!!!\n\n\tONGOING WORK\n\n!!!!!!!!!!!!!!!!!!!!!!')
-
-source_name = 'test_source.npy'
-save_name = 'test_save.npy'
-
 
 def check_distributed_array(reference, array, axis):
     """
@@ -21,52 +16,74 @@ def check_distributed_array(reference, array, axis):
     """
 
     s_index, b_size = distributed.distribute_bin(reference.shape[axis])
-    check_mat = arrays.transpose_dim_to(source_array, axis, 0)
+    check_mat = arrays.transpose_dim_to(reference, axis, 0)
     check_mat = check_mat[s_index:s_index + b_size]
     check_mat = arrays.transpose_dim_to(check_mat, 0, axis)
     return np.all(check_mat == array)
 
 
-def test_distributed_load(file_name, reference, axis):
-    sl_array, f_shape = distributed.load(file_name, axis)
-    check_distributed_array(reference, sl_array, axis)
-
 
 def test_distributed_save(file_name, reference, array, axis):
     distributed.save(file_name, array, axis, reference.shape)
     if distributed.is_root_process():
-        reloaded_array = np.load(save_name)
+        reloaded_array = np.load(file_name)
         return np.all(reference == reloaded_array)
     else:
         return True
 
 
-source_array = None
-if distributed.is_root_process():
-    dims = [2, 3, 4, 5]
-    source_array = np.empty(dims, dtype=np.float64)
-    source_array.flat = np.arange(int(np.prod(dims)), dtype=np.float64)
-    np.save(source_name, source_array)
-
-distributed.wait_all()
-
-
-os.remove(source_name)
-os.remove(save_name)
-
-# rk = comm.Get_rank()
-#
 # target_dim = 0
 # out_array = redistribute(sl_array, axis, target_dim, comm, f_shape)
 # print("R{}\n{}\n".format(rk, out_array))
 # print(np.all(out_array == source_array))
 
 
-class TestBsplines(unittest.TestCase):
-    pass
+class TestDistributedArrays(unittest.TestCase):
+    ref_file = 'test_source.npy'
+    tmp_file = 'test_save.npy'
+    reference = None
+    dims = [2, 3, 4]
+    ndims = None
+
+    @classmethod
+    def setUpClass(cls):
+        cls.ndims = len(cls.dims)
+        cls.reference = np.empty(cls.dims, dtype=np.float64)
+        cls.reference.flat = np.arange(int(np.prod(cls.dims)), dtype=np.float64)
+
+        if distributed.is_root_process():
+            np.save(cls.ref_file, cls.reference)
+        distributed.wait_all()
+
+    @classmethod
+    def tearDownClass(cls):
+        if distributed.is_root_process():
+            os.remove(cls.ref_file)
+
+    def test_load_array(self):
+        for axis in range(TestDistributedArrays.ndims):
+            sl_array, f_shape = distributed.load(TestDistributedArrays.ref_file, axis)
+            self.assertTrue(np.array_equal(f_shape, TestDistributedArrays.dims))
+            self.assertTrue(check_distributed_array(TestDistributedArrays.reference, sl_array, axis))
+
+    def test_distribute_array(self):
+        for src_axis in range(TestDistributedArrays.ndims):
+            sl_array, f_shape = distributed.load(TestDistributedArrays.ref_file, src_axis)
+
+            for tgt_axis in range(TestDistributedArrays.ndims):
+                temp_array = distributed.redistribute(sl_array, src_axis, tgt_axis, f_shape)
+                self.assertTrue(check_distributed_array(TestDistributedArrays.reference, temp_array, tgt_axis))
+
+    def test_save_array(self):
+        for axis in range(TestDistributedArrays.ndims):
+            sl_array, f_shape = distributed.load(TestDistributedArrays.ref_file, axis)
+            distributed.save(TestDistributedArrays.tmp_file, sl_array, axis, f_shape)
+
+            if distributed.is_root_process():
+                reloaded_array = np.load(TestDistributedArrays.tmp_file)
+                self.assertTrue(np.array_equal(TestDistributedArrays.reference, reloaded_array))
+                os.remove(TestDistributedArrays.tmp_file)
 
 
 if __name__ == "__main__":
     unittest.main()
-
-
