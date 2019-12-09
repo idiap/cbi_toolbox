@@ -22,7 +22,6 @@ def check_distributed_array(reference, array, axis):
     return np.all(check_mat == array)
 
 
-
 def test_distributed_save(file_name, reference, array, axis):
     distributed.save(file_name, array, axis, reference.shape)
     if distributed.is_root_process():
@@ -32,17 +31,11 @@ def test_distributed_save(file_name, reference, array, axis):
         return True
 
 
-# target_dim = 0
-# out_array = redistribute(sl_array, axis, target_dim, comm, f_shape)
-# print("R{}\n{}\n".format(rk, out_array))
-# print(np.all(out_array == source_array))
-
-
 class TestDistributedArrays(unittest.TestCase):
     ref_file = 'test_source.npy'
     tmp_file = 'test_save.npy'
     reference = None
-    dims = [2, 3, 4]
+    dims = [2, 3, 4, 5]
     ndims = None
 
     @classmethod
