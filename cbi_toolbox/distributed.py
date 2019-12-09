@@ -20,6 +20,15 @@ def is_root_process(mpi_comm=MPI.COMM_WORLD):
 
     return mpi_comm.Get_rank() == 0
 
+def get_rank(mpi_comm=MPI.COMM_WORLD):
+    """
+    Get process rank.
+
+    :param mpi_comm:
+    :return:
+    """
+
+    return mpi_comm.Get_rank()
 
 def wait_all(mpi_comm=MPI.COMM_WORLD):
     """
@@ -160,6 +169,31 @@ def create_slice_view(axis, n_slices, array=None, shape=None, dtype=None):
     return base_type.Create_vector(count, block, stride).Create_resized(0, extent)
 
 
+def compute_vector_extent(axis, array=None, shape=None, dtype=None):
+    """
+    Compute the extent in bytes of a sliced view of a given array
+
+    :param axis:
+    :param array:
+    :param shape:
+    :param dtype:
+    :return:
+    """
+
+    if array is not None:
+        shape = array.shape
+        dtype = array.dtype
+
+    elif shape is None or dtype is None:
+        raise ValueError("array, or shape and dtype must be not None")
+
+    ndims = len(shape)
+    axis = arrays.positive_axis(axis, ndims)
+
+    base_type = to_mpi_datatype(dtype)
+    return np.prod(shape[axis+1:], dtype=int) * base_type.extent
+
+
 def create_vector_type(src_axis, tgt_axis, array=None, shape=None, dtype=None, block_size=1):
     """
     Create a MPI vector datatype to communicate a distributed array.
@@ -204,11 +238,15 @@ def create_vector_type(src_axis, tgt_axis, array=None, shape=None, dtype=None, b
     i_stride = np.prod(shape[max_axis:], dtype=int)
     i_extent = np.prod(shape[src_axis + 1:], dtype=int) * base_type.extent
 
+    # only happens if the array is empty, avoid division by zero warnings
+    if i_extent == 0:
+        i_extent = 1
+
     inner_stride = base_type.Create_vector(i_count, i_block, i_stride).Create_resized(0, i_extent)
 
     o_count = np.prod(shape[:min_axis], dtype=int)
     o_block = block_size
-    o_stride = np.prod(shape[min_axis:], dtype=int)
+    o_stride = (np.prod(shape[min_axis:], dtype=int) * base_type.extent) // i_extent
     o_extent = np.prod(shape[tgt_axis + 1:], dtype=int) * base_type.extent
 
     outer_stride = inner_stride.Create_vector(o_count, o_block, o_stride).Create_resized(0, o_extent)
@@ -362,6 +400,7 @@ def redistribute(array, src_axis, tgt_axis, full_shape=None, mpi_comm=MPI.COMM_W
         return array
 
     rank = mpi_comm.Get_rank()
+    size = mpi_comm.Get_size()
 
     src_starts, src_bins = distribute_bin_all(full_shape[src_axis], mpi_comm)
     tgt_starts, tgt_bins = distribute_bin_all(full_shape[tgt_axis], mpi_comm)
@@ -369,77 +408,39 @@ def redistribute(array, src_axis, tgt_axis, full_shape=None, mpi_comm=MPI.COMM_W
     src_has_data = np.atleast_1d(src_bins)
     src_has_data[src_has_data > 0] = 1
 
+    tgt_has_data = np.atleast_1d(tgt_bins)
+    tgt_has_data[tgt_has_data > 0] = 1
+
     n_shape = list(full_shape)
     n_shape[tgt_axis] = tgt_bins[rank]
     n_array = np.empty(n_shape, dtype=array.dtype)
 
-    send_block = min(src_bins)
-    if send_block == 0:
-        send_block = 1
-    recv_block = send_block
-    send_block *= src_has_data[rank]
+    send_datatypes = []
+    recv_datatypes = []
+    for ji in range(size):
+        send_datatypes.append(create_vector_type(src_axis, tgt_axis, array, block_size=src_bins[rank]))
+        recv_datatypes.append(create_vector_type(src_axis, tgt_axis, n_array, block_size=src_bins[ji]))
 
-    src_stride = create_vector_type(src_axis, tgt_axis, array, block_size=send_block)
-    tgt_stride = create_vector_type(src_axis, tgt_axis, n_array, block_size=recv_block)
-
-    # since we know how many lines will be sent, we can create a strided type to receive them correctly
-    tgt_stride = tgt_stride.Create_vector(tgt_bins[rank], 1, 1) \
-        .Create_resized(0, tgt_stride.contents[2][0].contents[2][0].extent)
+    send_extent = compute_vector_extent(tgt_axis, array)
+    recv_extent = compute_vector_extent(src_axis, n_array)
 
     send_counts = np.multiply(tgt_bins, src_has_data[rank])
-    send_displs = tgt_starts
-    sendbuf = [array, send_counts, send_displs, src_stride]
+    send_displs = np.multiply(tgt_starts, send_extent)
 
-    recv_counts = src_has_data
-    recv_displs = src_starts
-    recvbuf = [n_array, recv_counts, recv_displs, tgt_stride]
+    sendbuf = [array, send_counts, send_displs, send_datatypes]
 
-    src_stride.Commit()
-    tgt_stride.Commit()
+    recv_counts = np.multiply(src_has_data, tgt_bins[rank])
+    recv_displs = np.multiply(src_starts, recv_extent)
+    recvbuf = [n_array, recv_counts, recv_displs, recv_datatypes]
 
-    mpi_comm.Alltoallv(sendbuf, recvbuf)
+    for ji in range(size):
+        send_datatypes[ji].Commit()
+        recv_datatypes[ji].Commit()
 
-    src_stride.Free()
-    tgt_stride.Free()
+    mpi_comm.Alltoallw(sendbuf, recvbuf)
 
-    if max(src_bins) != recv_block:
-        small_bin = recv_block
-        src_has_data = np.atleast_1d(src_bins) - small_bin
-        src_has_data[src_has_data > 0] = 1
-
-        recv_block = 1
-        send_block = src_has_data[rank]
-
-        src_stride = create_vector_type(src_axis, tgt_axis, array, block_size=send_block)
-        tgt_stride = create_vector_type(src_axis, tgt_axis, n_array, block_size=recv_block)
-
-        # extent of one item in the array
-        base_extent = to_mpi_datatype(n_array.dtype).extent
-        # extent of one slice in the source dimension
-        inner_extent = src_stride.contents[2][0].contents[2][0].extent / base_extent
-        # extent of one slice in the target dimension
-        outer_extent = src_stride.extent / base_extent
-        # we know we are going to send only one, but we need to modify its extent to give fine displacements
-        src_stride = src_stride.Create_resized(0, base_extent)
-
-        # since we know how many lines will be sent, we can create a strided type to receive them correctly
-        tgt_stride = tgt_stride.Create_vector(tgt_bins[rank], 1, 1) \
-            .Create_resized(0, tgt_stride.contents[2][0].contents[2][0].extent)
-
-        send_counts = np.multiply(tgt_bins, src_has_data[rank])
-        send_displs = np.multiply(tgt_starts, outer_extent) + inner_extent * small_bin
-        sendbuf = [array, send_counts, send_displs, src_stride]
-
-        recv_counts = src_has_data
-        recv_displs = np.add(src_starts, small_bin)
-        recvbuf = [n_array, recv_counts, recv_displs, tgt_stride]
-
-        src_stride.Commit()
-        tgt_stride.Commit()
-
-        mpi_comm.Alltoallv(sendbuf, recvbuf)
-
-        src_stride.Free()
-        tgt_stride.Free()
+    for ji in range(size):
+        send_datatypes[ji].Free()
+        recv_datatypes[ji].Free()
 
     return n_array

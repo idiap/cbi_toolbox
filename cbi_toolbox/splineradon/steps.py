@@ -1,17 +1,21 @@
 import numpy as np
 
 from cbi_toolbox.bsplines import change_basis
-import cbi_toolbox.ompradon as ompradon
 from cbi_toolbox.splineradon import filter_sinogram
 from cbi_toolbox.splineradon import spline_kernels
 
 try:
+    import cbi_toolbox.ompradon as ompradon
+except ImportError:
+    ompradon = None
+
+try:
     import cbi_toolbox.cudaradon as cudaradon
 except ImportError:
-    pass
+    cudaradon = None
 
 
-def splradon_pre(image, b_spline_deg=(1, 3)):
+def radon_pre(image, b_spline_deg=(1, 3)):
     """
     Pre-processing step for radon transform.
 
@@ -24,9 +28,9 @@ def splradon_pre(image, b_spline_deg=(1, 3)):
                         boundary_condition='periodic')
 
 
-def splradon_inner(spline_image, theta=np.arange(180), angledeg=True, n=None,
-                   b_spline_deg=(1, 3), sampling_steps=(1, 1),
-                   center=None, captors_center=None, kernel=None, use_cuda=False):
+def radon_inner(spline_image, theta=np.arange(180), angledeg=True, n=None,
+                b_spline_deg=(1, 3), sampling_steps=(1, 1),
+                center=None, captors_center=None, kernel=None, use_cuda=False):
     """
     Raw radon transform, require pre and post-processing. This can be run in parallel by splitting theta.
 
@@ -111,7 +115,7 @@ def splradon_inner(spline_image, theta=np.arange(180), angledeg=True, n=None,
     return sinogram
 
 
-def splradon_post(sinogram, b_spline_deg=(1, 3)):
+def radon_post(sinogram, b_spline_deg=(1, 3)):
     """
     Post-processing for the radon transform.
 
@@ -126,7 +130,7 @@ def splradon_post(sinogram, b_spline_deg=(1, 3)):
     return sinogram
 
 
-def spliradon_pre(sinogram, b_spline_deg=(1, 2), filter_type='RAM-LAK'):
+def iradon_pre(sinogram, b_spline_deg=(1, 2), filter_type='RAM-LAK'):
     """
     Pre-processing for the inverse radon transform.
 
@@ -144,9 +148,9 @@ def spliradon_pre(sinogram, b_spline_deg=(1, 2), filter_type='RAM-LAK'):
     return sinogram
 
 
-def spliradon_inner(sinogram_filtered, theta=None, angledeg=True,
-                    b_spline_deg=(1, 2), sampling_steps=(1, 1),
-                    center=None, captors_center=None, kernel=None, use_cuda=False):
+def iradon_inner(sinogram_filtered, theta=None, angledeg=True,
+                 b_spline_deg=(1, 2), sampling_steps=(1, 1),
+                 center=None, captors_center=None, kernel=None, use_cuda=False):
     """
     Raw inverse radon transform, requires pre and post-processing. Can be run in parallel by splitting the sinogram and theta.
 
@@ -239,7 +243,7 @@ def spliradon_inner(sinogram_filtered, theta=None, angledeg=True,
     return image, theta
 
 
-def spliradon_post(image, theta, b_spline_deg=(1, 2)):
+def iradon_post(image, theta, b_spline_deg=(1, 2)):
     """
     Post-processing for the inverse radon transform.
 

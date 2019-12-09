@@ -19,9 +19,9 @@ if use_cuda:
 else:
     print('Running on CPU')
 
-sinogram = cbi.splineradon.splradon(image, use_cuda=use_cuda)
+sinogram = cbi.splineradon.radon(image, use_cuda=use_cuda)
 
-reconstruct = cbi.splineradon.spliradon(sinogram, use_cuda=use_cuda)
+reconstruct = cbi.splineradon.iradon(sinogram, use_cuda=use_cuda)
 
 reconstruct -= reconstruct.min()
 reconstruct /= reconstruct.max()

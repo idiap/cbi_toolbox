@@ -22,9 +22,9 @@ def is_cuda_available(verbose=False):
         return False
 
 
-def splradon(image, theta=np.arange(180), angledeg=True, n=None,
-             b_spline_deg=(1, 3), sampling_steps=(1, 1),
-             center=None, captors_center=None, kernel=None, use_cuda=False):
+def radon(image, theta=np.arange(180), angledeg=True, n=None,
+          b_spline_deg=(1, 3), sampling_steps=(1, 1),
+          center=None, captors_center=None, kernel=None, use_cuda=False):
     """
     Perform a radon transform on the image.
 
@@ -41,18 +41,18 @@ def splradon(image, theta=np.arange(180), angledeg=True, n=None,
     :return:
     """
 
-    spline_image = steps.splradon_pre(image, b_spline_deg)
-    sinogram = steps.splradon_inner(spline_image, theta, angledeg, n, b_spline_deg, sampling_steps,
-                                    center, captors_center, kernel, use_cuda=use_cuda)
+    spline_image = steps.radon_pre(image, b_spline_deg)
+    sinogram = steps.radon_inner(spline_image, theta, angledeg, n, b_spline_deg, sampling_steps,
+                                 center, captors_center, kernel, use_cuda=use_cuda)
 
-    sinogram = steps.splradon_post(sinogram, b_spline_deg)
+    sinogram = steps.radon_post(sinogram, b_spline_deg)
 
     return sinogram
 
 
-def spliradon(sinogram, theta=None, angledeg=True, filter_type='RAM-LAK',
-              b_spline_deg=(1, 2), sampling_steps=(1, 1),
-              center=None, captors_center=None, kernel=None, use_cuda=False):
+def iradon(sinogram, theta=None, angledeg=True, filter_type='RAM-LAK',
+           b_spline_deg=(1, 2), sampling_steps=(1, 1),
+           center=None, captors_center=None, kernel=None, use_cuda=False):
     """
     Perform an inverse radon transform (backprojection) on the sinogram.
 
@@ -70,10 +70,10 @@ def spliradon(sinogram, theta=None, angledeg=True, filter_type='RAM-LAK',
     :return:
     """
 
-    sinogram = steps.spliradon_pre(sinogram, b_spline_deg, filter_type)
+    sinogram = steps.iradon_pre(sinogram, b_spline_deg, filter_type)
 
-    image, theta = steps.spliradon_inner(sinogram, theta, angledeg, b_spline_deg, sampling_steps,
-                                         center, captors_center, kernel, use_cuda=use_cuda)
-    image = steps.spliradon_post(image, theta, b_spline_deg)
+    image, theta = steps.iradon_inner(sinogram, theta, angledeg, b_spline_deg, sampling_steps,
+                                      center, captors_center, kernel, use_cuda=use_cuda)
+    image = steps.iradon_post(image, theta, b_spline_deg)
 
     return image
