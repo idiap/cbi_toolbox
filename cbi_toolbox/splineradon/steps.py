@@ -53,8 +53,8 @@ def radon_inner(spline_image, theta=np.arange(180), angledeg=True, n=None,
     ni = b_spline_deg[0]
     ns = b_spline_deg[1]
 
-    shape = np.array(spline_image.shape)
-    nc = 2 * int(np.ceil(np.linalg.norm(shape - np.floor((shape - 1) / 2) - 1))) + 3
+    shape = np.array(spline_image.shape)[0:2].max()
+    nc = int(np.ceil(shape * np.sqrt(2)))
 
     if n is not None:
         s = (nc - 1) / (n - 1)
@@ -157,7 +157,6 @@ def iradon_inner(sinogram_filtered, theta=None, angledeg=True,
     :param sinogram_filtered:
     :param theta:
     :param angledeg:
-    :param n:
     :param b_spline_deg:
     :param sampling_steps:
     :param center:
@@ -190,7 +189,7 @@ def iradon_inner(sinogram_filtered, theta=None, angledeg=True,
         nt = 200
         kernel = spline_kernels.get_kernel_table(nt, ni, ns, h, s, -theta, degree=False)
 
-    nx = int(2 * np.floor(nc / (2 * np.sqrt(2))))
+    nx = int(np.floor(nc / np.sqrt(2)))
     ny = nx
 
     if center is None:
