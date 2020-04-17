@@ -12,6 +12,7 @@ requires = [
     'numpy',
     'matplotlib',
     'mayavi',
+    'napari',
     'opencv-python',
     'python-bioformats',
     'javabridge',
