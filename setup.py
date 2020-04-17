@@ -11,6 +11,7 @@ __version__ = '0.1'
 requires = [
     'numpy',
     'matplotlib',
+    'mayavi',
     'opencv-python',
     'python-bioformats',
     'javabridge',
