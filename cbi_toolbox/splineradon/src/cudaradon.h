@@ -15,8 +15,8 @@ py::array_t<double, py::array::c_style> radon_cuda(
         py::array_t<double, py::array::c_style> &image,
         double h,
         long nI,
+        double z0,
         double x0,
-        double y0,
         py::array_t<double, py::array::c_style> &theta,
         py::array_t<double, py::array::c_style> &kernel,
         double a,
@@ -34,12 +34,12 @@ py::array_t<double, py::array::c_style> iradon_cuda(
         py::array_t<double, py::array::c_style> &theta,
         py::array_t<double, py::array::c_style> &kernel,
         double a,
+        long Nz,
         long Nx,
-        long Ny,
         double h,
         long nI,
-        double x0,
-        double y0
+        double z0,
+        double x0
 );
 
 std::vector<int> compatible_cuda_devices();

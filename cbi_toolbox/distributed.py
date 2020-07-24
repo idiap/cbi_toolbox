@@ -256,7 +256,7 @@ def create_vector_type(src_axis, tgt_axis, array=None, shape=None, dtype=None, b
 
 def gather_full_shape(array, axis, mpi_comm=MPI.COMM_WORLD):
     """
-    Gather the full shape of an array distributed acros an MPI communicator along a given axis.
+    Gather the full shape of an array distributed across an MPI communicator along a given axis.
 
     :param array:
     :param axis:

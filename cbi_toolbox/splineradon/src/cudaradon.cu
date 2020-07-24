@@ -85,25 +85,25 @@ __global__
 void precompute_trigo(
         const double h,            /* Sampling step on the image (pixel size) */
         const long nI,             /* Interpolation degree on the Image */
-        const long Nangles,        /* Number of angles in the sinogram (shape[0]) */
+        const long NAngles,        /* Number of angles in the sinogram (shape[0]) */
         const double s,            /* Sampling step of the captors (sinogram "pixel size") */
         const long nS,             /* Interpolation degree on the sinogram */
         double *theta,             /* Projection angles in radian */
-        double *trigo              /* Array containing cosine, sine and atheta for each angle shape {Nangles, 3}*/
+        double *trigo              /* Array containing cosine, sine and atheta for each angle shape {NAngles, 3}*/
 ) {
 
     // iterate over the projection angles using blocks and threads alike
-    for (long i_angle = blockIdx.x * blockDim.x + threadIdx.x; i_angle < Nangles; i_angle += blockDim.x * gridDim.x) {
+    for (long i_angle = blockIdx.x * blockDim.x + threadIdx.x; i_angle < NAngles; i_angle += blockDim.x * gridDim.x) {
 
         double co = cos(theta[i_angle]);
         double si = sin(theta[i_angle]);
 
-        double atheta = (double) (nI + 1L) / 2.0 * (fabs(si) + fabs(co)) * h + (double) (nS + 1L) / 2.0 * s;
+        double aTheta = (double) (nI + 1L) / 2.0 * (fabs(si) + fabs(co)) * h + (double) (nS + 1L) / 2.0 * s;
 
         long index = i_angle * 3;
         trigo[index] = co;
         trigo[index + 1] = si;
-        trigo[index + 2] = atheta;
+        trigo[index + 2] = aTheta;
     }
 }
 
@@ -111,26 +111,26 @@ void precompute_trigo(
 /*
  * Precompute the minimum and maximum indexes of sinogram values impacted by each pixel in the image, and the projected coordinates.
  * Stored in sino_bounds (min, max) and t_coord.
- * Grid-stride loop: blocks for angles (Nangles) , threads for image pixels (Nx * Ny).
+ * Grid-stride loop: blocks for angles (NAngles) , threads for image pixels (Nx * Ny).
  */
 __global__
 void precompute_radon(
+        const long Nz,             /* Image Z size (shape[0]) */
         const long Nx,             /* Image X size (shape[1]) */
-        const long Ny,             /* Image Y size (shape[0]) */
         const double h,            /* Sampling step on the image (pixel size) */
+        const double z0,           /* Rotation center Z in image coordinates */
         const double x0,           /* Rotation center X in image coordinates */
-        const double y0,           /* Rotation center Y in image coordinates */
-        const long Nangles,        /* Number of angles in the sinogram (shape[0]) */
+        const long NAngles,        /* Number of angles in the sinogram (shape[0]) */
         const long Nc,             /* Number of captors in the sinogram (shape[1]) */
         const double s,            /* Sampling step of the captors (sinogram "pixel size") */
         const double t0,           /* Projection of rotation center */
-        double *trigo,             /* Array containing cosine, sine and atheta for each angle (shape {Nangles, 3}) */
-        long *sino_bounds,         /* Indexes of sinogram impact for all pixels in the image (shape {A, x, y, 2}) */
-        double *t_coords           /* Projected coordinates on the sinogram (shape {A, x, y}) */
+        double *trigo,             /* Array containing cosine, sine and atheta for each angle (shape {NAngles, 3}) */
+        long *sino_bounds,         /* Indexes of sinogram impact for all pixels in the image (shape {A, X, Z, 2}) */
+        double *t_coords           /* Projected coordinates on the sinogram (shape {A, X, Z}) */
 ) {
 
     // iterate over the projection angles using blocks
-    for (long i_angle = blockIdx.x; i_angle < Nangles; i_angle += gridDim.x) {
+    for (long i_angle = blockIdx.x; i_angle < NAngles; i_angle += gridDim.x) {
 
         long index_angle = i_angle * 3;
 
@@ -139,22 +139,22 @@ void precompute_radon(
         double atheta = trigo[index_angle + 2];
 
         // iterate over the image using threads
-        for (long id = threadIdx.x; id < Nx * Ny; id += blockDim.x) {
-            long i_x = id / Ny;
-            long i_y = id % Ny;
+        for (long id = threadIdx.x; id < Nx * Nz; id += blockDim.x) {
+            long i_x = id / Nz;
+            long i_z = id % Nz;
 
             double x = i_x * h;
-            double y = i_y * h;
+            double z = i_z * h;
 
             // compute the projected coordinate on the sinogram
-            double t = t0 + ((x - x0) * co) + ((y - y0) * si);
+            double t = t0 + ((x - x0) * co) + ((z - z0) * si);
 
             // compute the range of sinogram elements impacted by this point and its spline kernel
             long imin = MAX(0L, (long) (ceil((t - atheta) / s)));
             long imax = MIN(Nc - 1L, (long) (floor((t + atheta) / s)));
 
             // store in the relevant matrices
-            auto t_index = i_angle * Nx * Ny + i_x * Ny + i_y;
+            auto t_index = i_angle * Nx * Nz + i_x * Nz + i_z;
             t_coords[t_index] = t;
 
             auto bound_index = t_index * 2;
@@ -166,37 +166,37 @@ void precompute_radon(
 
 /*
  * Compute the (inverse) radon transform.
- * Grid-stide loop: blocks for angles (Nangles), threads for depth (Nz)
+ * Grid-stide loop: blocks for angles (NAngles), threads for depth (Nz)
  */
 __global__
 void cuda_radontransform(
-        double *image,               /* Image (shape {Ny, Nx, Nz})*/
+        double *image,               /* Image (shape {Nz, Nx, Ny})*/
+        const long Nz,
         const long Nx,
         const long Ny,
-        const long Nz,
-        double *sinogram,            /* Sinogram (shape (Nangles, Nc, Nz)*/
-        const long Nangles,
+        double *sinogram,            /* Sinogram (shape (NAngles, Nc, Ny)*/
+        const long NAngles,
         const long Nc,
         const double s,              /* Sampling step of the captors (sinogram "pixel size") */
-        double *kernel,              /* Kernel table (shape {Nangles, Nt}) */
+        double *kernel,              /* Kernel table (shape {NAngles, Nt}) */
         const long Nt,
         const double tabfact,        /* Sampling step of the kernel */
-        long *sino_bounds,           /* Indexes of sinogram impact for all pixels in the image (shape {A, x, y, 2}) */
-        double *t_coords,            /* Projected coordinates on the sinogram (shape {A, x, y}) */
+        long *sino_bounds,           /* Indexes of sinogram impact for all pixels in the image (shape {A, X, Z, 2}) */
+        double *t_coords,            /* Projected coordinates on the sinogram (shape {A, X, Z}) */
         bool backprojection          /* Perform a back-projection */
 ) {
 
     // iterate over the projection angles
-    for (long i_angle = blockIdx.x; i_angle < Nangles; i_angle += gridDim.x) {
+    for (long i_angle = blockIdx.x; i_angle < NAngles; i_angle += gridDim.x) {
 
         // iterate over the width of the image
         for (long i_x = 0; i_x < Nx; i_x++) {
 
             // iterate over the height of the image
-            for (long i_y = 0; i_y < Ny; i_y++) {
+            for (long i_z = 0; i_z < Nz; i_z++) {
 
                 // fetch the projected coordinate
-                auto t_index = i_angle * Nx * Ny + i_x * Ny + i_y;
+                auto t_index = i_angle * Nx * Nz + i_x * Nz + i_z;
                 auto t = t_coords[t_index];
 
                 // fetch the sinogram bounds
@@ -210,11 +210,11 @@ void cuda_radontransform(
                     double xi = fabs((double) i_sino * s - t);
                     long idx = (long) (floor(xi * tabfact + 0.5));
 
-                    for (long i_z = threadIdx.x; i_z < Nz; i_z += blockDim.x) {
+                    for (long i_y = threadIdx.x; i_y < Ny; i_y += blockDim.x) {
 
-                        auto image_index = i_y * Nx * Nz + i_x * Nz + i_z;
+                        auto image_index = i_z * Nx * Ny + i_x * Ny + i_y;
                         auto kernel_index = i_angle * Nt + idx;
-                        auto sinogram_index = i_angle * Nc * Nz + i_sino * Nz + i_z;
+                        auto sinogram_index = i_angle * Nc * Ny + i_sino * Ny + i_y;
 
                         if (backprojection) {
                             // update the image
@@ -235,8 +235,8 @@ py::array_t<double, py::array::c_style> radon_cuda(
         py::array_t<double, py::array::c_style> &image,
         const double h,
         const long nI,
+        const double z0,
         const double x0,
-        const double y0,
         py::array_t<double, py::array::c_style> &theta,
         py::array_t<double, py::array::c_style> &kernel,
         const double a,
@@ -278,10 +278,10 @@ py::array_t<double, py::array::c_style> radon_cuda(
         throw py::value_error("nS must be greater of equal to -1.");
     }
 
-    const long Nangles = theta_info.shape[0];
+    const long NAngles = theta_info.shape[0];
 
-    if (Nangles != kernel_info.shape[0]) {
-        throw py::value_error("The kernel must have Nangle rows.");
+    if (NAngles != kernel_info.shape[0]) {
+        throw py::value_error("The kernel must have NAngles rows.");
     }
 
     auto dev_list = compatible_cuda_devices();
@@ -295,41 +295,41 @@ py::array_t<double, py::array::c_style> radon_cuda(
     double *cuda_theta = numpy_to_cuda(theta_info);
 
     double *cuda_trigo;
-    checkCuda(cudaMalloc(&cuda_trigo, Nangles * 3 * sizeof(double)));
+    checkCuda(cudaMalloc(&cuda_trigo, NAngles * 3 * sizeof(double)));
 
-    auto n_threads = optimal_threads(max_threads, Nangles);
+    auto n_threads = optimal_threads(max_threads, NAngles);
 
     precompute_trigo << < 1, n_threads >> > (
             h,
                     nI,
-                    Nangles,
+                    NAngles,
                     s,
                     nS,
                     cuda_theta,
                     cuda_trigo
     );
 
+    int Nz = image_info.shape[0];
     int Nx = image_info.shape[1];
-    int Ny = image_info.shape[0];
-    int Nz = image_info.shape[2];
+    int Ny = image_info.shape[2];
 
     long *cuda_sino_bounds;
     double *cuda_t_coords;
 
-    n_threads = optimal_threads(max_threads, Nx * Ny);
+    n_threads = optimal_threads(max_threads, Nx * Nz);
 
     checkCuda(cudaFree(cuda_theta));
 
-    checkCuda(cudaMalloc(&cuda_sino_bounds, Nangles * Nx * Ny * 2 * sizeof(long)));
-    checkCuda(cudaMalloc(&cuda_t_coords, Nangles * Nx * Ny * sizeof(double)));
+    checkCuda(cudaMalloc(&cuda_sino_bounds, NAngles * Nx * Nz * 2 * sizeof(long)));
+    checkCuda(cudaMalloc(&cuda_t_coords, NAngles * Nx * Nz * sizeof(double)));
 
-    precompute_radon << < Nangles, n_threads >> > (
-            Nx,
-                    Ny,
+    precompute_radon << < NAngles, n_threads >> > (
+                    Nz,
+                    Nx,
                     h,
+                    z0,
                     x0,
-                    y0,
-                    Nangles,
+                    NAngles,
                     Nc,
                     s,
                     t0,
@@ -341,7 +341,7 @@ py::array_t<double, py::array::c_style> radon_cuda(
     n_threads = optimal_threads(max_threads, Nz);
 
     double *cuda_sinogram;
-    long sinogram_bytes = Nangles * Nc * image_info.shape[2] * sizeof(double);
+    long sinogram_bytes = NAngles * Nc * Ny * sizeof(double);
     auto Nt = kernel_info.shape[1];
     double tabfact = (double) (Nt - 1L) / a;
 
@@ -355,13 +355,13 @@ py::array_t<double, py::array::c_style> radon_cuda(
     checkCuda(cudaMalloc(&cuda_sinogram, sinogram_bytes));
     checkCuda(cudaMemset(cuda_sinogram, 0, sinogram_bytes));
 
-    cuda_radontransform <<<Nangles, n_threads>>>(
+    cuda_radontransform <<<NAngles, n_threads>>>(
             cuda_image,
+                    Nz,
                     Nx,
                     Ny,
-                    Nz,
                     cuda_sinogram,
-                    Nangles,
+                    NAngles,
                     Nc,
                     s,
                     cuda_kernel,
@@ -378,7 +378,7 @@ py::array_t<double, py::array::c_style> radon_cuda(
     checkCuda(cudaFree(cuda_t_coords));
     checkCuda(cudaFree(cuda_sino_bounds));
 
-    py::array::ShapeContainer shape = {Nangles, Nc, image_info.shape[2]};
+    py::array::ShapeContainer shape = {NAngles, Nc, Ny};
 
     auto sinogram = cuda_to_numpy(shape, cuda_sinogram);
     checkCuda(cudaFree(cuda_sinogram));
@@ -394,12 +394,12 @@ py::array_t<double, py::array::c_style> iradon_cuda(
         py::array_t<double, py::array::c_style> &theta,
         py::array_t<double, py::array::c_style> &kernel,
         const double a,
+        const long Nz,
         const long Nx,
-        const long Ny,
         const double h,
         const long nI,
-        const double x0,
-        const double y0
+        const double z0,
+        const double x0
 ) {
 
     auto sinogram_info = sinogram.request();
@@ -422,9 +422,9 @@ py::array_t<double, py::array::c_style> iradon_cuda(
         throw py::value_error("nS must be greater or equal to 0.");
     }
 
-    const long Nangles = sinogram_info.shape[0];
+    const long NAngles = sinogram_info.shape[0];
 
-    if (Nangles != theta_info.size) {
+    if (NAngles != theta_info.size) {
         throw py::value_error("The number of angles in theta in incompatible with the sinogram.");
     }
 
@@ -432,8 +432,8 @@ py::array_t<double, py::array::c_style> iradon_cuda(
         throw py::value_error("nI must be greater or equal to -1.");
     }
 
-    if (Nangles != kernel_info.shape[0]) {
-        throw py::value_error("The kernel table must have Nangle rows.");
+    if (NAngles != kernel_info.shape[0]) {
+        throw py::value_error("The kernel table must have NAngles rows.");
     }
 
     if (a < 0) {
@@ -443,8 +443,8 @@ py::array_t<double, py::array::c_style> iradon_cuda(
     if (Nx < 1L) {
         throw py::value_error("Nx must at least be 1.");
     }
-    if (Ny < 1L) {
-        throw py::value_error("Ny must at least be 1.");
+    if (Nz < 1L) {
+        throw py::value_error("Nz must at least be 1.");
     }
 
     auto dev_list = compatible_cuda_devices();
@@ -458,14 +458,14 @@ py::array_t<double, py::array::c_style> iradon_cuda(
     double *cuda_theta = numpy_to_cuda(theta_info);
 
     double *cuda_trigo;
-    checkCuda(cudaMalloc(&cuda_trigo, Nangles * 3 * sizeof(double)));
+    checkCuda(cudaMalloc(&cuda_trigo, NAngles * 3 * sizeof(double)));
 
-    auto n_threads = optimal_threads(max_threads, Nangles);
+    auto n_threads = optimal_threads(max_threads, NAngles);
 
     precompute_trigo << < 1, n_threads >> > (
             h,
                     nI,
-                    Nangles,
+                    NAngles,
                     s,
                     nS,
                     cuda_theta,
@@ -473,26 +473,26 @@ py::array_t<double, py::array::c_style> iradon_cuda(
     );
 
 
-    int Nz = sinogram_info.shape[2];
+    int Ny = sinogram_info.shape[2];
     int Nc = sinogram_info.shape[1];
 
     long *cuda_sino_bounds;
     double *cuda_t_coords;
 
-    n_threads = optimal_threads(max_threads, Nx * Ny);
+    n_threads = optimal_threads(max_threads, Nx * Nz);
 
     checkCuda(cudaFree(cuda_theta));
 
-    checkCuda(cudaMalloc(&cuda_sino_bounds, Nangles * Nx * Ny * 2 * sizeof(long)));
-    checkCuda(cudaMalloc(&cuda_t_coords, Nangles * Nx * Ny * sizeof(double)));
+    checkCuda(cudaMalloc(&cuda_sino_bounds, NAngles * Nx * Nz * 2 * sizeof(long)));
+    checkCuda(cudaMalloc(&cuda_t_coords, NAngles * Nx * Nz * sizeof(double)));
 
-    precompute_radon << < Nangles, n_threads >> > (
-            Nx,
-                    Ny,
+    precompute_radon << < NAngles, n_threads >> > (
+                    Nz,
+                    Nx,
                     h,
+                    z0,
                     x0,
-                    y0,
-                    Nangles,
+                    NAngles,
                     Nc,
                     s,
                     t0,
@@ -501,10 +501,10 @@ py::array_t<double, py::array::c_style> iradon_cuda(
                     cuda_t_coords
     );
 
-    n_threads = optimal_threads(max_threads, Nz);
+    n_threads = optimal_threads(max_threads, Ny);
 
     double *cuda_image;
-    long image_bytes = Ny * Nx * sinogram_info.shape[2] * sizeof(double);
+    long image_bytes = Nz * Nx * Ny * sizeof(double);
     auto Nt = kernel_info.shape[1];
     double tabfact = (double) (Nt - 1L) / a;
 
@@ -517,13 +517,13 @@ py::array_t<double, py::array::c_style> iradon_cuda(
     checkCuda(cudaMalloc(&cuda_image, image_bytes));
     checkCuda(cudaMemset(cuda_image, 0, image_bytes));
 
-    cuda_radontransform << < Nangles, n_threads >> > (
+    cuda_radontransform << < NAngles, n_threads >> > (
             cuda_image,
+                    Nz,
                     Nx,
                     Ny,
-                    Nz,
                     cuda_sinogram,
-                    Nangles,
+                    NAngles,
                     Nc,
                     s,
                     cuda_kernel,
@@ -540,7 +540,7 @@ py::array_t<double, py::array::c_style> iradon_cuda(
     checkCuda(cudaFree(cuda_t_coords));
     checkCuda(cudaFree(cuda_sino_bounds));
 
-    py::array::ShapeContainer shape = {Ny, Nx, sinogram_info.shape[2]};
+    py::array::ShapeContainer shape = {Nz, Nx, Ny};
 
     auto image = cuda_to_numpy(shape, cuda_image);
     checkCuda(cudaFree(cuda_image));

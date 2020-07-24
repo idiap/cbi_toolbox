@@ -46,8 +46,8 @@ def radon_inner(spline_image, theta=np.arange(180), angledeg=True, n=None,
     :param use_cuda:
     :return:
     """
+    nz = spline_image.shape[0]
     nx = spline_image.shape[1]
-    ny = spline_image.shape[0]
     h = sampling_steps[0]
     s = sampling_steps[1]
     ni = b_spline_deg[0]
@@ -61,7 +61,7 @@ def radon_inner(spline_image, theta=np.arange(180), angledeg=True, n=None,
         nc = n
 
     if center is None:
-        center = int(np.floor((ny - 1) / 2)), int(np.floor((nx - 1) / 2))
+        center = int(np.floor((nz - 1) / 2)), int(np.floor((nx - 1) / 2))
 
     if captors_center is None:
         captors_center = s * (nc - 1) / 2
@@ -83,8 +83,8 @@ def radon_inner(spline_image, theta=np.arange(180), angledeg=True, n=None,
             spline_image,
             h,
             ni,
-            center[1],
             center[0],
+            center[1],
             -theta,
             kernel[0],
             kernel[1],
@@ -98,8 +98,8 @@ def radon_inner(spline_image, theta=np.arange(180), angledeg=True, n=None,
             spline_image,
             h,
             ni,
-            center[1],
             center[0],
+            center[1],
             -theta,
             kernel[0],
             kernel[1],
@@ -190,10 +190,10 @@ def iradon_inner(sinogram_filtered, theta=None, angledeg=True,
         kernel = spline_kernels.get_kernel_table(nt, ni, ns, h, s, -theta, degree=False)
 
     nx = int(np.floor(nc / np.sqrt(2)))
-    ny = nx
+    nz = nx
 
     if center is None:
-        center = int(np.floor((ny - 1) / 2)), int(np.floor((nx - 1) / 2))
+        center = int(np.floor((nz - 1) / 2)), int(np.floor((nx - 1) / 2))
 
     if captors_center is None:
         captors_center = s * (nc - 1) / 2
@@ -212,12 +212,12 @@ def iradon_inner(sinogram_filtered, theta=None, angledeg=True,
             -theta,
             kernel[0],
             kernel[1],
+            nz,
             nx,
-            ny,
             h,
             ni,
-            center[1],
-            center[0]
+            center[0],
+            center[1]
         )
     else:
         image = cudaradon.iradon_cuda(
@@ -228,12 +228,12 @@ def iradon_inner(sinogram_filtered, theta=None, angledeg=True,
             -theta,
             kernel[0],
             kernel[1],
+            nz,
             nx,
-            ny,
             h,
             ni,
-            center[1],
-            center[0]
+            center[0],
+            center[1]
         )
 
     if squeeze:

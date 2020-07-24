@@ -10,9 +10,6 @@ __version__ = '0.1'
 
 requires = [
     'numpy',
-    'matplotlib',
-    'mayavi',
-    'napari',
     'opencv-python',
     'python-bioformats',
     'javabridge',
@@ -20,6 +17,10 @@ requires = [
     'scipy>=1.2.0',
     'mpi4py',
 ]
+
+extras_require = {
+    'plots': ['napari', 'mayavi', 'matplotlib']
+}
 
 
 class CMakeExtension(Extension):
@@ -79,6 +80,7 @@ setup(
     long_description='',
     ext_modules=[CMakeExtension('cbi_toolbox/splineradon')],
     install_requires=requires,
+    extras_require=extras_require,
     cmdclass={'build_ext': CMakeBuild},
     zip_safe=False,
 )
