@@ -4,10 +4,7 @@ from cbi_toolbox.bsplines import change_basis
 from cbi_toolbox.splineradon import filter_sinogram
 from cbi_toolbox.splineradon import spline_kernels
 
-try:
-    import cbi_toolbox.ompradon as ompradon
-except ImportError:
-    ompradon = None
+import cbi_toolbox.ompradon as ompradon
 
 try:
     import cbi_toolbox.cudaradon as cudaradon

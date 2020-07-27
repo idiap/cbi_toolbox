@@ -42,4 +42,4 @@ if(CMAKE_CUDA_COMPILER)
 endif()
 
 pybind11_add_module(ompradon cbi_toolbox/splineradon/src/ompradon.cpp)
-target_compile_options(ompradon PRIVATE ${OpenMP_CXX_FLAGS})
+target_link_libraries(ompradon PUBLIC OpenMP::OpenMP_CXX)
