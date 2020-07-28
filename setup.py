@@ -11,8 +11,7 @@ __version__ = '0.1'
 requires = [
     'numpy',
     'opencv-python',
-    'python-bioformats',
-    'javabridge',
+    'apeer-ometiff-library',
     'pybind11>=2.2',
     'scipy>=1.2.0',
     'mpi4py',
