@@ -20,6 +20,7 @@ def is_root_process(mpi_comm=MPI.COMM_WORLD):
 
     return mpi_comm.Get_rank() == 0
 
+
 def get_rank(mpi_comm=MPI.COMM_WORLD):
     """
     Get process rank.
@@ -29,6 +30,7 @@ def get_rank(mpi_comm=MPI.COMM_WORLD):
     """
 
     return mpi_comm.Get_rank()
+
 
 def wait_all(mpi_comm=MPI.COMM_WORLD):
     """
@@ -191,7 +193,7 @@ def compute_vector_extent(axis, array=None, shape=None, dtype=None):
     axis = arrays.positive_axis(axis, ndims)
 
     base_type = to_mpi_datatype(dtype)
-    return np.prod(shape[axis+1:], dtype=int) * base_type.extent
+    return np.prod(shape[axis + 1:], dtype=int) * base_type.extent
 
 
 def create_vector_type(src_axis, tgt_axis, array=None, shape=None, dtype=None, block_size=1):
