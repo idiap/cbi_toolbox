@@ -1,14 +1,14 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.18)
 
 project(splineradon LANGUAGES CXX)
 
-include(CheckLanguage)
-check_language(CUDA)
+find_package(CUDAToolkit 8.0)
 
-if(CMAKE_CUDA_COMPILER)
+if(CUDAToolkit_FOUND)
   enable_language(CUDA)
 else()
-  message(STATUS "No CUDA support, GPU support disabled.")
+  message(STATUS "CUDA toolkit version insufficient, GPU support disabled.")
+  message(STATUS "If your CUDAToolkit is not being detected, try setting the environment variable CUDAToolkit_ROOT.")
 endif()
 
 # set(CMAKE_VERBOSE_MAKEFILE TRUE)
@@ -27,18 +27,18 @@ find_package(OpenMP 4.5 REQUIRED)
 
 string(APPEND CMAKE_CXX_FLAGS " -Wall -Wextra -pedantic")
 
-if(CMAKE_CUDA_COMPILER)
-
-  string(APPEND CMAKE_CUDA_FLAGS " -gencode arch=compute_60,code=sm_60")
-  
+if(CUDAToolkit_FOUND)
   add_library(cudaradon SHARED cbi_toolbox/splineradon/src/cudaradon.cpp cbi_toolbox/splineradon/src/cudaradon.h cbi_toolbox/splineradon/src/cudaradon.cu)
+
+  set_property(TARGET cudaradon PROPERTY CUDA_ARCHITECTURES 60-virtual 61-real)
 
   set_property(TARGET cudaradon PROPERTY CXX_STANDARD 14)
   target_include_directories(cudaradon PRIVATE ${pybind11_INCLUDE_DIRS})
   target_compile_options(cudaradon PRIVATE $<$<COMPILE_LANGUAGE:CXX>: -fvisibility=hidden -std=c++14 -flto -fno-fat-lto-objects>)
 
   set_target_properties(cudaradon PROPERTIES PREFIX "${PYTHON_MODULE_PREFIX}")
-  set_target_properties(cudaradon PROPERTIES SUFFIX "${PYTHON_MODULE_EXTENSION}")  
+  set_target_properties(cudaradon PROPERTIES SUFFIX "${PYTHON_MODULE_EXTENSION}")
+  
 endif()
 
 pybind11_add_module(ompradon cbi_toolbox/splineradon/src/ompradon.cpp)

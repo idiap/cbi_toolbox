@@ -4,9 +4,6 @@
 #include "cudaradon.h"
 
 #include <cuda_runtime.h>
-#include <device_launch_parameters.h>
-
-#include <math.h>
 
 
 // Throw std::runtime_error when a cuda error occurs
@@ -37,11 +34,11 @@ std::vector<int> compatible_cuda_devices() {
     for (int i = 0; i < nDevices; i++) {
         checkCuda(cudaGetDeviceProperties(&prop, 0));
         if (prop.major >= 6) {
-            dev_list.push_back(i);
+	    dev_list.push_back(i);
         }
     }
     if (dev_list.empty()) {
-        throw std::runtime_error("No CUDA device with capability minimum 6.0 found");
+        throw std::runtime_error("No CUDA device with compute capability >= 6.0 found.");
     }
 
     return dev_list;
@@ -72,7 +69,7 @@ py::array_t<double, py::array::c_style> cuda_to_numpy(py::array::ShapeContainer 
     return numpy_array;
 }
 
-int optimal_threads(int max_threads, int job_size) {
+int optimal_threads(long max_threads, long job_size) {
     return MIN(max_threads, job_size);
 }
 
@@ -309,9 +306,9 @@ py::array_t<double, py::array::c_style> radon_cuda(
                     cuda_trigo
     );
 
-    int Nz = image_info.shape[0];
-    int Nx = image_info.shape[1];
-    int Ny = image_info.shape[2];
+    const long Nz = image_info.shape[0];
+    const long Nx = image_info.shape[1];
+    const long Ny = image_info.shape[2];
 
     long *cuda_sino_bounds;
     double *cuda_t_coords;
@@ -473,8 +470,8 @@ py::array_t<double, py::array::c_style> iradon_cuda(
     );
 
 
-    int Ny = sinogram_info.shape[2];
-    int Nc = sinogram_info.shape[1];
+    const long Ny = sinogram_info.shape[2];
+    const long  Nc = sinogram_info.shape[1];
 
     long *cuda_sino_bounds;
     double *cuda_t_coords;
