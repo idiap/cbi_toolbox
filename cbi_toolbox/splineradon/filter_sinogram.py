@@ -1,11 +1,11 @@
 import numpy as np
-import scipy.fftpack as fftpack
+import scipy
 
 from cbi_toolbox.arrays import make_broadcastable
 
 
 def get_filter(n, filter_name: str, degree):
-    nu = np.concatenate((np.arange((n + 1) / 2), np.arange(-(n / 2 - 1), 0)))
+    nu = np.arange((n + 1) / 2)
     n0 = 3
 
     k = 50
@@ -60,9 +60,9 @@ def filter_sinogram(sinogram, filter_name, degree):
     n = np.power(2, int(np.ceil(np.log2(4 * length))))
 
     filter_f, pre_filter = get_filter(n, filter_name, degree)
-    filtered = fftpack.fft(sinogram, n, axis=1)
+    filtered = scipy.fft.rfft(sinogram, n, axis=1)
     filter_f = make_broadcastable(filter_f[np.newaxis, ...], filtered)
     filtered *= filter_f
-    filtered = np.real(fftpack.ifft(filtered, axis=1, overwrite_x=True))
+    filtered = np.real(scipy.fft.irfft(filtered, axis=1, overwrite_x=True))
 
     return filtered[:, :length], pre_filter

@@ -1,4 +1,5 @@
 import numpy as np
+import scipy
 
 
 def fft_trikernel(nt, a, n1, n2, n3, h1, h2, h3, pad_fact):
@@ -9,7 +10,7 @@ def fft_trikernel(nt, a, n1, n2, n3, h1, h2, h3, pad_fact):
     trikernel_hat = np.power(np.sinc(np.outer(h1, nu)), (n1 + 1)) * np.power(
         np.sinc(np.outer(h2, nu)), (n2 + 1)) * np.power(np.sinc(np.outer(h3, nu)), (n3 + 1))
 
-    kernel = np.abs(np.fft.fft(trikernel_hat, axis=1))
+    kernel = np.abs(scipy.fft.rfft(trikernel_hat, axis=1, overwrite_x=True))
 
     return kernel[:, 0:nt] / (T * nt * pad_fact)
 

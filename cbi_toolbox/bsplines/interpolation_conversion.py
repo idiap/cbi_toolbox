@@ -227,7 +227,6 @@ def convert_to_samples(c, deg, boundary_condition='Mirror'):
 
     kernel = make_broadcastable(kernel, c)
 
-    source = c.copy()
-    ndimage.convolve(source, kernel, output=c, mode=boundary)
+    ndimage.convolve(c, kernel, mode=boundary)
 
     return c
