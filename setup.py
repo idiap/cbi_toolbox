@@ -15,10 +15,11 @@ requires = [
     'pybind11>=2.2',
     'scipy>=1.4.0',
     'mpi4py',
+    'noise',
 ]
 
 extras_require = {
-    'plots': ['napari', 'mayavi', 'matplotlib']
+    'plots': ['napari', 'matplotlib']
 }
 
 

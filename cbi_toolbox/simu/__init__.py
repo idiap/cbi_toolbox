@@ -36,7 +36,7 @@ def quadrant_to_volume(quadrant):
     return volume
 
 
-def boccia(size, n_stripes=3, deg_space=15, deg_width=7.5, rad_thick=0.12, antialias=2):
+def boccia(size, n_stripes=3, deg_space=15, deg_width=7.5, rad_thick=0.12, antialias=2, dtype=np.float64):
     '''
     Create a boccia simulated sample: resolution stripes on a sphere
 
@@ -91,7 +91,7 @@ def boccia(size, n_stripes=3, deg_space=15, deg_width=7.5, rad_thick=0.12, antia
 
     quadrant = (r < radius) & (r > (radius * (1 - rad_thick))) & angle_crit
 
-    quadrant = quadrant_symmetry(quadrant) * 1.0
+    quadrant = quadrant_symmetry(quadrant).astype(dtype)
 
     if antialias > 1:
         quadrant = skimage.transform.rescale(quadrant, 1 / antialias, mode='symmetric')
@@ -99,7 +99,7 @@ def boccia(size, n_stripes=3, deg_space=15, deg_width=7.5, rad_thick=0.12, antia
     return quadrant_to_volume(quadrant)
 
 
-def torus_boccia(size, n_stripes=3, deg_space=15, torus_radius=0.075, antialias=2):
+def torus_boccia(size, n_stripes=3, deg_space=15, torus_radius=0.075, antialias=2, dtype=np.float64):
     '''
     Generate a boccia with torus stripes
 
@@ -149,7 +149,7 @@ def torus_boccia(size, n_stripes=3, deg_space=15, torus_radius=0.075, antialias=
 
     quadrant = rad < (torus_radius * radius) ** 2
 
-    quadrant = quadrant_symmetry(quadrant) * 1.0
+    quadrant = quadrant_symmetry(quadrant).astype(dtype)
 
     if antialias > 1:
         quadrant = skimage.transform.rescale(quadrant, 1 / antialias, mode='symmetric')
@@ -157,7 +157,7 @@ def torus_boccia(size, n_stripes=3, deg_space=15, torus_radius=0.075, antialias=
     return quadrant_to_volume(quadrant)
 
 
-def ball(size, in_radius=0, antialias=2):
+def ball(size, in_radius=0, antialias=2, dtype=np.float64):
     '''
     Generate a boccia with torus stripes
 
@@ -189,7 +189,7 @@ def ball(size, in_radius=0, antialias=2):
     if in_radius > 0:
         quadrant &= r > (in_radius * radius) ** 2
 
-    quadrant = quadrant * 1.0
+    quadrant = quadrant.astype(dtype)
 
     if antialias > 1:
         quadrant = skimage.transform.rescale(quadrant, 1 / antialias, mode='symmetric')
@@ -213,18 +213,3 @@ if __name__ == '__main__':
     s_boccia = boccia(test_size)
     with napari.gui_qt():
         napari.view_image(s_boccia)
-
-    from mayavi import mlab
-
-    mlab.contour3d((s_ball > 0.99) * 1.0)
-    mlab.title('ball')
-
-    mlab.figure()
-    mlab.contour3d((s_torus > 0.99) * 1.0)
-    mlab.title('torus boccia')
-
-    mlab.figure()
-    mlab.contour3d((s_boccia > 0.99) * 1.0)
-    mlab.title('boccia')
-
-    mlab.show()
