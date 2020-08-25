@@ -10,6 +10,17 @@ This module implements ways to distribute operations in MPI communicators.
 _MPI_dtypes = {'float64': MPI.DOUBLE}
 
 
+def get_size(mpi_comm=MPI.COMM_WORLD):
+    """
+    Get the process count in the communicator.
+
+    :param mpi_comm:
+    :return:
+    """
+
+    return mpi_comm.Get_size()
+
+
 def is_root_process(mpi_comm=MPI.COMM_WORLD):
     """
     Check if current process is root.
