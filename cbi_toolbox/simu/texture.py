@@ -1,12 +1,11 @@
 import numpy as np
-from scipy.stats import truncnorm
-from cbi_toolbox import simu
+from cbi_toolbox.simu import primitives
 import noise
 
 
 def spheres(size, density=1):
     dtype = np.float32
-    n_spheres = int(density * size**3 / 5000)
+    n_spheres = int(density * 10000)
 
     max_radius = int(0.1 * size)
     min_radius = int(0.02 * size)
@@ -27,7 +26,7 @@ def spheres(size, density=1):
         in_radius = np.random.uniform(0, max_in_radius)
         intens = np.random.uniform(min_intens, max_intens)
 
-        object = simu.ball(radius * 2, in_radius=in_radius, dtype=dtype)
+        object = primitives.ball(radius * 2, in_radius=in_radius, dtype=dtype)
 
         volume[center[0] - radius:center[0] + radius, center[1] - radius:center[1] + radius,
         center[2] - radius:center[2] + radius] *= (1 - object * intens)
@@ -57,10 +56,10 @@ def simplex(size, scale=1, octaves=3, persistence=0.7, lacunarity=3.5, seed=None
 if __name__ == '__main__':
     import napari
 
-    # volume = spheres(256)
-    #
-    # with napari.gui_qt():
-    #     napari.view_image(volume)
+    volume = spheres(256)
+
+    with napari.gui_qt():
+        napari.view_image(volume)
 
     volume = simplex(256)
 
