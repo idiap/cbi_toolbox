@@ -3,14 +3,14 @@ import astropy.units as u
 import numpy as np
 import poppy
 import scipy.interpolate
-import os
 
 
 def create_wf_1d(wf_object, upsampling=1, scale=1, copy=False):
     if copy:
         wf_object = wf_object.copy()
 
-    wf = np.ones((1, int(wf_object.shape[1] * upsampling)), dtype=wf_object.wavefront.dtype)
+    wf = np.ones(
+        (1, int(wf_object.shape[1] * upsampling)), dtype=wf_object.wavefront.dtype)
     y, x = np.indices(wf.shape, dtype=float)
     x -= wf.shape[1] / 2
 
@@ -53,13 +53,13 @@ def wf_mix(wf1, wf2, ref=None):
     mix = np.outer(wfb, wfa)
 
     if ref is None:
-        wf_mix = wf1.copy()
+        wf_m = wf1.copy()
     else:
-        wf_mix = ref.copy()
+        wf_m = ref.copy()
 
-    wf_mix.wavefront = mix
+    wf_m.wavefront = mix
 
-    return wf_mix
+    return wf_m
 
 
 def resample_wavefront(wf, pixelscale, npixels):
@@ -80,7 +80,8 @@ def resample_wavefront(wf, pixelscale, npixels):
         For data on a regular 2D grid, RectBivariateSpline is more efficient than interp2d.
         """
         return scipy.interpolate.interp1d(
-            x_in, arr, kind='slinear', copy=False, fill_value=0, assume_sorted=True, bounds_error=False)
+            x_in, arr, kind='slinear', copy=False, fill_value=0,
+            assume_sorted=True, bounds_error=False)
 
     # Interpolate real and imaginary parts separately
     real_resampled = interpolator(wf.wavefront.real)(x_out)
@@ -95,7 +96,8 @@ def resample_wavefront(wf, pixelscale, npixels):
     wf.pixelscale = pixelscale
 
 
-def spim_illumination(wavelength=500e-9, laser_radius=1.2e-3, objective_na=0.3, objective_focal=18e-3,
+def spim_illumination(wavelength=500e-9, refr_index=1.333, laser_radius=1.2e-3,
+                      objective_na=0.3, objective_focal=18e-3,
                       slit_opening=10e-3, fov_width=1.3e-3,
                       npix_fov=512, simu_size=2048, oversample=16):
 
@@ -117,28 +119,38 @@ def spim_illumination(wavelength=500e-9, laser_radius=1.2e-3, objective_na=0.3, 
     # We approximate the objective aperture with a square one to make it separable
     # Given the shape of the wavefront, we estimate the generated error to be negligible
     objective_radius = math.tan(math.asin(objective_na)) * objective_focal
-    circular_aperture = poppy.CircularAperture(radius=objective_radius, name='objective aperture')
-    objective_aperture = poppy.RectangleAperture(name='objective aperture', width=2 * objective_radius,
+    objective_aperture = poppy.RectangleAperture(name='objective aperture',
+                                                 width=2 * objective_radius,
                                                  height=2 * objective_radius)
-    objective_lens = poppy.QuadraticLens(f_lens=objective_focal, name='objective lens')
+    objective_lens = poppy.QuadraticLens(
+        f_lens=objective_focal, name='objective lens')
 
-    objective = poppy.FresnelOpticalSystem()
-    objective.add_optic(objective_aperture, objective_focal)
-    objective.add_optic(objective_lens)
+    obj_aperture = poppy.FresnelOpticalSystem()
+    obj_aperture.add_optic(objective_aperture, objective_focal)
 
-    # Computed as following: going through T1 then CLens then T2 is equivalent to going through CLens with focal/4
+    # Implement the objective lens separately to be able to account for refractive index change
+    obj_lens = poppy.FresnelOpticalSystem()
+    obj_lens.add_optic(objective_lens)
+
+    # Computed as following: going through T1 then CLens then T2
+    # is equivalent to going through CLens with focal/4
     # Then the radius is computed as the Fourier transform of the input beam, per 2F lens system
     w0_y = (12.5e-3 * u.m * wavelength) / (2 * np.pi ** 2 * laser_radius)
     laser_shape_y = poppy.GaussianAperture(w=w0_y, pupil_diam=5 * w0_y)
-    path_y = poppy.FresnelOpticalSystem(pupil_diameter=2 * w0_y, npix=pixel_width, beam_ratio=beam_ratio)
+    path_y = poppy.FresnelOpticalSystem(
+        pupil_diameter=2 * w0_y, npix=pixel_width, beam_ratio=beam_ratio)
     path_y.add_optic(laser_shape_y)
 
-    laser_shape_z = poppy.GaussianAperture(w=laser_radius, pupil_diam=slit_opening / 2)
-    slit = poppy.RectangleAperture(name='Slit', width=slit_opening / 2, height=slit_opening / 2)
+    laser_shape_z = poppy.GaussianAperture(
+        w=laser_radius, pupil_diam=slit_opening / 2)
+    slit = poppy.RectangleAperture(
+        name='Slit', width=slit_opening / 2, height=slit_opening / 2)
 
-    # Going through T1, slit and T2 is equivalent to going through a half-sized slit, then propagating 1/4 the distance
+    # Going through T1, slit and T2 is equivalent to going through a half-sized slit,
+    # then propagating 1/4 the distance
     # Since we use 1D propagation, we can increase oversampling a lot for better results
-    path_z = poppy.FresnelOpticalSystem(pupil_diameter=slit_opening / 2, npix=pixel_width, beam_ratio=beam_ratio)
+    path_z = poppy.FresnelOpticalSystem(
+        pupil_diameter=slit_opening / 2, npix=pixel_width, beam_ratio=beam_ratio)
     path_z.add_optic(laser_shape_z)
     path_z.add_optic(slit)
     path_z.add_optic(noop, 0.25 * 100e-3 * u.m)
@@ -152,10 +164,17 @@ def spim_illumination(wavelength=500e-9, laser_radius=1.2e-3, objective_na=0.3, 
     create_wf_1d(wf_y, upsampling=simu_size, scale=10)
     path_y.propagate(wf_y)
 
-    objective.propagate(wf_z)
-    objective.propagate(wf_y)
+    obj_aperture.propagate(wf_z)
+    obj_aperture.propagate(wf_y)
 
-    illumination = np.empty((npix_fov, npix_fov, npix_fov), dtype=wf_z.intensity.dtype)
+    wf_z.wavelength /= refr_index
+    wf_y.wavelength /= refr_index
+
+    obj_lens.propagate(wf_z)
+    obj_lens.propagate(wf_y)
+
+    illumination = np.empty(
+        (npix_fov, npix_fov, npix_fov), dtype=wf_z.intensity.dtype)
 
     for pix in range(npix_fov):
         pixel = pix - npix_fov // 2
@@ -184,7 +203,8 @@ def spim_illumination(wavelength=500e-9, laser_radius=1.2e-3, objective_na=0.3, 
 if __name__ == '__main__':
     import napari
 
-    illumination = spim_illumination(simu_size=1024, npix_fov=256, oversample=8)
+    illu = spim_illumination(
+        simu_size=1024, npix_fov=256, oversample=8)
 
     with napari.gui_qt():
-        napari.view_image(illumination)
+        napari.view_image(illu)
