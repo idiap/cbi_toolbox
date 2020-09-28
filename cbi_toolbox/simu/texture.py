@@ -20,7 +20,8 @@ def spheres(size, density=1):
     volume = np.ones((pad_size, pad_size, pad_size), dtype=dtype)
 
     for _ in range(n_spheres):
-        center = (np.random.rand(3) * (size + 2 * max_radius)).astype(int) + max_radius
+        center = (np.random.rand(3) * (size + 2 * max_radius)
+                  ).astype(int) + max_radius
 
         radius = int(np.random.uniform(min_radius, max_radius))
         in_radius = np.random.uniform(0, max_in_radius)
@@ -29,7 +30,7 @@ def spheres(size, density=1):
         object = primitives.ball(radius * 2, in_radius=in_radius, dtype=dtype)
 
         volume[center[0] - radius:center[0] + radius, center[1] - radius:center[1] + radius,
-        center[2] - radius:center[2] + radius] *= (1 - object * intens)
+               center[2] - radius:center[2] + radius] *= (1 - object * intens)
 
     return 1 - volume[volume.ndim * [slice(2*max_radius, -2*max_radius)]]
 
@@ -56,12 +57,13 @@ def simplex(size, scale=1, octaves=3, persistence=0.7, lacunarity=3.5, seed=None
 if __name__ == '__main__':
     import napari
 
-    volume = spheres(256)
+    TEST_SIZE = 128
+    s_spheres = spheres(TEST_SIZE)
+    s_simplex = simplex(TEST_SIZE)
+
+    phantom = primitives.phantom(TEST_SIZE) * (s_simplex * 0.5 + 0.75)
 
     with napari.gui_qt():
-        napari.view_image(volume)
-
-    volume = simplex(256)
-
-    with napari.gui_qt():
-        napari.view_image(volume)
+        viewer = napari.view_image(s_spheres)
+        viewer.add_image(s_simplex)
+        viewer.add_image(phantom)

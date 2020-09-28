@@ -209,19 +209,93 @@ def ball(size, in_radius=0, antialias=2, dtype=np.float64):
     return quadrant_to_volume(quadrant)
 
 
+def phantom(size, antialias=2):
+    if antialias < 1 or type(antialias) is not int:
+        raise ValueError('Antialias must be a positive integer')
+
+    '''    A         a     b      c     x0      y0     z0   phi  theta   psi'''
+    ellipses = [
+        [1,      .6900, .920,  .810,     0,      0,     0,    0,     0,    0],
+        [-.8,    .6624, .874,  .780,     0, -.0184,     0,    0,     0,    0],
+        [-.2,    .1100, .310,  .220,   .22,      0,     0,  -18,     0,   10],
+        [-.2,    .1600, .410,  .280,  -.22,      0,     0,   18,     0,   10],
+        [.1,     .2100, .250,  .410,     0,    .35,  -.15,    0,     0,    0],
+        [.1,     .0460, .046,  .050,     0,     .1,   .25,    0,     0,    0],
+        [.1,     .0460, .046,  .050,     0,    -.1,   .25,    0,     0,    0],
+        [.1,     .0460, .023,  .050,  -.08,  -.605,     0,    0,     0,    0],
+        [.1,     .0230, .023,  .020,     0,  -.606,     0,    0,     0,    0],
+        [.1,     .0230, .046,  .020,   .06,  -.605,     0,    0,     0,    0]
+    ]
+
+    size *= antialias
+
+    mat = np.zeros((size, size, size), dtype=np.float64)
+    coords = 2 * np.indices(mat.shape) / size - 1
+
+    for ellipse in ellipses:
+        A = ellipse[0]
+        a2 = ellipse[1] ** 2
+        b2 = ellipse[2] ** 2
+        c2 = ellipse[3] ** 2
+        x0 = ellipse[4]
+        y0 = ellipse[5]
+        z0 = ellipse[6]
+        phi = ellipse[7] * np.pi / 180
+        theta = ellipse[8] * np.pi / 180
+        psi = ellipse[9] * np.pi / 180
+
+        cphi = np.cos(phi)
+        sphi = np.sin(phi)
+        ctheta = np.cos(theta)
+        stheta = np.sin(theta)
+        cpsi = np.cos(psi)
+        spsi = np.sin(psi)
+
+        # Euler rotation matrix with ZXY convention
+        rotmat = np.array([
+            [
+                ctheta,
+                stheta * sphi,
+                -stheta * cphi,
+            ],
+            [
+                spsi * stheta,
+                cpsi * cphi - ctheta * sphi * spsi,
+                cpsi * sphi + ctheta * cphi * spsi,
+            ],
+            [
+                cpsi * stheta,
+                -spsi * cphi - ctheta * sphi * cpsi,
+                -spsi * sphi + ctheta * cphi * cpsi,
+            ],
+        ])
+
+        rcoords = np.tensordot(rotmat, coords, 1)
+        idx = ((rcoords[1, :] - x0) ** 2.0 / a2 +
+               (rcoords[2, :] - y0) ** 2.0 / b2 +
+               (rcoords[0, :] - z0) ** 2.0 / c2 <= 1)
+
+        mat[idx] += A
+
+    if antialias > 1:
+        mat = skimage.transform.rescale(
+            mat, 1 / antialias, mode='constant')
+
+    return mat
+
+
 if __name__ == '__main__':
     import napari
 
-    test_size = 128
+    TEST_SIZE = 128
 
-    s_ball = ball(test_size)
-    with napari.gui_qt():
-        napari.view_image(s_ball)
+    s_ball = ball(TEST_SIZE)
+    s_torus = torus_boccia(TEST_SIZE)
+    s_boccia = boccia(TEST_SIZE)
+    s_phantom = phantom(TEST_SIZE)
 
-    s_torus = torus_boccia(test_size)
     with napari.gui_qt():
-        napari.view_image(s_torus)
-
-    s_boccia = boccia(test_size)
-    with napari.gui_qt():
-        napari.view_image(s_boccia)
+        viewer = napari.view_image(s_ball)
+        viewer.add_image(s_torus)
+        viewer.add_image(s_boccia)
+        viewer.add_image(s_phantom)
