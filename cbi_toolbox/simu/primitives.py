@@ -12,9 +12,12 @@ def quadrant_symmetry(quadrant):
     size = np.max(quadrant.shape)
 
     full_quadrant = np.zeros((size, size, size), dtype=bool)
-    full_quadrant[:quadrant.shape[0], :quadrant.shape[1], :quadrant.shape[2]] = quadrant
-    full_quadrant[:quadrant.shape[1], :quadrant.shape[2], :quadrant.shape[0]] |= quadrant.transpose((1, 2, 0))
-    full_quadrant[:quadrant.shape[2], :quadrant.shape[0], :quadrant.shape[1]] |= quadrant.transpose((2, 0, 1))
+    full_quadrant[:quadrant.shape[0], :quadrant.shape[1],
+                  :quadrant.shape[2]] = quadrant
+    full_quadrant[:quadrant.shape[1], :quadrant.shape[2],
+                  :quadrant.shape[0]] |= quadrant.transpose((1, 2, 0))
+    full_quadrant[:quadrant.shape[2], :quadrant.shape[0],
+                  :quadrant.shape[1]] |= quadrant.transpose((2, 0, 1))
 
     return full_quadrant
 
@@ -27,11 +30,15 @@ def quadrant_to_volume(quadrant):
     :return:
     '''
 
-    volume = np.empty((2 * quadrant.shape[0], 2 * quadrant.shape[1], 2 * quadrant.shape[2]), dtype=quadrant.dtype)
+    volume = np.empty(
+        (2 * quadrant.shape[0], 2 * quadrant.shape[1], 2 * quadrant.shape[2]), dtype=quadrant.dtype)
     volume[quadrant.shape[0]:, quadrant.shape[1]:, quadrant.shape[2]:] = quadrant
-    volume[:quadrant.shape[0], quadrant.shape[1]:, quadrant.shape[2]:] = np.flip(quadrant, 0)
-    volume[:, :quadrant.shape[1], quadrant.shape[2]:] = np.flip(volume[:, quadrant.shape[1]:, quadrant.shape[2]:], 1)
-    volume[:, :, :quadrant.shape[2]] = np.flip(volume[:, :, quadrant.shape[2]:], 2)
+    volume[:quadrant.shape[0], quadrant.shape[1]:,
+           quadrant.shape[2]:] = np.flip(quadrant, 0)
+    volume[:, :quadrant.shape[1], quadrant.shape[2]:] = np.flip(
+        volume[:, quadrant.shape[1]:, quadrant.shape[2]:], 1)
+    volume[:, :, :quadrant.shape[2]] = np.flip(
+        volume[:, :, quadrant.shape[2]:], 2)
 
     return volume
 
@@ -87,14 +94,16 @@ def boccia(size, n_stripes=3, deg_space=15, deg_width=7.5, rad_thick=0.12, antia
 
     angle_crit = np.zeros_like(phi, dtype=bool)
     for angle in c_angles:
-        angle_crit |= (phi > (angle - half_width)) & (phi < (angle + half_width))
+        angle_crit |= (phi > (angle - half_width)
+                       ) & (phi < (angle + half_width))
 
     quadrant = (r < radius) & (r > (radius * (1 - rad_thick))) & angle_crit
 
     quadrant = quadrant_symmetry(quadrant).astype(dtype)
 
     if antialias > 1:
-        quadrant = skimage.transform.rescale(quadrant, 1 / antialias, mode='symmetric')
+        quadrant = skimage.transform.rescale(
+            quadrant, 1 / antialias, mode='symmetric')
 
     return quadrant_to_volume(quadrant)
 
@@ -135,7 +144,8 @@ def torus_boccia(size, n_stripes=3, deg_space=15, torus_radius=0.075, antialias=
     if max_angle > np.pi / 2:
         raise ValueError('max angle must be less than 90°')
 
-    c_pos = np.array([np.cos(c_angles), np.sin(c_angles)]) * radius * (1 - torus_radius)
+    c_pos = np.array([np.cos(c_angles), np.sin(c_angles)]) * \
+        radius * (1 - torus_radius)
     width = int(np.ceil(c_pos[1, :].max() + size * torus_radius))
 
     x = (np.arange(size) + 0.5).reshape((size, 1, 1, 1))
@@ -152,7 +162,8 @@ def torus_boccia(size, n_stripes=3, deg_space=15, torus_radius=0.075, antialias=
     quadrant = quadrant_symmetry(quadrant).astype(dtype)
 
     if antialias > 1:
-        quadrant = skimage.transform.rescale(quadrant, 1 / antialias, mode='symmetric')
+        quadrant = skimage.transform.rescale(
+            quadrant, 1 / antialias, mode='symmetric')
 
     return quadrant_to_volume(quadrant)
 
@@ -192,7 +203,8 @@ def ball(size, in_radius=0, antialias=2, dtype=np.float64):
     quadrant = quadrant.astype(dtype)
 
     if antialias > 1:
-        quadrant = skimage.transform.rescale(quadrant, 1 / antialias, mode='symmetric')
+        quadrant = skimage.transform.rescale(
+            quadrant, 1 / antialias, mode='symmetric')
 
     return quadrant_to_volume(quadrant)
 

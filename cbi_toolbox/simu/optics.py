@@ -3,6 +3,7 @@ import astropy.units as u
 import numpy as np
 import poppy
 import scipy.interpolate
+from cbi_toolbox.simu import primitives
 
 
 def create_wf_1d(wf_object, upsampling=1, scale=1, copy=False):
@@ -118,7 +119,8 @@ def spim_illumination(wavelength=500e-9, refr_index=1.333, laser_radius=1.2e-3,
 
     # We approximate the objective aperture with a square one to make it separable
     # Given the shape of the wavefront, we estimate the generated error to be negligible
-    objective_radius = math.tan(math.asin(objective_na)) * objective_focal
+    objective_radius = math.tan(
+        math.asin(objective_na / refr_index)) * objective_focal
     objective_aperture = poppy.RectangleAperture(name='objective aperture',
                                                  width=2 * objective_radius,
                                                  height=2 * objective_radius)
@@ -141,14 +143,13 @@ def spim_illumination(wavelength=500e-9, refr_index=1.333, laser_radius=1.2e-3,
         pupil_diameter=2 * w0_y, npix=pixel_width, beam_ratio=beam_ratio)
     path_y.add_optic(laser_shape_y)
 
+    # Going through T1, slit and T2 is equivalent to going through a half-sized slit,
+    # then propagating 1/4 the distance
+    # Since we use 1D propagation, we can increase oversampling a lot for better results
     laser_shape_z = poppy.GaussianAperture(
         w=laser_radius, pupil_diam=slit_opening / 2)
     slit = poppy.RectangleAperture(
         name='Slit', width=slit_opening / 2, height=slit_opening / 2)
-
-    # Going through T1, slit and T2 is equivalent to going through a half-sized slit,
-    # then propagating 1/4 the distance
-    # Since we use 1D propagation, we can increase oversampling a lot for better results
     path_z = poppy.FresnelOpticalSystem(
         pupil_diameter=slit_opening / 2, npix=pixel_width, beam_ratio=beam_ratio)
     path_z.add_optic(laser_shape_z)
@@ -200,11 +201,47 @@ def spim_illumination(wavelength=500e-9, refr_index=1.333, laser_radius=1.2e-3,
     return illumination
 
 
+def gaussian_psf(npix_lateral=128, npix_axial=128,
+                 pixelscale=1.3e-3/512, wavelength=500e-9,
+                 numerical_aperture=0.5, refraction_index=1.33):
+
+    assert(npix_lateral % 2 == 0)
+    assert(npix_axial % 2 == 0)
+
+    r_coords = (np.arange(npix_lateral // 2)) * pixelscale
+    z_coords = (np.arange(npix_axial // 2)) * pixelscale
+    alpha = math.asin(numerical_aperture / refraction_index)
+
+    # Use laser divergence angle as half-aperture
+    w0 = wavelength / (math.pi * refraction_index * alpha)
+    # Use airy pattern radius as waist w0
+    # w0 = 1.22 * wavelength / (2 * numerical_aperture)
+
+    z_rayleygh = math.pi * w0 ** 2 * refraction_index / wavelength
+
+    w_zi2 = 1 / np.power(w0 * np.sqrt(1 + (z_coords/z_rayleygh)**2), 2)
+    r_coords = np.power(r_coords, 2)
+
+    gauss_psf = np.einsum('i, ij -> ij', w0**2 * w_zi2,
+                          np.exp(- 2 * np.outer(w_zi2, r_coords)))
+
+    gauss_psf = np.einsum('ij, ik->ijk', gauss_psf, gauss_psf)
+    gauss_psf = primitives.quadrant_to_volume(gauss_psf)
+
+    return gauss_psf
+
+
 if __name__ == '__main__':
     import napari
+
+    psf = gaussian_psf()
+    psf = np.log(psf+1e-12)
+
+    with napari.gui_qt():
+        napari.view_image(psf)
 
     illu = spim_illumination(
         simu_size=1024, npix_fov=256, oversample=8)
 
     with napari.gui_qt():
-        napari.view_image(illu)
+        v = napari.view_image(illu)
