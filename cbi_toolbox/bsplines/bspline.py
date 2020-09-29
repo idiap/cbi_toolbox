@@ -6,6 +6,28 @@
 
 import numpy as np
 from numpy import zeros, power, multiply
+from scipy import signal
+
+
+def bspline(x, deg):
+    if deg == 0:
+        return bspline00(x)
+    elif deg == 1:
+        return bspline01(x)
+    elif deg == 2:
+        return bspline02(x)
+    elif deg == 3:
+        return bspline03(x)
+    elif deg == 4:
+        return bspline04(x)
+    elif deg == 5:
+        return bspline05(x)
+    elif deg == 6:
+        return bspline06(x)
+    elif deg == 7:
+        return bspline07(x)
+    else:
+        return signal.bspline(x, deg)
 
 
 def bspline00(x):
@@ -65,7 +87,8 @@ def bspline05(x):
     y = zeros(x.shape)
     a = power(x, 2)
     idx = np.abs(x) < 1.
-    y[idx] = (multiply(a[idx], multiply(a[idx], 1. / 4. - np.abs(x[idx]) * 1. / 12.) - 1. / 2.) + 11. / 20.0)
+    y[idx] = (multiply(a[idx], multiply(a[idx], 1. / 4. -
+                                        np.abs(x[idx]) * 1. / 12.) - 1. / 2.) + 11. / 20.0)
     idx = (np.abs(x) < 2.) & (np.abs(x) >= 1.)
     a = np.abs(x)
     y[idx] = (multiply(a[idx], multiply(a[idx], multiply(a[idx], multiply(a[idx], a[
@@ -81,7 +104,8 @@ def bspline06(x):
     y = zeros(x.shape)
     idx = np.abs(x) < 0.5
     a = power(x, 2)
-    y[idx] = (multiply(a[idx], multiply(a[idx], (7. / 48. - a[idx] * 1. / 36)) - 77. / 192.) + 5887. / 11520.)
+    y[idx] = (multiply(a[idx], multiply(
+        a[idx], (7. / 48. - a[idx] * 1. / 36)) - 77. / 192.) + 5887. / 11520.)
     idx = (np.abs(x) < 1.5) & (np.abs(x) >= 0.5)
     a = np.abs(x)
     y[idx] = (multiply(a[idx], multiply(a[idx], multiply(a[idx], multiply(a[idx], multiply(a[idx], a[

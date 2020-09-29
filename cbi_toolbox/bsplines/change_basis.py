@@ -1,8 +1,8 @@
 # B-spline interpolation function for degree up to 7
 # Christian Jaques, june 2016, Computational Bioimaging Group, Idiap
 # Francois Marelli, may 2019, Computational Bioimaging Group, Idiap
-# This code is a translation of Michael Liebling's matlab code, 
-# which was already largely based on a C-library written by Philippe 
+# This code is a translation of Michael Liebling's matlab code,
+# which was already largely based on a C-library written by Philippe
 # Thevenaz, BIG, EPFL
 
 import numpy as np
@@ -12,18 +12,20 @@ from cbi_toolbox.arrays import transpose_dim_to
 
 
 def change_basis(in_array, from_basis, to_basis, degree, axes=(0,), tolerance=1e-9, boundary_condition='Mirror',
-                 in_place=True):
+                 in_place=False):
     """Change the basis along the provided axes (e.g. to convert a 2D signal, use axes=(0, 1))"""
 
     if not in_place:
         in_array = in_array.copy()
 
     try:
-       for ax in axes:
-            in_array = change_basis(in_array, from_basis, to_basis, degree, ax, tolerance, boundary_condition)
+        for ax in axes:
+            in_array = change_basis(
+                in_array, from_basis, to_basis, degree, ax, tolerance, boundary_condition)
     except TypeError:
         in_array = transpose_dim_to(in_array, axes, 0)
-        in_array = change_basis_inner(in_array, from_basis, to_basis, degree, tolerance, boundary_condition)
+        in_array = change_basis_inner(
+            in_array, from_basis, to_basis, degree, tolerance, boundary_condition)
         in_array = transpose_dim_to(in_array, 0, axes)
 
     return in_array
@@ -89,7 +91,9 @@ if __name__ == "__main__":
 
     c_out = change_basis(data, 'cardinal', 'dual', degre, axes=axe, tolerance=toleranc, boundary_condition=condition,
                          in_place=False)
-    ar = change_basis(c_out, 'dual', 'cardinal', degre, axes=axe, tolerance=toleranc, boundary_condition=condition)
+    ar = change_basis(c_out, 'dual', 'cardinal', degre, axes=axe,
+                      tolerance=toleranc, boundary_condition=condition)
 
-    print('Relative error is ', np.max(np.linalg.norm((data - ar) / np.abs(data))))
+    print('Relative error is ', np.max(
+        np.linalg.norm((data - ar) / np.abs(data))))
     print('are samples back to signal? ', np.allclose(data, ar))

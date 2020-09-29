@@ -123,7 +123,7 @@ def radon_post(sinogram, b_spline_deg=(1, 3)):
     ns = b_spline_deg[1]
 
     if ns > -1:
-        sinogram = change_basis(sinogram, 'dual', 'cardinal', ns, 1, boundary_condition='periodic')
+        sinogram = change_basis(sinogram, 'dual', 'cardinal', ns, 1, boundary_condition='periodic', in_place=True)
     return sinogram
 
 
@@ -251,7 +251,7 @@ def iradon_post(image, theta, b_spline_deg=(1, 2)):
 
     ni = b_spline_deg[0]
     if ni > -1:
-        image = change_basis(image, 'DUAL', 'CARDINAL', ni, (0, 1), boundary_condition='periodic')
+        image = change_basis(image, 'DUAL', 'CARDINAL', ni, (0, 1), boundary_condition='periodic', in_place=True)
 
     if theta.size > 1:
         image = image * np.pi / theta.size

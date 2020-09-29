@@ -84,10 +84,12 @@ def initial_causal_coefficient(coeff, z, tolerance, boundary_condition='Mirror')
             z_exp = make_broadcastable(z_exp, c1)
 
             # compute sum c[k]*z**k
-            c = c1[0, ...] + np.sum(np.multiply(c1[1:, ...], z_exp), axis=0) / (1 - z ** n)
+            c = c1[0, ...] + \
+                np.sum(np.multiply(c1[1:, ...], z_exp), axis=0) / (1 - z ** n)
 
     else:
-        raise ValueError('Illegal boundary condition: {}'.format(boundary_condition.upper()))
+        raise ValueError('Illegal boundary condition: {}'.format(
+            boundary_condition.upper()))
 
     return c
 
@@ -116,38 +118,38 @@ def initial_anticausal_coefficient(c, z, boundary_condition='Mirror'):
 
         c0 = (1. / (z ** n - 1.)) * np.sum(np.multiply(c1, z_exp), axis=0)
     else:
-        raise ValueError('Illegal boundary condition: {}'.format(boundary_condition.upper()))
+        raise ValueError('Illegal boundary condition: {}'.format(
+            boundary_condition.upper()))
     return c0
 
 
-def convert_to_interpolation_coefficients(c, degree, tolerance, boundary_condition='Mirror'):
+def convert_to_interpolation_coefficients(c, degree, tolerance=1e-9, boundary_condition='Mirror', in_place=False):
     """
         Computes the b-spline interpolation coefficients of a signal
         In the input array, the signals are considered along the first dimension (1D computations)
     """
 
-    if degree == 0 or degree == 1:
+    if degree == 0 or degree == 1 or c.shape[0] == 1:
+        if not in_place:
+            return c.copy()
         return c
 
-    n = c.shape[0]
-    # this is a bit of a hack, better way to process vectors of shape (n,) ?
-    # if len(c.shape) == 1:
-    #     c = c[..., np.newaxis]
+    elif 2 <= degree <= 5:
+        if boundary_condition.upper() == 'MIRROR':
+            mode = 'mirror'
+        elif boundary_condition.upper() == 'PERIODIC':
+            mode = 'wrap'
 
-    if n == 1:
-        return c
+        output = None
+        if in_place:
+            output = c
 
-    if degree == 2:
-        z = math.sqrt(8.) - 3.
-    elif degree == 3:
-        z = math.sqrt(3.0) - 2.0
-    elif degree == 4:
-        z = [math.sqrt(664.0 - math.sqrt(438976.0)) + math.sqrt(304.0) - 19.0,
-             math.sqrt(664.0 + math.sqrt(438976.0)) - math.sqrt(304.0) - 19.0]
-    elif degree == 5:
-        z = [math.sqrt(135.0 / 2.0 - math.sqrt(17745.0 / 4.0)) + math.sqrt(105.0 / 4.0) - 13.0 / 2.0,
-             math.sqrt(135.0 / 2.0 + math.sqrt(17745.0 / 4.0)) - math.sqrt(105.0 / 4.0) - 13.0 / 2.0]
-    elif degree == 6:
+        return ndimage.spline_filter1d(c, degree, axis=0, mode=mode, output=output)
+
+    if not in_place:
+        c = c.copy()
+
+    if degree == 6:
         z = [-0.488294589303044755130118038883789062112279161239377608394,
              -0.081679271076237512597937765737059080653379610398148178525368,
              -0.00141415180832581775108724397655859252786416905534669851652709]
@@ -187,27 +189,32 @@ def convert_to_interpolation_coefficients(c, degree, tolerance, boundary_conditi
     # loop over all poles
     for pole in z:
         # causal initialization
-        c[0, ...] = initial_causal_coefficient(c, pole, tolerance, boundary_condition)
+        c[0, ...] = initial_causal_coefficient(
+            c, pole, tolerance, boundary_condition)
         # causal filter
         zinit = pole * c[0, ...]
         zinit = zinit[np.newaxis, ...]
-        c[1:, ...], zf = signal.lfilter([1], [1, -pole], c[1:, ...], axis=0, zi=zinit)
+        c[1:, ...], zf = signal.lfilter(
+            [1], [1, -pole], c[1:, ...], axis=0, zi=zinit)
         # anticausal initialization
-        c[-1, ...] = initial_anticausal_coefficient(c, pole, boundary_condition=boundary_condition)
+        c[-1, ...] = initial_anticausal_coefficient(
+            c, pole, boundary_condition=boundary_condition)
         # anticausal filter
         zinit = pole * c[-1, ...]
         zinit = zinit[np.newaxis, ...]
-        c[:-1], zf = signal.lfilter([-pole], [1, -pole], np.flipud(c[0:-1, ...]), axis=0, zi=zinit)
+        c[:-1], zf = signal.lfilter([-pole], [1, -pole],
+                                    np.flipud(c[0:-1, ...]), axis=0, zi=zinit)
         c[:-1] = np.flipud(c[:-1])
 
     return c
 
 
-def convert_to_samples(c, deg, boundary_condition='Mirror'):
+def convert_to_samples(c, deg, boundary_condition='Mirror', in_place=False):
     """
         Convert interpolation coefficients into samples
         In the input array, the signals are considered along the first dimension (1D computations)
     """
+
     n = c.shape[0]
     if n == 1:
         return c
@@ -223,10 +230,13 @@ def convert_to_samples(c, deg, boundary_condition='Mirror'):
     elif boundary_condition.upper() == 'PERIODIC':
         boundary = 'wrap'
     else:
-        raise ValueError('Illegal boundary condition: {}'.format(boundary_condition.upper()))
+        raise ValueError('Illegal boundary condition: {}'.format(
+            boundary_condition.upper()))
 
     kernel = make_broadcastable(kernel, c)
 
-    ndimage.convolve(c, kernel, mode=boundary)
+    output = None
+    if in_place:
+        output = c
 
-    return c
+    return ndimage.convolve(c, kernel, mode=boundary, output=output)

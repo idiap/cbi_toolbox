@@ -28,7 +28,7 @@ def radon(image, theta=np.arange(180), angledeg=True, n=None,
     """
     Perform a radon transform on the image.
 
-    :param image:
+    :param image: [z, x, y]
     :param theta:
     :param angledeg:
     :param n:
@@ -38,7 +38,7 @@ def radon(image, theta=np.arange(180), angledeg=True, n=None,
     :param captors_center:
     :param kernel:
     :param use_cuda:
-    :return:
+    :return: sinogram [angles, captors, y]
     """
 
     spline_image = steps.radon_pre(image, b_spline_deg)
@@ -56,7 +56,7 @@ def iradon(sinogram, theta=None, angledeg=True, filter_type='RAM-LAK',
     """
     Perform an inverse radon transform (backprojection) on the sinogram.
 
-    :param sinogram:
+    :param sinogram: [angles, captors, y]
     :param theta:
     :param angledeg:
     :param n:
@@ -67,7 +67,7 @@ def iradon(sinogram, theta=None, angledeg=True, filter_type='RAM-LAK',
     :param captors_center:
     :param kernel:
     :param use_cuda:
-    :return:
+    :return: image [z, x, y]
     """
 
     sinogram = steps.iradon_pre(sinogram, b_spline_deg, filter_type)
