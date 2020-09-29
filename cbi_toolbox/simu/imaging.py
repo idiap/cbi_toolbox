@@ -8,14 +8,14 @@ def widefield(obj, psf):
     return image
 
 
-def noise(image, seed=None):
+def noise(image, photons=150, background=3, seed=None):
+    image *= (photons - background) / image.max()
+    image += background
+
     rng = random.default_rng(seed)
     poisson = rng.poisson(image)
-    gauss = rng.normal()
 
-    out = poisson + gauss
-
-    return out
+    return poisson
 
 
 if __name__ == "__main__":
