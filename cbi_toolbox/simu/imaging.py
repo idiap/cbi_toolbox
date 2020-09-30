@@ -151,6 +151,52 @@ def fpsopt(obj, psf, **kwargs):
     return image
 
 
+def spim(obj, psf, illu):
+    """
+    Simulate the SPIM imaging of an object
+
+    Parameters
+    ----------
+    obj : array [ZXY]
+        the object to be imaged
+    psf : array [ZXY]
+        the PSF of the imaging objective
+    illu : array [ZXY]
+        the illumination function of the SPIM
+    """
+
+    if psf.shape[0] % 2 != illu.shape[0] % 2:
+        raise ValueError('In order to correctly center the illumination on the PSF,'
+                         ' please profide a PSF with the same Z axis parity as the illumination Z axis')
+
+    if psf.shape[0] < illu.shape[0]:
+        raise ValueError(
+            'PSF depth must be bigger than SPIM illumination depth (Z axis) - {} < {}'.format(psf.shape[0], illu.shape[0]))
+
+    if illu.shape[1] != obj.shape[1] or illu.shape[2] != obj.shape[2]:
+        raise ValueError(
+            'SPIM illumination XY must coincide with object XY dimensions - {},{} != {},{}'.format(
+                illu.shape[1], illu.shape[2], obj.shape[1], obj.shape[2]))
+
+    thickness = illu.shape[0]
+    crop = (psf.shape[0] - thickness) // 2
+    if crop:
+        psf = psf[crop:-crop, ...]
+    psf = np.flip(psf, 0)
+
+    image = np.empty(
+        (obj.shape[0] + thickness - 1, obj.shape[1] + psf.shape[1] - 1, obj.shape[2] + psf.shape[2] - 1))
+
+    obj = np.pad(obj, ((thickness - 1,), (0,), (0,)))
+
+    for index in range(image.shape[0]):
+        sliced = obj[index:index+thickness, ...] * illu
+        sliced = sig.fftconvolve(sliced, psf, axes=(1, 2))
+        image[index, ...] = sliced.sum(0)
+
+    return image
+
+
 def noise(image, photons=150, background=3, seed=None):
     """
     Simulate the acquisition noise of the camera:
@@ -184,26 +230,40 @@ def noise(image, photons=150, background=3, seed=None):
 if __name__ == "__main__":
     from cbi_toolbox.simu import primitives, optics
     import napari
+    import time
 
-    TEST_SIZE = 128
+    TEST_SIZE = 64
 
     sample = primitives.boccia(TEST_SIZE, 4)
     s_psf = optics.gaussian_psf(
+        numerical_aperture=0.3,
         npix_axial=TEST_SIZE+1, npix_lateral=TEST_SIZE+1)
     opt_psf = optics.gaussian_psf(
         numerical_aperture=0.1, npix_axial=TEST_SIZE, npix_lateral=TEST_SIZE+1)
     spim_illu = optics.openspim_illumination(
-        npix_fov=TEST_SIZE, simu_size=4*TEST_SIZE, rel_thresh=1e-6)
+        slit_opening=2e-3,
+        npix_fov=TEST_SIZE, simu_size=4*TEST_SIZE, rel_thresh=1e-3)
 
+    start = time.time()
     s_widefield = widefield(sample, s_psf)
+    print('Time for widefield: \t{}'.format(time.time() - start))
+    start = time.time()
     noisy = noise(s_widefield)
+    print('Time for noise: \t{}'.format(time.time() - start))
 
-
-
+    start = time.time()
+    s_spim = spim(sample, s_psf, spim_illu)
+    print('Time for SPIM: \t{}'.format(time.time() - start))
 
     s_theta = np.arange(90)
+
+    start = time.time()
     s_opt = opt(sample, opt_psf, theta=s_theta)
+    print('Time for OPT: \t{}'.format(time.time() - start))
+
+    start = time.time()
     s_fpsopt = fpsopt(sample, s_psf, theta=s_theta)
+    print('Time for FPS-OPT: \t{}'.format(time.time() - start))
 
     with napari.gui_qt():
         viewer = napari.view_image(sample)
@@ -211,3 +271,4 @@ if __name__ == "__main__":
         viewer.add_image(noisy)
         viewer.add_image(s_opt)
         viewer.add_image(s_fpsopt)
+        viewer.add_image(s_spim)
