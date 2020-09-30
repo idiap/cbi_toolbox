@@ -10,7 +10,9 @@ try:
     from cbi_toolbox.cudaradon import is_cuda_available as _cuda_available
 except ImportError:
     def _cuda_available():
-        return False
+        raise ModuleNotFoundError(
+            "cbi_toolbox.cudaradon not found, did you install with CUDA?\n"
+            "Try verbose install to spot errors (pip install -v).")
 
 
 def is_cuda_available(verbose=False):
