@@ -32,22 +32,24 @@ def quadrant_symmetry(quadrant):
     return full_quadrant
 
 
-def quadrant_to_volume(quadrant):
+def quadrant_to_volume(quadrant, odd=(False, False, False)):
     '''
     Generate a volume by mirroring a quadrant in all 8 corners
 
     :param quadrant:
+    :param odd: if the corresponding axis has an odd dimension
     :return:
     '''
 
     volume = np.empty(
-        (2 * quadrant.shape[0], 2 * quadrant.shape[1], 2 * quadrant.shape[2]), dtype=quadrant.dtype)
-    volume[quadrant.shape[0]:, quadrant.shape[1]:, quadrant.shape[2]:] = quadrant
-    volume[:quadrant.shape[0], quadrant.shape[1]:,
-           quadrant.shape[2]:] = np.flip(quadrant, 0)
-    volume[:, :quadrant.shape[1], quadrant.shape[2]:] = np.flip(
-        volume[:, quadrant.shape[1]:, quadrant.shape[2]:], 1)
-    volume[:, :, :quadrant.shape[2]] = np.flip(
+        (2 * quadrant.shape[0] - odd[0], 2 * quadrant.shape[1] - odd[1], 2 * quadrant.shape[2] - odd[2]), dtype=quadrant.dtype)
+    volume[quadrant.shape[0] - odd[0]:, quadrant.shape[1] -
+           odd[1]:, quadrant.shape[2] - odd[2]:] = quadrant
+    volume[:quadrant.shape[0], quadrant.shape[1] - odd[1]:,
+           quadrant.shape[2] - odd[2]:] = np.flip(quadrant, 0)
+    volume[:, :quadrant.shape[1] - odd[1], quadrant.shape[2] - odd[2]:] = np.flip(
+        volume[:, quadrant.shape[1]:, quadrant.shape[2] - odd[2]:], 1)
+    volume[:, :, :quadrant.shape[2] - odd[2]] = np.flip(
         volume[:, :, quadrant.shape[2]:], 2)
 
     return volume
