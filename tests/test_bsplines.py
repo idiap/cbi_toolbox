@@ -54,7 +54,7 @@ class TestBsplines(unittest.TestCase):
 
         for degree in range(8):
             for size in data_size_list:
-                signal = np.random.rand(*size)
+                signal = np.random.default_rng().random(size)
                 for condition in condition_list:
                     test_convert(signal, degree, tolerance, condition)
 
@@ -68,7 +68,7 @@ class TestBsplines(unittest.TestCase):
 
         for degree in range(4):
             for size in data_size_list:
-                signal = np.random.rand(*size)
+                signal = np.random.default_rng().random(size)
                 for condition in condition_list:
                     for axis in axes_list:
                         for base in bases_list:
@@ -86,7 +86,7 @@ class TestBsplines(unittest.TestCase):
 
         for degree in range(4):
             for size in data_size_list:
-                sig = np.random.rand(*size)
+                sig = np.random.default_rng().random(size)
                 for condition in condition_list:
                     for axis in axes_list:
                         test_dims_conversion(

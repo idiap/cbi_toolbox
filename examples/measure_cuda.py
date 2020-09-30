@@ -6,7 +6,7 @@ import time
 width = 200
 depth = 500
 
-image = np.random.randn(width, width, depth)
+image = np.random.default_rng().standard_normal((width, width, depth))
 
 use_cuda = cbi.splineradon.is_cuda_available()
 if use_cuda:
@@ -27,6 +27,3 @@ reconstruct = cbi.splineradon.iradon(sinogram, use_cuda=use_cuda)
 stop = time.time()
 
 print('IRadon : {}'.format(stop-start))
-
-
-
