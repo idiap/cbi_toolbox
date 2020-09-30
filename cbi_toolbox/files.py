@@ -57,11 +57,3 @@ def save_ome_tiff(file_path, image, xmlstring=None):
     image = image.transpose((0, 2, 1))
     image = image[None, :, None, ...]
     omeio.write_ometiff(file_path, image, xmlstring)
-
-
-if __name__ == '__main__':
-    a = np.zeros((10, 20, 30), dtype=float)
-    save_ome_tiff('./test', a)
-
-    load, _, _ = load_ome_tiff('./test')
-    print(load.shape)

@@ -1,10 +1,20 @@
+"""
+The primitives module generates basic 3D objects
+
+Conventions:
+        arrays follow the ZXY convention, with
+            Z : depth axis (axial, focus axis)
+            X : horizontal axis (lateral)
+            Y : vertical axis (lateral, rotation axis when relevant)
+"""
+
 import numpy as np
 import skimage.transform
 
 
 def quadrant_symmetry(quadrant):
     '''
-    Generate a quadrant by aligning itself on all 3 axes
+    Generate a quadrant by rotating itself 90° on all 3 axes and summing
     :param quadrant:
     :return:
     '''
@@ -43,7 +53,8 @@ def quadrant_to_volume(quadrant):
     return volume
 
 
-def boccia(size, n_stripes=3, deg_space=15, deg_width=7.5, rad_thick=0.12, antialias=2, dtype=np.float64):
+def boccia(size, n_stripes=3, deg_space=15, deg_width=7.5, rad_thick=0.12,
+           antialias=2, dtype=np.float64):
     '''
     Create a boccia simulated sample: resolution stripes on a sphere
 
@@ -59,7 +70,7 @@ def boccia(size, n_stripes=3, deg_space=15, deg_width=7.5, rad_thick=0.12, antia
     if size % 2:
         raise ValueError('The size must be even to cut it in quadrants')
 
-    if antialias < 1 or type(antialias) is not int:
+    if antialias < 1 or not isinstance(antialias, int):
         raise ValueError('Antialias must be a positive integer')
 
     size //= 2
@@ -108,7 +119,8 @@ def boccia(size, n_stripes=3, deg_space=15, deg_width=7.5, rad_thick=0.12, antia
     return quadrant_to_volume(quadrant)
 
 
-def torus_boccia(size, n_stripes=3, deg_space=15, torus_radius=0.075, antialias=2, dtype=np.float64):
+def torus_boccia(size, n_stripes=3, deg_space=15, torus_radius=0.075,
+                 antialias=2, dtype=np.float64):
     '''
     Generate a boccia with torus stripes
 
@@ -123,7 +135,7 @@ def torus_boccia(size, n_stripes=3, deg_space=15, torus_radius=0.075, antialias=
     if size % 2:
         raise ValueError('The size must be even to cut it in quadrants')
 
-    if antialias < 1 or type(antialias) is not int:
+    if antialias < 1 or not isinstance(antialias, int):
         raise ValueError('Antialias must be a positive integer')
 
     size //= 2
@@ -181,7 +193,7 @@ def ball(size, in_radius=0, antialias=2, dtype=np.float64):
     if size % 2:
         raise ValueError('The size must be even to cut it in quadrants')
 
-    if antialias < 1 or type(antialias) is not int:
+    if antialias < 1 or not isinstance(antialias, int):
         raise ValueError('Antialias must be a positive integer')
 
     size //= 2
@@ -210,10 +222,31 @@ def ball(size, in_radius=0, antialias=2, dtype=np.float64):
 
 
 def phantom(size, antialias=2):
-    if antialias < 1 or type(antialias) is not int:
+    """
+    Generate 3D modified Shepp-Logann phantoms
+
+    Parameters
+    ----------
+    size : int
+        size of the output
+    antialias : int, optional
+        antialiasing factor, by default 2
+
+    Returns
+    -------
+    array [ZXY]
+        the phantoms
+
+    Raises
+    ------
+    ValueError
+        if antialias is not a positive integer
+    """
+
+    if antialias < 1 or not isinstance(antialias, int):
         raise ValueError('Antialias must be a positive integer')
 
-    '''    A         a     b      c     x0      y0     z0   phi  theta   psi'''
+    #      A         a     b      c     x0      y0     z0   phi  theta   psi
     ellipses = [
         [1,      .6900, .920,  .810,     0,      0,     0,    0,     0,    0],
         [-.8,    .6624, .874,  .780,     0, -.0184,     0,    0,     0,    0],
