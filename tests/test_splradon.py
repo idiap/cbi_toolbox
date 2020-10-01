@@ -14,8 +14,8 @@ class TestSplradon(unittest.TestCase):
         spline_3d = splradon.radon(image_3d)
         spline_2d = splradon.radon(image_2d)
 
-        self.assertTrue(np.allclose(
-            spline_2d, spline_3d[..., 0], rtol=1e-12, atol=1e-12))
+        np.testing.assert_allclose(
+            spline_2d, spline_3d[..., 0], rtol=1e-12, atol=1e-12)
 
         out_3d = splradon.iradon(image_3d)
         out_2d = splradon.iradon(image_2d)
@@ -33,8 +33,8 @@ class TestSplradon(unittest.TestCase):
         spline_3d = splradon.radon(image_3d)
         spline_2d = splradon.radon(image_2d)
 
-        self.assertTrue(np.allclose(
-            spline_2d, spline_3d[..., 0], rtol=1e-9, atol=1e-12))
+        np.testing.assert_allclose(
+            spline_2d, spline_3d[..., 0], rtol=1e-9, atol=1e-12)
 
         out_3d = splradon.iradon(spline_3d)
         out_2d = splradon.iradon(spline_2d)
