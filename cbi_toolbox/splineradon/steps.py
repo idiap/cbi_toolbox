@@ -27,7 +27,8 @@ def radon_pre(image, b_spline_deg=(1, 3)):
 
 def radon_inner(spline_image, theta=np.arange(180), angledeg=True, n=None,
                 b_spline_deg=(1, 3), sampling_steps=(1, 1),
-                center=None, captors_center=None, kernel=None, use_cuda=False):
+                center=None, captors_center=None, pad=True,
+                kernel=None, use_cuda=False):
     """
     Raw radon transform, require pre and post-processing. This can be run in parallel by splitting theta.
 
@@ -39,6 +40,7 @@ def radon_inner(spline_image, theta=np.arange(180), angledeg=True, n=None,
     :param sampling_steps:
     :param center:
     :param captors_center:
+    :param pad:
     :param kernel:
     :param use_cuda:
     :return:
@@ -51,7 +53,10 @@ def radon_inner(spline_image, theta=np.arange(180), angledeg=True, n=None,
     ns = b_spline_deg[1]
 
     shape = np.array(spline_image.shape)[0:2].max()
-    nc = int(np.ceil(shape * np.sqrt(2)))
+    if pad:
+        nc = int(np.ceil(shape * np.sqrt(2)))
+    else:
+        nc = shape
 
     if n is not None:
         s = (nc - 1) / (n - 1)
@@ -68,7 +73,8 @@ def radon_inner(spline_image, theta=np.arange(180), angledeg=True, n=None,
 
     if kernel is None:
         nt = 200
-        kernel = spline_kernels.get_kernel_table(nt, ni, ns, h, s, -theta, degree=False)
+        kernel = spline_kernels.get_kernel_table(
+            nt, ni, ns, h, s, -theta, degree=False)
 
     squeeze = False
     if spline_image.ndim < 3:
@@ -123,7 +129,8 @@ def radon_post(sinogram, b_spline_deg=(1, 3)):
     ns = b_spline_deg[1]
 
     if ns > -1:
-        sinogram = change_basis(sinogram, 'dual', 'cardinal', ns, 1, boundary_condition='periodic', in_place=True)
+        sinogram = change_basis(sinogram, 'dual', 'cardinal',
+                                ns, 1, boundary_condition='periodic', in_place=True)
     return sinogram
 
 
@@ -137,7 +144,8 @@ def iradon_pre(sinogram, b_spline_deg=(1, 2), filter_type='RAM-LAK'):
     :return:
     """
     ns = b_spline_deg[1]
-    sinogram, pre_filter = filter_sinogram.filter_sinogram(sinogram, filter_type, ns)
+    sinogram, pre_filter = filter_sinogram.filter_sinogram(
+        sinogram, filter_type, ns)
 
     if pre_filter:
         sinogram = change_basis(sinogram, 'CARDINAL', 'B-SPLINE', ns, 1,
@@ -147,9 +155,11 @@ def iradon_pre(sinogram, b_spline_deg=(1, 2), filter_type='RAM-LAK'):
 
 def iradon_inner(sinogram_filtered, theta=None, angledeg=True,
                  b_spline_deg=(1, 2), sampling_steps=(1, 1),
-                 center=None, captors_center=None, kernel=None, use_cuda=False):
+                 center=None, captors_center=None, unpad=True,
+                 kernel=None, use_cuda=False):
     """
-    Raw inverse radon transform, requires pre and post-processing. Can be run in parallel by splitting the sinogram and theta.
+    Raw inverse radon transform, requires pre and post-processing. 
+    Can be run in parallel by splitting the sinogram and theta.
 
     :param sinogram_filtered:
     :param theta:
@@ -158,6 +168,7 @@ def iradon_inner(sinogram_filtered, theta=None, angledeg=True,
     :param sampling_steps:
     :param center:
     :param captors_center:
+    :param unpad:
     :param kernel:
     :param use_cuda:
     :return:
@@ -184,9 +195,13 @@ def iradon_inner(sinogram_filtered, theta=None, angledeg=True,
 
     if kernel is None:
         nt = 200
-        kernel = spline_kernels.get_kernel_table(nt, ni, ns, h, s, -theta, degree=False)
+        kernel = spline_kernels.get_kernel_table(
+            nt, ni, ns, h, s, -theta, degree=False)
 
-    nx = int(np.floor(nc / np.sqrt(2)))
+    if unpad:
+        nx = int(np.floor(nc / np.sqrt(2)))
+    else:
+        nx = nc
     nz = nx
 
     if center is None:
@@ -251,7 +266,8 @@ def iradon_post(image, theta, b_spline_deg=(1, 2)):
 
     ni = b_spline_deg[0]
     if ni > -1:
-        image = change_basis(image, 'DUAL', 'CARDINAL', ni, (0, 1), boundary_condition='periodic', in_place=True)
+        image = change_basis(image, 'DUAL', 'CARDINAL', ni,
+                             (0, 1), boundary_condition='periodic', in_place=True)
 
     if theta.size > 1:
         image = image * np.pi / theta.size

@@ -1,9 +1,10 @@
-import cbi_toolbox as cbi
-import cbi_toolbox.splineradon
+import os
 import numpy as np
 import matplotlib
-matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import cbi_toolbox as cbi
+import cbi_toolbox.splineradon
+matplotlib.use('Agg')
 
 image = np.zeros((70, 70, 3))
 image[10, 3, 0] = 1
@@ -36,4 +37,5 @@ plt.subplot(132)
 plt.imshow(sinogram)
 plt.subplot(133)
 plt.imshow(reconstruct)
-plt.savefig('splineradon_example.pdf')
+
+plt.savefig(os.path.join(os.path.dirname(__file__), 'splineradon_example.pdf'))
