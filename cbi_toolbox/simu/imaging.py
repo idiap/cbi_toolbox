@@ -21,7 +21,7 @@ from scipy import ndimage
 from cbi_toolbox import splineradon as spl
 
 
-def widefield(obj, psf):
+def widefield(obj, psf, pad=False):
     """
     Simulate the widefield imaging of an object
 
@@ -31,6 +31,9 @@ def widefield(obj, psf):
         the object to be imaged
     psf : array [ZXY]
         the PSF of the imaging system
+    pad : bool, optional
+        extend the field of view to see all contributions, by default False
+        if False, the image will have the same size as the object
 
     Returns
     -------
@@ -38,7 +41,9 @@ def widefield(obj, psf):
         [description]
     """
 
-    image = sig.fftconvolve(obj, psf)
+    mode = 'full' if pad else 'same'
+
+    image = sig.fftconvolve(obj, psf, mode=mode)
     image.clip(0, None, out=image)
     return image
 
@@ -56,8 +61,8 @@ def opt(obj, psf, theta=np.arange(180), pad=False):
     theta : array, optional
         array of rotation angles (in degrees), by default np.arange(180)
     pad : bool, optional
-        pad the array so that the sinogram contains the whole object
-        (use if the object is not contained in the inner cylinder to the array), by default False
+        extend the field of view to see all contributions
+        (needed if the object is not contained in the inner cylinder to the array), by default False
 
     Returns
     -------
@@ -92,9 +97,15 @@ def opt(obj, psf, theta=np.arange(180), pad=False):
     if pad and pad_size:
         obj = np.pad(obj, ((pad_size,), (pad_size,), (0,)))
 
-    sinogram = np.empty(
-        (theta.size, obj.shape[0] + psf.shape[1] - 1,
-         obj.shape[-1] + psf.shape[-1] - 1))
+    if pad:
+        mode = 'full'
+        sinogram = np.empty(
+            (theta.size, obj.shape[0] + psf.shape[1] - 1,
+             obj.shape[-1] + psf.shape[-1] - 1))
+    else:
+        mode = 'same'
+        sinogram = np.empty(
+            (theta.size, obj.shape[0], obj.shape[-1]))
 
     splimage = ndimage.spline_filter1d(obj, axis=0)
     splimage = ndimage.spline_filter1d(obj, axis=1, output=splimage)
@@ -109,14 +120,14 @@ def opt(obj, psf, theta=np.arange(180), pad=False):
         rotated = ndimage.rotate(
             splimage, angle, prefilter=False, reshape=False)
 
-        rotated = sig.fftconvolve(rotated, psf, axes=(1, 2))
+        rotated = sig.fftconvolve(rotated, psf, axes=(1, 2), mode=mode)
 
         sinogram[idx, ...] = rotated.sum(0)
 
     return sinogram
 
 
-def fpsopt(obj, psf, **kwargs):
+def fps_opt(obj, psf, pad=False, **kwargs):
     """
     Simulate the FPS-OPT (focal plane scanning) imaging of an object
 
@@ -126,6 +137,12 @@ def fpsopt(obj, psf, **kwargs):
         the object to be imaged
     psf : array [ZXY] or array [XY]
         the PSF of the system, or projected PSF along the Z axis
+    pad : bool, optional
+        pad the vield of view to see all contributions
+        (required if the sample is not contained in the inner cylinder of the object), by default False
+
+    **kwargs : 
+        to be passed to the radon call
 
     Returns
     -------
@@ -138,8 +155,6 @@ def fpsopt(obj, psf, **kwargs):
         if the PSF is not 2D or 3D
     """
 
-    radon = spl.radon(obj, **kwargs)
-
     if psf.ndim == 3:
         psf = psf.sum(0, keepdims=True)
     elif psf.ndim == 2:
@@ -147,11 +162,15 @@ def fpsopt(obj, psf, **kwargs):
     else:
         raise ValueError("Invalid dimensions for PSF: {}".format(psf.ndim))
 
-    image = sig.fftconvolve(radon, psf, axes=(1, 2))
+    sinogram = spl.radon(obj, pad=pad, **kwargs)
+
+    mode = 'full' if pad else 'same'
+
+    image = sig.fftconvolve(sinogram, psf, axes=(1, 2), mode=mode)
     return image
 
 
-def spim(obj, psf, illu):
+def spim(obj, psf, illu, pad=False):
     """
     Simulate the SPIM imaging of an object
 
@@ -163,6 +182,8 @@ def spim(obj, psf, illu):
         the PSF of the imaging objective
     illu : array [ZXY]
         the illumination function of the SPIM
+    pad : bool, optional
+        pad the vield of view to see all contributions, by default False
     """
 
     if psf.shape[0] % 2 != illu.shape[0] % 2:
@@ -175,7 +196,7 @@ def spim(obj, psf, illu):
 
     if illu.shape[1] != obj.shape[1] or illu.shape[2] != obj.shape[2]:
         raise ValueError(
-            'SPIM illumination XY must coincide with object XY dimensions - {},{} != {},{}'.format(
+            'SPIM illumination XY must match object XY dimensions - [{},{}] != [{},{}]'.format(
                 illu.shape[1], illu.shape[2], obj.shape[1], obj.shape[2]))
 
     thickness = illu.shape[0]
@@ -184,14 +205,21 @@ def spim(obj, psf, illu):
         psf = psf[crop:-crop, ...]
     psf = np.flip(psf, 0)
 
-    image = np.empty(
-        (obj.shape[0] + thickness - 1, obj.shape[1] + psf.shape[1] - 1, obj.shape[2] + psf.shape[2] - 1))
+    if pad:
+        image = np.empty(
+            (obj.shape[0] + thickness - 1, obj.shape[1] + psf.shape[1] - 1, obj.shape[2] + psf.shape[2] - 1))
+        mode = 'full'
+        obj = np.pad(obj, ((thickness - 1,), (0,), (0,)))
 
-    obj = np.pad(obj, ((thickness - 1,), (0,), (0,)))
+    else:
+        image = np.empty(
+            (obj.shape[0], obj.shape[1], obj.shape[2]))
+        mode = 'same'
+        obj = np.pad(obj, ((thickness // 2,), (0,), (0,)))
 
     for index in range(image.shape[0]):
         sliced = obj[index:index+thickness, ...] * illu
-        sliced = sig.fftconvolve(sliced, psf, axes=(1, 2))
+        sliced = sig.fftconvolve(sliced, psf, axes=(1, 2), mode=mode)
         image[index, ...] = sliced.sum(0)
 
     return image
@@ -243,6 +271,7 @@ if __name__ == "__main__":
     spim_illu = optics.openspim_illumination(
         slit_opening=2e-3,
         npix_fov=TEST_SIZE, simu_size=4*TEST_SIZE, rel_thresh=1e-3)
+    s_theta = np.arange(90)
 
     start = time.time()
     s_widefield = widefield(sample, s_psf)
@@ -255,14 +284,12 @@ if __name__ == "__main__":
     s_spim = spim(sample, s_psf, spim_illu)
     print('Time for SPIM: \t{}'.format(time.time() - start))
 
-    s_theta = np.arange(90)
-
     start = time.time()
     s_opt = opt(sample, opt_psf, theta=s_theta)
     print('Time for OPT: \t{}'.format(time.time() - start))
 
     start = time.time()
-    s_fpsopt = fpsopt(sample, s_psf, theta=s_theta)
+    s_fpsopt = fps_opt(sample, s_psf, theta=s_theta)
     print('Time for FPS-OPT: \t{}'.format(time.time() - start))
 
     with napari.gui_qt():
