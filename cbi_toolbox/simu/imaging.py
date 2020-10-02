@@ -141,7 +141,7 @@ def fps_opt(obj, psf, pad=False, **kwargs):
         pad the vield of view to see all contributions
         (required if the sample is not contained in the inner cylinder of the object), by default False
 
-    **kwargs : 
+    **kwargs :
         to be passed to the radon call
 
     Returns
@@ -167,6 +167,81 @@ def fps_opt(obj, psf, pad=False, **kwargs):
     mode = 'full' if pad else 'same'
 
     image = sig.fftconvolve(sinogram, psf, axes=(1, 2), mode=mode)
+    return image
+
+
+def fss_opt(obj, psf, illu, pad=False, **kwargs):
+    """
+    Simulate the FSS-OPT (focal sheet scanning) imaging of an object
+
+    Parameters
+    ----------
+    obj : array [ZXY]
+        the object to be imaged
+    psf : array [ZXY] or array [XY]
+        the PSF of the system
+    illu : array [ZXY]
+        the illumination function of the SPIM
+    pad : bool, optional
+        pad the vield of view to see all contributions
+        if used, illu will be required to be bigger
+        (required if the sample is not contained in the inner cylinder of the object), by default False
+
+    **kwargs :
+        to be passed to the radon call
+
+    Returns
+    -------
+    array [TPY]
+        the imaged sinogram
+
+    Raises
+    ------
+    ValueError
+        if the PSF dimensions do not fit the illumination
+        if the illumination function has an incorrect shape
+    """
+
+    if pad:
+        # TODO use bigger SPIM illumination function to fit padded sinogram
+        raise NotImplementedError()
+
+    if psf.shape[0] % 2 != illu.shape[0] % 2:
+        raise ValueError('In order to correctly center the illumination on the PSF,'
+                         ' please profide a PSF with the same Z axis parity as the illumination Z axis')
+
+    if not (psf.shape[1] % 2 and psf.shape[2] % 2):
+        raise ValueError('In order to correctly center the PSF on the pixels,'
+                         ' please provide a PSF with odd parity on X and Y axis')
+
+    crop = (psf.shape[0] - illu.shape[0]) // 2
+    if crop:
+        psf = psf[crop:-crop, ...]
+    psf = np.flip(psf)
+
+    sinogram = spl.radon(obj, pad=pad, **kwargs)
+
+    psf_xw = psf.shape[1]
+    psf_yw = psf.shape[2]
+    pad_x = psf_xw // 2
+    pad_y = psf_yw // 2
+
+    illu = np.pad(illu, ((0,), (pad_x,), (pad_y,)))
+
+    image = np.zeros_like(sinogram, shape=(
+        sinogram.shape[0], sinogram.shape[1] + psf_xw - 1, sinogram.shape[2] + psf_yw - 1))
+
+    for x in range(sinogram.shape[1]):
+        for y in range(sinogram.shape[2]):
+            local = np.sum(illu[:, x:x+psf_xw, y:y+psf_yw] * psf, 0)
+            pixel = sinogram[:, x, y]
+            spread = pixel[:, None, None] * local[None, ...]
+
+            image[:, x:x+psf_xw, y:y+psf_xw] += spread
+
+    if not pad:
+        image = image[:, pad_x:-pad_x, pad_y:-pad_y]
+
     return image
 
 
@@ -262,7 +337,8 @@ if __name__ == "__main__":
 
     TEST_SIZE = 64
 
-    sample = primitives.boccia(TEST_SIZE, 4)
+    sample = primitives.boccia(
+        TEST_SIZE, radius=(0.8 * TEST_SIZE) // 2, n_stripes=4)
     s_psf = optics.gaussian_psf(
         numerical_aperture=0.3,
         npix_axial=TEST_SIZE+1, npix_lateral=TEST_SIZE+1)
@@ -275,27 +351,38 @@ if __name__ == "__main__":
 
     start = time.time()
     s_widefield = widefield(sample, s_psf)
-    print('Time for widefield: \t{}'.format(time.time() - start))
+    print('Time for widefield: \t{}s'.format(time.time() - start))
     start = time.time()
     noisy = noise(s_widefield)
-    print('Time for noise: \t{}'.format(time.time() - start))
+    print('Time for noise: \t{}s'.format(time.time() - start))
 
     start = time.time()
     s_spim = spim(sample, s_psf, spim_illu)
-    print('Time for SPIM: \t{}'.format(time.time() - start))
+    print('Time for SPIM: \t{}s'.format(time.time() - start))
 
     start = time.time()
     s_opt = opt(sample, opt_psf, theta=s_theta)
-    print('Time for OPT: \t{}'.format(time.time() - start))
+    print('Time for OPT: \t{}s'.format(time.time() - start))
 
     start = time.time()
     s_fpsopt = fps_opt(sample, s_psf, theta=s_theta)
-    print('Time for FPS-OPT: \t{}'.format(time.time() - start))
+    print('Time for FPS-OPT: \t{}s'.format(time.time() - start))
+
+    start = time.time()
+    s_fssopt = fss_opt(sample, s_psf, spim_illu, theta=s_theta)
+    print('Time for FSS-OPT: \t{}s'.format(time.time() - start))
+
+    start = time.time()
+    s_radon = spl.radon(sample, theta=s_theta, pad=False)
+    print('Time for radon: \t{}s'.format(time.time() - start))
 
     with napari.gui_qt():
         viewer = napari.view_image(sample)
         viewer.add_image(s_widefield)
         viewer.add_image(noisy)
+        viewer.add_image(s_spim)
+
+        viewer = napari.view_image(s_radon)
         viewer.add_image(s_opt)
         viewer.add_image(s_fpsopt)
-        viewer.add_image(s_spim)
+        viewer.add_image(s_fssopt)

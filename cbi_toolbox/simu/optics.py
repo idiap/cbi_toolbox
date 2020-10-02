@@ -404,7 +404,7 @@ if __name__ == '__main__':
     import napari
 
     s_psf = gaussian_psf(npix_lateral=129, npix_axial=129)
-    s_psf = np.log(s_psf+1e-12)
+    s_psf = np.log10(s_psf+1e-12)
     illu = openspim_illumination(
         simu_size=1024, npix_fov=256, oversample=8, rel_thresh=1e-6)
 

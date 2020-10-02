@@ -55,12 +55,13 @@ def quadrant_to_volume(quadrant, odd=(False, False, False)):
     return volume
 
 
-def boccia(size, n_stripes=3, deg_space=15, deg_width=7.5, rad_thick=0.12,
+def boccia(size, radius=None, n_stripes=3, deg_space=15, deg_width=7.5, rad_thick=0.12,
            antialias=2, dtype=np.float64):
     '''
     Create a boccia simulated sample: resolution stripes on a sphere
 
     :param size: side of the cube containing the volume
+    :param radius: radius of the boccia
     :param n_stripes: number of stripes to generate
     :param deg_space: spacing in degrees between the center of the stripes
     :param deg_width: width in degrees of the stripes
@@ -76,7 +77,8 @@ def boccia(size, n_stripes=3, deg_space=15, deg_width=7.5, rad_thick=0.12,
         raise ValueError('Antialias must be a positive integer')
 
     size //= 2
-    radius = size - 1  # leave one pixel out for antialiasing
+    if radius is None:
+        radius = size - 1  # leave one pixel out for antialiasing
     size *= antialias
     radius *= antialias
 
@@ -121,12 +123,13 @@ def boccia(size, n_stripes=3, deg_space=15, deg_width=7.5, rad_thick=0.12,
     return quadrant_to_volume(quadrant)
 
 
-def torus_boccia(size, n_stripes=3, deg_space=15, torus_radius=0.075,
+def torus_boccia(size, radius=None, n_stripes=3, deg_space=15, torus_radius=0.075,
                  antialias=2, dtype=np.float64):
     '''
     Generate a boccia with torus stripes
 
     :param size: side of the cube containing the volume
+    :param radius: radius of the boccia
     :param n_stripes: number of torus stripes
     :param deg_space: spacing of the torus on the sphere in degrees
     :param torus_radius: radius of the torus, as a fraction of the sphere radius
@@ -141,7 +144,8 @@ def torus_boccia(size, n_stripes=3, deg_space=15, torus_radius=0.075,
         raise ValueError('Antialias must be a positive integer')
 
     size //= 2
-    radius = size - 1  # leave one pixel out for antialiasing
+    if radius is None:
+        radius = size - 1  # leave one pixel out for antialiasing
     size *= antialias
     radius *= antialias
 
@@ -182,11 +186,12 @@ def torus_boccia(size, n_stripes=3, deg_space=15, torus_radius=0.075,
     return quadrant_to_volume(quadrant)
 
 
-def ball(size, in_radius=0, antialias=2, dtype=np.float64):
+def ball(size, radius=None, in_radius=0, antialias=2, dtype=np.float64):
     '''
     Generate a boccia with torus stripes
 
     :param size: side of the cube containing the volume
+    :param radius: radius of the ball
     :param in_radius: inner radius fraction (set to 0 for full ball)
     :param antialias: antialiasing scale factor
     :return:
@@ -199,7 +204,8 @@ def ball(size, in_radius=0, antialias=2, dtype=np.float64):
         raise ValueError('Antialias must be a positive integer')
 
     size //= 2
-    radius = size - 1  # leave one pixel out for antialiasing
+    if radius is None:
+        radius = size - 1  # leave one pixel out for antialiasing
     size *= antialias
     radius *= antialias
 
