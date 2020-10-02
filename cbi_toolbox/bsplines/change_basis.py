@@ -8,7 +8,7 @@
 import numpy as np
 
 from cbi_toolbox.bsplines.interpolation_conversion import convert_to_samples, convert_to_interpolation_coefficients
-from cbi_toolbox.arrays import transpose_dim_to
+from cbi_toolbox.utils import transpose_dim_to
 
 
 def change_basis(in_array, from_basis, to_basis, degree, axes=(0,), tolerance=1e-9, boundary_condition='Mirror',

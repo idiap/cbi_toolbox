@@ -5,7 +5,7 @@ The distributed module allows to distribute operations in MPI communicators.
 import mpi4py.MPI as MPI
 import numpy as np
 import numpy.lib.format as npformat
-from cbi_toolbox import arrays
+from cbi_toolbox import utils
 
 
 _MPI_dtypes = {'float64': MPI.DOUBLE}
@@ -173,7 +173,7 @@ def create_slice_view(axis, n_slices, array=None, shape=None, dtype=None):
     elif shape is None or dtype is None:
         raise ValueError("array, or shape and dtype must be not None")
 
-    axis = arrays.positive_axis(axis, len(shape))
+    axis = utils.positive_index(axis, len(shape))
 
     base_type = to_mpi_datatype(dtype)
     stride = np.prod(shape[axis:], dtype=int)
@@ -203,7 +203,7 @@ def compute_vector_extent(axis, array=None, shape=None, dtype=None):
         raise ValueError("array, or shape and dtype must be not None")
 
     ndims = len(shape)
-    axis = arrays.positive_axis(axis, ndims)
+    axis = utils.positive_index(axis, ndims)
 
     base_type = to_mpi_datatype(dtype)
     return np.prod(shape[axis + 1:], dtype=int) * base_type.extent
@@ -230,8 +230,8 @@ def create_vector_type(src_axis, tgt_axis, array=None, shape=None, dtype=None, b
         raise ValueError("array, or shape and dtype must be not None")
 
     ndims = len(shape)
-    src_axis = arrays.positive_axis(src_axis, ndims)
-    tgt_axis = arrays.positive_axis(tgt_axis, ndims)
+    src_axis = utils.positive_index(src_axis, ndims)
+    tgt_axis = utils.positive_index(tgt_axis, ndims)
 
     if src_axis == tgt_axis:
         raise ValueError(
@@ -321,7 +321,7 @@ def load(file_name, axis, mpi_comm=MPI.COMM_WORLD):
             "Fortran-ordered (column-major) arrays are not supported")
 
     ndims = len(full_shape)
-    axis = arrays.positive_axis(axis, ndims)
+    axis = utils.positive_index(axis, ndims)
 
     i_start, bin_size = distribute_bin(full_shape[axis], mpi_comm)
 
@@ -367,7 +367,7 @@ def save(file_name, array, axis, full_shape=None, mpi_comm=MPI.COMM_WORLD):
     if full_shape is None:
         full_shape = gather_full_shape(array, axis, mpi_comm)
 
-    axis = arrays.positive_axis(axis, len(full_shape))
+    axis = utils.positive_index(axis, len(full_shape))
 
     header_offset = None
     if is_root_process(mpi_comm):
@@ -376,7 +376,11 @@ def save(file_name, array, axis, full_shape=None, mpi_comm=MPI.COMM_WORLD):
                        'descr': npformat.dtype_to_descr(array.dtype)}
 
         with open(file_name, 'wb') as fp:
-            npformat._write_array_header(fp, header_dict, None)
+            try:
+                npformat.write_array_header_1_0(fp, header_dict)
+            except ValueError:
+                npformat.write_array_header_2_0(fp, header_dict)
+
             header_offset = fp.tell()
     header_offset = mpi_comm.bcast(header_offset, root=0)
 
@@ -417,8 +421,8 @@ def redistribute(array, src_axis, tgt_axis, full_shape=None, mpi_comm=MPI.COMM_W
         full_shape = gather_full_shape(array, src_axis, mpi_comm)
 
     ndims = len(full_shape)
-    src_axis = arrays.positive_axis(src_axis, ndims)
-    tgt_axis = arrays.positive_axis(tgt_axis, ndims)
+    src_axis = utils.positive_index(src_axis, ndims)
+    tgt_axis = utils.positive_index(tgt_axis, ndims)
 
     if src_axis == tgt_axis:
         return array

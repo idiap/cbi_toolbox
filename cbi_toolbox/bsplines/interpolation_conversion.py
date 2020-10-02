@@ -11,7 +11,7 @@ import numpy as np
 from scipy import signal
 from scipy import ndimage
 
-from cbi_toolbox.arrays import make_broadcastable
+from cbi_toolbox.utils import make_broadcastable
 from cbi_toolbox.bsplines import compute_bspline
 
 

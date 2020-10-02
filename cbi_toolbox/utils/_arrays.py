@@ -45,18 +45,19 @@ def transpose_dim_to(array, src_dim, target_dim):
     return np.transpose(array, dims)
 
 
-def positive_axis(axis, ndims):
+def positive_index(index, size):
     """
-    Return the positive axis number.
+    Return a positive index from any index.
 
-    :param axis:
-    :param ndims:
+    :param index:
+    :param size:
     :return:
     """
-    if not (-ndims <= axis < ndims):
-        raise ValueError("Invalid axis {} for array of ndim {}".format(axis, ndims))
+    if not (-size <= index <= size):
+        raise ValueError(
+            "Invalid index {} for size {}".format(index, size))
 
-    if axis < 0:
-        axis = ndims + axis
+    if index < 0:
+        index = size + index
 
-    return axis
+    return index

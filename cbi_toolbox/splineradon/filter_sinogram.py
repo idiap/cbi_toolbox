@@ -1,7 +1,7 @@
 import numpy as np
 import scipy
 
-from cbi_toolbox.arrays import make_broadcastable
+from cbi_toolbox.utils import make_broadcastable
 
 
 def get_filter(n, filter_name: str, degree):
@@ -32,22 +32,25 @@ def get_filter(n, filter_name: str, degree):
         pre_filter = True
 
     elif filter_name == 'B-SPLINE':
-        filter_f = np.abs(nu) / np.sum(np.power(np.sinc(nu + k_vector), degree + 1), 0)
+        filter_f = np.abs(
+            nu) / np.sum(np.power(np.sinc(nu + k_vector), degree + 1), 0)
 
     elif filter_name == 'OBLIQUE':
         filter_f = np.abs(nu) / np.power(np.sinc(nu), degree + 1)
 
     elif filter_name == 'FRACTIONAL':
-        filter_f = np.abs(np.sin(np.pi * nu) / np.pi) / np.sum(np.power(np.abs(np.sinc(nu + k_vector)), degree + 2), 0)
+        filter_f = np.abs(np.sin(np.pi * nu) / np.pi) / \
+            np.sum(np.power(np.abs(np.sinc(nu + k_vector)), degree + 2), 0)
 
     elif filter_name == 'FRACTIONALOBLIQUE':
-        filter_f = np.abs(np.sin(np.pi * nu) / 2) / np.power(np.abs(np.sinc(nu)), degree + 2)
+        filter_f = np.abs(np.sin(np.pi * nu) / 2) / \
+            np.power(np.abs(np.sinc(nu)), degree + 2)
 
     elif filter_name == 'BSPLINEPROJ':
         nu_k = nu + k_vector
         filter_f = np.sum(np.abs(nu_k) * np.power(np.sinc(nu_k), degree + 2 + n0), 0) / (
-                np.sum(np.power(np.sinc(nu_k), n0 + 1), 0) *
-                np.sum(np.power(np.abs(np.power(np.sinc(nu_k), degree + 1)), 2), 0))
+            np.sum(np.power(np.sinc(nu_k), n0 + 1), 0) *
+            np.sum(np.power(np.abs(np.power(np.sinc(nu_k), degree + 1)), 2), 0))
 
     else:
         raise ValueError('Illegal filter name: {}'.format(filter_name))
