@@ -2,7 +2,7 @@ from scipy import fft
 import numpy as np
 
 
-def inverse_psf_rfft(psf, shape=None, l=20, filter='laplacian'):
+def inverse_psf_rfft(psf, shape=None, l=20, mode='laplacian'):
     """
     Computes the real FFT of a regularized inversed 2D PSF (or projected 3D)
     This follows the convention of fft.rfft: only half the spectrum is computed
@@ -40,7 +40,7 @@ def inverse_psf_rfft(psf, shape=None, l=20, filter='laplacian'):
     psf = fft.ifftshift(psf)
     psf_fft = fft.rfft2(psf, s=shape, overwrite_x=True)
 
-    if filter == 'laplacian':
+    if mode == 'laplacian':
         filt = [[0, -0.25, 0], [-0.25, 1, -0.25], [0, -0.25, 0]]
         reg = np.abs(fft.rfft2(filt, s=shape)) ** 2
 
@@ -75,10 +75,10 @@ def deconvolve_sinogram(sinogram, psf, **kwargs):
     array [TPY]
         the deconvolved sinogram
     """
-    i_psf = inverse_psf_rfft(psf, shape=sinogram.shape[1:], **kwargs)
+    inverse = inverse_psf_rfft(psf, shape=sinogram.shape[1:], **kwargs)
     s_fft = fft.rfft2(sinogram)
 
-    return fft.irfft2(s_fft * i_psf)
+    return fft.irfft2(s_fft * inverse)
 
 
 if __name__ == '__main__':
