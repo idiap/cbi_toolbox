@@ -142,7 +142,7 @@ def radon_inner(spline_image, theta=np.arange(180), angledeg=True, n=None,
         nc = n
 
     if center is None:
-        center = int(np.floor((nz - 1) / 2)), int(np.floor((nx - 1) / 2))
+        center = (nz - 1) / 2, (nx - 1) / 2
 
     if captors_center is None:
         captors_center = s * (nc - 1) / 2
@@ -284,7 +284,7 @@ def iradon_inner(sinogram_filtered, theta=None, angledeg=True,
     nz = nx
 
     if center is None:
-        center = int(np.floor((nz - 1) / 2)), int(np.floor((nx - 1) / 2))
+        center = (nz - 1) / 2, (nx - 1) / 2
 
     if captors_center is None:
         captors_center = s * (nc - 1) / 2

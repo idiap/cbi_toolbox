@@ -65,7 +65,7 @@ def deconvolve_sinogram(sinogram, psf, l=20):
     inverse = inverse_psf_rfft(psf, shape=sinogram.shape[1:], l=l)
     s_fft = fft.rfft2(sinogram)
 
-    return fft.irfft2(s_fft * inverse)
+    return fft.irfft2(s_fft * inverse, s=sinogram.shape[1:])
 
 
 if __name__ == '__main__':
