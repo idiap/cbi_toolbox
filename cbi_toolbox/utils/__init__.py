@@ -78,3 +78,17 @@ class AnimImshow:
 
     def save_to_gif(self, path):
         self.ani.save(path, writer='imagemagick', fps=1000/self.interval)
+
+
+def fft_size(n):
+    """
+    Returns the smallest power of 2 above n, but no less than 64
+    for efficient FFT computations
+
+    Parameters
+    ----------
+    n : int
+        size of the signal
+    """
+
+    return max(64, int(2 ** np.ceil(np.log2(2 * n))))

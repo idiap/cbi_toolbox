@@ -131,9 +131,10 @@ def radon_inner(spline_image, theta=np.arange(180), angledeg=True, n=None,
     ni = b_spline_deg[0]
     ns = b_spline_deg[1]
 
-    shape = np.array(spline_image.shape)[0:2].max()
+    shape = np.max(spline_image.shape[0:2])
     if pad:
         nc = int(np.ceil(shape * np.sqrt(2)))
+
     else:
         nc = shape
 
@@ -349,6 +350,6 @@ def iradon_post(image, theta, b_spline_deg=(1, 2)):
                              (0, 1), boundary_condition='periodic', in_place=True)
 
     if theta.size > 1:
-        image = image * np.pi / theta.size
+        image = image * np.pi / (2 * theta.size)
 
     return image
