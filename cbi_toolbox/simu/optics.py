@@ -338,7 +338,7 @@ def openspim_illumination(wavelength=500e-9, refr_index=1.333, laser_radius=1.2e
 
 
 def gaussian_psf(npix_lateral=129, npix_axial=129,
-                 pixelscale=635e-9, wavelength=500e-9, airy=False,
+                 pixelscale=635e-9, wavelength=500e-9, airy=True,
                  numerical_aperture=0.5, refraction_index=1.33):
     """
     Compute an approximate PSF model based on gaussian beam propagation
