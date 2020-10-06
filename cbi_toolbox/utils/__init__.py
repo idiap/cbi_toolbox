@@ -91,4 +91,4 @@ def fft_size(n):
         size of the signal
     """
 
-    return max(64, int(2 ** np.ceil(np.log2(2 * n))))
+    return max(64, int(2 ** np.ceil(np.log2(n))))
