@@ -300,7 +300,7 @@ def spim(obj, psf, illu, pad=False):
     return image
 
 
-def noise(image, photons=150, background=3, seed=None):
+def noise(image, photons=150, background=3, seed=None, in_place=False):
     """
     Simulate the acquisition noise of the camera:
         noise = shot noise
@@ -321,6 +321,9 @@ def noise(image, photons=150, background=3, seed=None):
     array [ZXY]
         the noisy image
     """
+
+    if not in_place:
+        image = image.copy()
 
     image *= (photons - background) / image.max()
     image += background

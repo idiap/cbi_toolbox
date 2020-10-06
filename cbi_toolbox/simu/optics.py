@@ -192,7 +192,7 @@ def resample_wavefront(wf, pixelscale, npixels):
 
 def openspim_illumination(wavelength=500e-9, refr_index=1.333, laser_radius=1.2e-3,
                           objective_na=0.3, objective_focal=18e-3, slit_opening=10e-3,
-                          pixelscale=1.3e-3/2048, npix_fov=512, rel_thresh=None,
+                          pixelscale=635e-9, npix_fov=512, rel_thresh=None,
                           simu_size=2048, oversample=16):
     """
     Compute the illumination function of an OpenSPIM device
@@ -216,7 +216,7 @@ def openspim_illumination(wavelength=500e-9, refr_index=1.333, laser_radius=1.2e
     npix_fov : int, optional
         target size in pixels, by default 512
     rel_thresh: float, optional
-        relative threshold to crop the beam thickness 
+        relative threshold to crop the beam thickness
         if a full row is below this theshold, all rows after are removed
         will be computed as compared to the maximum pixel
     simu_size : int, optional
@@ -334,11 +334,11 @@ def openspim_illumination(wavelength=500e-9, refr_index=1.333, laser_radius=1.2e
         thresh = np.nonzero(row_intensity > rel_thresh)[0]
         illumination = illumination[thresh[0]:thresh[-1]+1, ...]
 
-    return illumination
+    return illumination / illumination.sum(0).mean()
 
 
 def gaussian_psf(npix_lateral=129, npix_axial=129,
-                 pixelscale=1.3e-3/2048, wavelength=500e-9, airy=False,
+                 pixelscale=635e-9, wavelength=500e-9, airy=False,
                  numerical_aperture=0.5, refraction_index=1.33):
     """
     Compute an approximate PSF model based on gaussian beam propagation
