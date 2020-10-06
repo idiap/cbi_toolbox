@@ -45,11 +45,11 @@ def inverse_psf_rfft(psf, shape=None, l=20, mode='laplacian'):
     # We need to shift the PSF so that the center is located at the (0, 0) pixel
     # otherwise deconvolving will shift every pixel
     freq = fft.rfftfreq(shape[1])
-    phase_shift = (freq*2*np.pi*((psf.shape[1]-1)//2)) % (2 * np.pi)
+    phase_shift = freq * 2 * np.pi * ((psf.shape[1] - 1) // 2)
     psf_fft *= np.exp(1j * phase_shift[None, :])
 
     freq = fft.fftfreq(shape[0])
-    phase_shift = (freq*2*np.pi*((psf.shape[0]-1)//2)) % (2 * np.pi)
+    phase_shift = freq * 2 * np.pi * ((psf.shape[0] - 1) // 2)
     psf_fft *= np.exp(1j * phase_shift[:, None])
 
     if mode == 'laplacian':
