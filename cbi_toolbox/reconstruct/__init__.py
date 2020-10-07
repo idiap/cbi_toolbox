@@ -28,13 +28,18 @@ def psnr(ref, target, norm=None):
     if norm is None:
         pass
     elif norm == 'std':
-        ref /= ref.std()
-        target /= target.std()
+        target *= ref.std() / target.std()
     elif norm == 'max':
-        ref /= ref.max()
-        target /= target.max()
+        target *= ref.max() / target.max()
+    elif norm == 'sum':
+        target *= ref.sum() / target.sum()
+    elif norm == 'mse':
+        w = np.sum(ref * target) / np.sum(target ** 2)
+        target *= w
+    else:
+        raise ValueError('Unknown normalization: {}'.format(norm))
 
-    return 10 * np.log10(np.max(target)**2 / mse(ref, target))
+    return 10 * np.log10(max(target.max(), ref.max())**2 / mse(ref, target))
 
 
 def mse(ref, target):
