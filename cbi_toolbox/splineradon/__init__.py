@@ -76,7 +76,7 @@ def iradon(sinogram, theta=None, angledeg=True, filter_type='RAM-LAK',
     :param sampling_steps:
     :param center:
     :param captors_center:
-    :param unpad:
+    :param padded:
     :param kernel:
     :param use_cuda:
     :return: image [z, x, y]
@@ -220,9 +220,9 @@ def iradon_pre(sinogram, b_spline_deg=(1, 2), filter_type='RAM-LAK', padded=True
     Pre-processing for the inverse radon transform.
 
     :param sinogram:
-    :param padded:
     :param b_spline_deg:
     :param filter_type:
+    :param padded:
     :return:
     """
     ns = b_spline_deg[1]
