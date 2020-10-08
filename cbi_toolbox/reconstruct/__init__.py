@@ -9,6 +9,7 @@ import numpy as np
 def psnr(ref, target, norm=None):
     """
     Computes the Peak Signal-to-Noise Ratio
+    PSNR = 10 log( max(ref, target) ^ 2 / MSE(ref, target) )
 
     Parameters
     ----------
@@ -27,17 +28,11 @@ def psnr(ref, target, norm=None):
 
     if norm is None:
         pass
-    elif norm == 'std':
-        target *= ref.std() / target.std()
-    elif norm == 'max':
-        target *= ref.max() / target.max()
-    elif norm == 'sum':
-        target *= ref.sum() / target.sum()
     elif norm == 'mse':
-        w = np.sum(ref * target) / np.sum(target ** 2)
-        target *= w
+        scale_to_mse(ref, target)
     else:
-        raise ValueError('Unknown normalization: {}'.format(norm))
+        normalize(ref)
+        normalize(target)
 
     return 10 * np.log10(max(target.max(), ref.max())**2 / mse(ref, target))
 
@@ -60,3 +55,59 @@ def mse(ref, target):
     """
 
     return np.square(np.subtract(ref, target)).mean()
+
+
+def normalize(image, mode='std'):
+    """
+    Normalize an image according to the given criterion
+
+    Parameters
+    ----------
+    image : array
+        image to normalize, will be modified
+    mode : str, optional
+        type of normalization to use, by default 'std'
+
+    Returns
+    -------
+    array
+        the normalized image (same as input)
+
+    Raises
+    ------
+    ValueError
+        for unknown mode
+    """
+    if mode == 'std':
+        f = np.std(image)
+    elif mode == 'max':
+        f = np.max(image)
+    elif mode == 'sum':
+        f = np.sum(image)
+    else:
+        raise ValueError('Invalid norm: {}'.format(mode))
+
+    image /= f
+    return image
+
+
+def scale_to_mse(ref, target):
+    """
+    Scale a target array to minimise MSE with reference
+
+    Parameters
+    ----------
+    ref : array
+        the reference for MSE
+    target : array
+        the array to rescale (will be done in-place)
+
+    Returns
+    -------
+    array
+        the rescaled target
+    """
+    w = np.sum(ref * target) / np.sum(target ** 2)
+    target *= w
+
+    return target
