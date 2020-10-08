@@ -45,7 +45,7 @@ s_fssopt = imaging.fss_opt(sample, s_psf, spim_illu, theta=s_theta)
 print('Time for FSS-OPT: \t{}s'.format(time.time() - start))
 
 start = time.time()
-s_radon = spl.radon(sample, theta=s_theta, pad=False)
+s_radon = spl.radon(sample, theta=s_theta, circle=True)
 print('Time for radon: \t{}s'.format(time.time() - start))
 
 start = time.time()
@@ -54,23 +54,23 @@ print('Time for deconv: \t{}s'.format(time.time() - start))
 
 
 start = time.time()
-r_radon = spl.iradon(s_radon, s_theta, unpad=False)
+r_radon = spl.iradon(s_radon, s_theta, circle=True)
 print('Time for reconstruct radon: \t{}s'.format(time.time() - start))
 
 start = time.time()
-r_opt = spl.iradon(s_opt, s_theta, unpad=False)
+r_opt = spl.iradon(s_opt, s_theta, circle=True)
 print('Time for reconstruct OPT: \t{}s'.format(time.time() - start))
 
 start = time.time()
-r_fpsopt = spl.iradon(s_fpsopt, s_theta, unpad=False)
+r_fpsopt = spl.iradon(s_fpsopt, s_theta, circle=True)
 print('Time for reconstruct FPS-OPT: \t{}s'.format(time.time() - start))
 
 start = time.time()
-r_deconv = spl.iradon(s_deconv, s_theta, unpad=False)
+r_deconv = spl.iradon(s_deconv, s_theta, circle=True)
 print('Time for reconstruct FPS-OPT deconv: \t{}s'.format(time.time() - start))
 
 start = time.time()
-r_fssopt = spl.iradon(s_fssopt, s_theta, unpad=False)
+r_fssopt = spl.iradon(s_fssopt, s_theta, circle=True)
 print('Time for reconstruct FSS-OPT: \t{}s'.format(time.time() - start))
 
 

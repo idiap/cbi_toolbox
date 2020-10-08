@@ -112,7 +112,7 @@ if __name__ == '__main__':
         TEST_SIZE, radius=(0.8 * TEST_SIZE) // 2, n_stripes=4)
     s_theta = np.arange(90)
 
-    s_radon = spl.radon(sample, theta=s_theta, pad=False)
+    s_radon = spl.radon(sample, theta=s_theta, circle=True)
     s_fpsopt = imaging.fps_opt(sample, s_psf, theta=s_theta)
 
     s_deconv = deconvolve_sinogram(s_fpsopt, s_psf, l=0)

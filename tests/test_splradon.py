@@ -49,9 +49,10 @@ class TestSplradon(unittest.TestCase):
             shape = (size, size)
             image = np.random.default_rng().random(shape)
 
-            for pad in (True, False):
-                rd = spl.radon(image, theta, pad=pad, b_spline_deg=(0, 0))
-                ird = spl.iradon(rd, theta, padded=pad, b_spline_deg=(0, 0))
+            for circle in (True, False):
+                rd = spl.radon(image, theta, circle=circle,
+                               b_spline_deg=(0, 0))
+                ird = spl.iradon(rd, theta, circle=circle, b_spline_deg=(0, 0))
 
                 np.testing.assert_array_equal(shape, ird.shape)
 

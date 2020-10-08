@@ -34,7 +34,7 @@ class TestDeconv(unittest.TestCase):
             size, radius=(0.8 * size) // 2, n_stripes=4)
         theta = np.arange(90)
 
-        radon = spl.radon(sample, theta=theta, pad=False)
+        radon = spl.radon(sample, theta=theta, circle=True)
 
         for psf in self.psfs:
             fpsopt = imaging.fps_opt(sample, psf, theta=theta)

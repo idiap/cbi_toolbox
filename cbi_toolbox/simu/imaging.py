@@ -162,7 +162,7 @@ def fps_opt(obj, psf, pad=False, **kwargs):
     else:
         raise ValueError("Invalid dimensions for PSF: {}".format(psf.ndim))
 
-    sinogram = spl.radon(obj, pad=pad, **kwargs)
+    sinogram = spl.radon(obj, circle=(not pad), **kwargs)
 
     mode = 'full' if pad else 'same'
 
@@ -219,7 +219,7 @@ def fss_opt(obj, psf, illu, pad=False, **kwargs):
         psf = psf[crop:-crop, ...]
     psf = np.flip(psf)
 
-    sinogram = spl.radon(obj, pad=pad, **kwargs)
+    sinogram = spl.radon(obj, circle=(not pad), **kwargs)
 
     psf_xw = psf.shape[1]
     psf_yw = psf.shape[2]
@@ -376,7 +376,7 @@ if __name__ == "__main__":
     print('Time for FSS-OPT: \t{}s'.format(time.time() - start))
 
     start = time.time()
-    s_radon = spl.radon(sample, theta=s_theta, pad=False)
+    s_radon = spl.radon(sample, theta=s_theta, circle=True)
     print('Time for radon: \t{}s'.format(time.time() - start))
 
     with napari.gui_qt():
