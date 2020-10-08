@@ -229,7 +229,7 @@ def ball(size, radius=None, in_radius=0, antialias=2, dtype=np.float64):
     return quadrant_to_volume(quadrant)
 
 
-def phantom(size, antialias=2):
+def phantom(size, scale=1, antialias=2):
     """
     Generate 3D modified Shepp-Logann phantoms
 
@@ -237,6 +237,8 @@ def phantom(size, antialias=2):
     ----------
     size : int
         size of the output
+    scale : float
+        scaling factor for the size of the phantoms
     antialias : int, optional
         antialiasing factor, by default 2
 
@@ -272,6 +274,7 @@ def phantom(size, antialias=2):
 
     mat = np.zeros((size, size, size), dtype=np.float64)
     coords = 2 * np.indices(mat.shape) / size - 1
+    coords /= scale
 
     for ellipse in ellipses:
         A = ellipse[0]
