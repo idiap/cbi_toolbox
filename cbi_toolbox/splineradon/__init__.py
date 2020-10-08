@@ -62,7 +62,7 @@ def radon(image, theta=np.arange(180), angledeg=True, n=None,
 
 def iradon(sinogram, theta=None, angledeg=True, filter_type='RAM-LAK',
            b_spline_deg=(1, 2), sampling_steps=(1, 1),
-           center=None, captors_center=None, unpad=True,
+           center=None, captors_center=None, padded=True,
            kernel=None, use_cuda=False):
     """
     Perform an inverse radon transform (backprojection) on the sinogram.
@@ -82,10 +82,10 @@ def iradon(sinogram, theta=None, angledeg=True, filter_type='RAM-LAK',
     :return: image [z, x, y]
     """
 
-    sinogram = iradon_pre(sinogram, b_spline_deg, filter_type)
+    sinogram = iradon_pre(sinogram, b_spline_deg, filter_type, padded)
 
     image, theta = iradon_inner(sinogram, theta, angledeg, b_spline_deg, sampling_steps,
-                                center, captors_center, unpad, kernel, use_cuda=use_cuda)
+                                center, captors_center, kernel, use_cuda=use_cuda)
     image = iradon_post(image, theta, b_spline_deg)
 
     return image
@@ -134,6 +134,7 @@ def radon_inner(spline_image, theta=np.arange(180), angledeg=True, n=None,
     shape = np.max(spline_image.shape[0:2])
     if pad:
         nc = int(np.ceil(shape * np.sqrt(2)))
+        nc += (nc % 2 != shape % 2)
 
     else:
         nc = shape
@@ -214,16 +215,27 @@ def radon_post(sinogram, b_spline_deg=(1, 3)):
     return sinogram
 
 
-def iradon_pre(sinogram, b_spline_deg=(1, 2), filter_type='RAM-LAK'):
+def iradon_pre(sinogram, b_spline_deg=(1, 2), filter_type='RAM-LAK', padded=True):
     """
     Pre-processing for the inverse radon transform.
 
     :param sinogram:
+    :param padded:
     :param b_spline_deg:
     :param filter_type:
     :return:
     """
     ns = b_spline_deg[1]
+
+    if not padded:
+        shape = sinogram.shape[1]
+        nc = np.ceil(shape * np.sqrt(2))
+        nc += (nc % 2 != shape % 2)
+        pad = int((nc - shape) // 2)
+        padding = [(0, )] * sinogram.ndim
+        padding[1] = (pad, )
+        sinogram = np.pad(sinogram, padding)
+
     sinogram, pre_filter = filter_sinogram.filter_sinogram(
         sinogram, filter_type, ns)
 
@@ -235,7 +247,7 @@ def iradon_pre(sinogram, b_spline_deg=(1, 2), filter_type='RAM-LAK'):
 
 def iradon_inner(sinogram_filtered, theta=None, angledeg=True,
                  b_spline_deg=(1, 2), sampling_steps=(1, 1),
-                 center=None, captors_center=None, unpad=True,
+                 center=None, captors_center=None,
                  kernel=None, use_cuda=False):
     """
     Raw inverse radon transform, requires pre and post-processing. 
@@ -248,7 +260,6 @@ def iradon_inner(sinogram_filtered, theta=None, angledeg=True,
     :param sampling_steps:
     :param center:
     :param captors_center:
-    :param unpad:
     :param kernel:
     :param use_cuda:
     :return:
@@ -278,10 +289,8 @@ def iradon_inner(sinogram_filtered, theta=None, angledeg=True,
         kernel = spline_kernels.get_kernel_table(
             nt, ni, ns, h, s, -theta, degree=False)
 
-    if unpad:
-        nx = int(np.floor(nc / np.sqrt(2)))
-    else:
-        nx = nc
+    nx = int(np.floor(nc / np.sqrt(2)))
+    nx -= (nx % 2 != nc % 2)
     nz = nx
 
     if center is None:
