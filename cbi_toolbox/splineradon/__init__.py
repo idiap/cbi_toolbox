@@ -31,9 +31,10 @@ def is_cuda_available(verbose=False):
 
 
 def radon(image, theta=np.arange(180), angledeg=True, n=None,
-          b_spline_deg=(1, 3), sampling_steps=(1, 1),
+          b_spline_deg=(0, 0), sampling_steps=(1, 1),
           center=None, captors_center=None, circle=False,
           kernel=None, use_cuda=False):
+    # TODO default spline degree to (1, 3) -> why is it worse?
     """
     Perform a radon transform on the image.
 
@@ -61,9 +62,10 @@ def radon(image, theta=np.arange(180), angledeg=True, n=None,
 
 
 def iradon(sinogram, theta=None, angledeg=True, filter_type='RAM-LAK',
-           b_spline_deg=(1, 2), sampling_steps=(1, 1),
+           b_spline_deg=(0, 0), sampling_steps=(1, 1),
            center=None, captors_center=None, circle=False,
            kernel=None, use_cuda=False):
+    # TODO default spline degree to (1, 2) -> why is it worse?
     """
     Perform an inverse radon transform (backprojection) on the sinogram.
 
