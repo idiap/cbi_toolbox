@@ -338,10 +338,14 @@ def openspim_illumination(wavelength=500e-9, refr_index=1.333, laser_radius=1.2e
 
 
 def gaussian_psf(npix_lateral=129, npix_axial=129,
-                 pixelscale=635e-9, wavelength=500e-9, airy=True,
+                 pixelscale=635e-9, wavelength=500e-9,
                  numerical_aperture=0.5, refraction_index=1.33):
     """
     Compute an approximate PSF model based on gaussian beam propagation
+
+    Koskela, O., Montonen, T., Belay, B. et al. Gaussian Light Model in Brightfield
+    Optical Projection Tomography. Sci Rep 9, 13934 (2019).
+    https://bib-ezproxy.epfl.ch:5295/10.1038/s41598-019-50469-6
 
     Parameters
     ----------
@@ -353,9 +357,6 @@ def gaussian_psf(npix_lateral=129, npix_axial=129,
         pixelscale in meters per pixel, by default 1.3e-3/2048
     wavelength : float, optional
         illumination wavelength in meters, by default 500e-9
-    airy : bool, optional
-        use airy radius to define the PSF instead of the divergence angle
-        of the gaussian beam, by default False
     numerical_aperture : float, optional
         objective NA, by default 0.5
     refraction_index : float, optional
@@ -376,24 +377,17 @@ def gaussian_psf(npix_lateral=129, npix_axial=129,
 
     r_coords = (np.arange((npix_lateral + 1) // 2) + lat_offset) * pixelscale
     z_coords = (np.arange((npix_axial + 1) // 2) + ax_offset) * pixelscale
-    alpha = math.asin(numerical_aperture / refraction_index)
 
-    if airy:
-        # Use airy pattern radius as waist w0
-        w0 = 1.22 * wavelength / (2 * numerical_aperture)
-
-    else:
-        # Use laser divergence angle as half-aperture
-        w0 = wavelength / (math.pi * refraction_index * alpha)
+    w0 = wavelength / (np.pi * refraction_index * numerical_aperture)
 
     z_rayleygh = math.pi * w0 ** 2 * refraction_index / wavelength
+    w_z = w0 * np.sqrt(1 + (z_coords/z_rayleygh)**2)
+    w_zi2 = 1 / np.square(w_z)
+    r_coords = np.square(r_coords)
+    intens = np.sqrt(w0**2 * w_zi2)
 
-    w_zi2 = 1 / np.power(w0 * np.sqrt(1 + (z_coords/z_rayleygh)**2), 2)
-    r_coords = np.power(r_coords, 2)
-
-    gauss_psf = np.einsum('i, ij -> ij', w0**2 * w_zi2,
+    gauss_psf = np.einsum('i, ij -> ij', intens,
                           np.exp(- 2 * np.outer(w_zi2, r_coords)))
-
     gauss_psf = np.einsum('ij, ik->ijk', gauss_psf, gauss_psf)
     gauss_psf = primitives.quadrant_to_volume(gauss_psf, (odd_a, odd_l, odd_l))
 
