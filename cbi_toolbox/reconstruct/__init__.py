@@ -6,10 +6,10 @@ as well as preprocessing tools and performance scores.
 import numpy as np
 
 
-def psnr(ref, target, norm=None):
+def psnr(ref, target, norm=None, limit=None):
     """
     Computes the Peak Signal-to-Noise Ratio
-    PSNR = 10 log( max(ref, target) ^ 2 / MSE(ref, target) )
+    PSNR = 10 log( limit ^ 2 / MSE(ref, target) )
 
     Parameters
     ----------
@@ -19,6 +19,8 @@ def psnr(ref, target, norm=None):
         the reconstructed array
     norm : str
         normalize the images before computing snr, default is None
+    limit: float, optional
+        the maximum pixel value used for PSNR computation, default is None (max(ref))
 
     Returns
     -------
@@ -34,7 +36,10 @@ def psnr(ref, target, norm=None):
         normalize(ref)
         normalize(target)
 
-    return 10 * np.log10(max(target.max(), ref.max())**2 / mse(ref, target))
+    if limit is None:
+        limit = ref.max()
+
+    return 10 * np.log10(limit**2 / mse(ref, target))
 
 
 def mse(ref, target):
