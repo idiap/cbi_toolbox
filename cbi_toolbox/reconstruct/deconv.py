@@ -64,7 +64,7 @@ def inverse_psf_rfft(psf, shape=None, l=20, mode='laplacian'):
     return psf_fft.conjugate() / (np.abs(psf_fft) ** 2 + l * reg)
 
 
-def deconvolve_sinogram(sinogram, psf, l=20, mode='laplacian'):
+def deconvolve_sinogram(sinogram, psf, l=20, mode='laplacian', clip=True):
     """
     Deconvolve a sinogram with given PSF
 
@@ -76,6 +76,8 @@ def deconvolve_sinogram(sinogram, psf, l=20, mode='laplacian'):
         the PSF used to deconvolve
     l : float, optional
         strength of the regularization
+    clip : bool, optional
+        clip negative values to 0, default is True
 
     Returns
     -------
@@ -89,8 +91,11 @@ def deconvolve_sinogram(sinogram, psf, l=20, mode='laplacian'):
 
     s_fft = fft.rfft2(sinogram, s=fft_shape)
     i_fft = fft.irfft2(s_fft * inverse, s=fft_shape, overwrite_x=True)
+    i_fft = i_fft[:, :sinogram.shape[1], :sinogram.shape[2]]
+    if clip:
+        np.clip(i_fft, 0, None, out=i_fft)
 
-    return i_fft[:, :sinogram.shape[1], :sinogram.shape[2]]
+    return i_fft
 
 
 if __name__ == '__main__':
