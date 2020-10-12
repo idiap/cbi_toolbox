@@ -31,10 +31,9 @@ def is_cuda_available(verbose=False):
 
 
 def radon(image, theta=np.arange(180), angledeg=True, n=None,
-          b_spline_deg=(0, 0), sampling_steps=(1, 1),
+          b_spline_deg=(2, 3), sampling_steps=(1, 1),
           center=None, captors_center=None, circle=False,
           kernel=None, use_cuda=False):
-    # TODO default spline degree to (1, 3) -> why is it worse?
     """
     Perform a radon transform on the image.
 
@@ -42,7 +41,7 @@ def radon(image, theta=np.arange(180), angledeg=True, n=None,
     :param theta:
     :param angledeg:
     :param n:
-    :param b_spline_deg:
+    :param b_spline_deg: (ni, ns)
     :param sampling_steps:
     :param center:
     :param captors_center:
@@ -62,10 +61,9 @@ def radon(image, theta=np.arange(180), angledeg=True, n=None,
 
 
 def iradon(sinogram, theta=None, angledeg=True, filter_type='RAM-LAK',
-           b_spline_deg=(0, 0), sampling_steps=(1, 1),
+           b_spline_deg=(2, 3), sampling_steps=(1, 1),
            center=None, captors_center=None, circle=False,
            kernel=None, use_cuda=False):
-    # TODO default spline degree to (1, 2) -> why is it worse?
     """
     Perform an inverse radon transform (backprojection) on the sinogram.
 
@@ -74,7 +72,7 @@ def iradon(sinogram, theta=None, angledeg=True, filter_type='RAM-LAK',
     :param angledeg:
     :param n:
     :param filter_type:
-    :param b_spline_deg:
+    :param b_spline_deg: (ni, ns)
     :param sampling_steps:
     :param center:
     :param captors_center:
@@ -93,7 +91,7 @@ def iradon(sinogram, theta=None, angledeg=True, filter_type='RAM-LAK',
     return image
 
 
-def radon_pre(image, b_spline_deg=(1, 3)):
+def radon_pre(image, b_spline_deg=(2, 3)):
     """
     Pre-processing step for radon transform.
 
@@ -107,7 +105,7 @@ def radon_pre(image, b_spline_deg=(1, 3)):
 
 
 def radon_inner(spline_image, theta=np.arange(180), angledeg=True, n=None,
-                b_spline_deg=(1, 3), sampling_steps=(1, 1),
+                b_spline_deg=(2, 3), sampling_steps=(1, 1),
                 center=None, captors_center=None, circle=False,
                 kernel=None, use_cuda=False):
     """
@@ -201,7 +199,7 @@ def radon_inner(spline_image, theta=np.arange(180), angledeg=True, n=None,
     return sinogram
 
 
-def radon_post(sinogram, b_spline_deg=(1, 3)):
+def radon_post(sinogram, b_spline_deg=(2, 3)):
     """
     Post-processing for the radon transform.
 
@@ -217,7 +215,7 @@ def radon_post(sinogram, b_spline_deg=(1, 3)):
     return sinogram
 
 
-def iradon_pre(sinogram, b_spline_deg=(1, 2), filter_type='RAM-LAK', circle=False):
+def iradon_pre(sinogram, b_spline_deg=(2, 3), filter_type='RAM-LAK', circle=False):
     """
     Pre-processing for the inverse radon transform.
 
@@ -248,7 +246,7 @@ def iradon_pre(sinogram, b_spline_deg=(1, 2), filter_type='RAM-LAK', circle=Fals
 
 
 def iradon_inner(sinogram_filtered, theta=None, angledeg=True,
-                 b_spline_deg=(1, 2), sampling_steps=(1, 1),
+                 b_spline_deg=(2, 3), sampling_steps=(1, 1),
                  center=None, captors_center=None,
                  kernel=None, use_cuda=False):
     """
@@ -345,7 +343,7 @@ def iradon_inner(sinogram_filtered, theta=None, angledeg=True,
     return image, theta
 
 
-def iradon_post(image, theta, b_spline_deg=(1, 2)):
+def iradon_post(image, theta, b_spline_deg=(2, 3)):
     """
     Post-processing for the inverse radon transform.
 
