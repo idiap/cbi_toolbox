@@ -1,4 +1,3 @@
-import logging
 from scipy import fft
 import numpy as np
 from cbi_toolbox.utils import fft_size
