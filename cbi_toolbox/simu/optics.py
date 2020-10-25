@@ -14,6 +14,7 @@ import numpy as np
 import poppy
 import scipy.interpolate
 from cbi_toolbox.simu import primitives
+from cbi_toolbox import utils
 
 
 def create_wf_1d(wf_object, upsampling=1, scale=1, copy=False):
@@ -329,10 +330,8 @@ def openspim_illumination(wavelength=500e-9, refr_index=1.333, laser_radius=1.2e
         illumination[:, pix, :] = mix.intensity
 
     if rel_thresh is not None:
-        row_intensity = illumination.max((1, 2))
-        row_intensity /= row_intensity.max()
-        thresh = np.nonzero(row_intensity > rel_thresh)[0]
-        illumination = illumination[thresh[0]:thresh[-1]+1, ...]
+        illumination = utils.threshold_crop(
+            illumination, rel_thresh, 0)
 
     return illumination / illumination.sum(0).mean()
 

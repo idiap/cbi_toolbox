@@ -11,19 +11,14 @@ def roll_array(array, shifts, axis):
     return rolled
 
 
-def center_of_mass(array, axis=1):
-    pos = np.arange(1, array.shape[axis] + 1)
+def center_of_mass(array, axis):
+    pos = np.arange(array.shape[axis])
 
-    dims = np.arange(array.ndim)
+    axes = list(range(array.ndim))
+    axes.remove(axis)
+    pos = np.expand_dims(pos, axes)
 
-    for index in range(axis):
-        dims[axis - index] = dims[axis - index - 1]
-
-    dims[0] = axis
-
-    transposed = np.transpose(array, dims)
-
-    return pos.dot(transposed) / array.sum(axis)
+    return np.tensordot(pos, array, (axis, axis)).squeeze() / array.sum(axis)
 
 
 def make_broadcastable(array, target):
@@ -43,6 +38,26 @@ def transpose_dim_to(array, src_dim, target_dim):
     dims.remove(src_dim)
     dims.insert(target_dim, src_dim)
     return np.transpose(array, dims)
+
+
+def threshold_crop(array, threshold, dim, summed=False):
+    """Crop array to relative threshold on given axis"""
+    dims = list(range(array.ndim))
+    dims.remove(dim)
+    dims = tuple(dims)
+
+    if summed:
+        amplitude = array.sum(dims)
+    else:
+        amplitude = array.max(dims)
+
+    amplitude = amplitude / amplitude.max()
+    thresh = np.nonzero(amplitude > threshold)[0]
+
+    slices = [slice(None)] * array.ndim
+    slices[dim] = slice(thresh[0], thresh[-1]+1)
+    slices = tuple(slices)
+    return array[slices]
 
 
 def positive_index(index, size):

@@ -1,7 +1,6 @@
 """
 The utils module provides various utility functions to work with files and arrays
 """
-
 import json
 import os
 import numpy as np
@@ -26,20 +25,10 @@ def load_ome_tiff(file_path):
     """
 
     array, xmlstring = omeio.read_ometiff(file_path)
-
     array = array.squeeze()
     array = np.ascontiguousarray(array.transpose((0, 2, 1)))
 
-    file_name = os.path.splitext(os.path.splitext(file_path)[0])[0]
-    metadata_path = '_'.join((file_name, 'metadata.txt'))
-
-    try:
-        with open(metadata_path) as f:
-            metadata = json.load(f)
-    except FileNotFoundError:
-        metadata = None
-
-    return array, xmlstring, metadata
+    return array, xmlstring
 
 
 def save_ome_tiff(file_path, image, xmlstring=None):
