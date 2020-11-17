@@ -1,5 +1,5 @@
 variables:
-  PATH: "$CI_PROJECT_DIR/.cache/miniconda3/:$PATH"
+  PATH: "${CI_PROJECT_DIR}/.cache/miniconda3/:${PATH}"
 
 default:
   # This does not seem to work as of now...
@@ -10,7 +10,8 @@ default:
       - .cache/
 
   before_script:
-    - mkdir .cache
+    - echo $PATH
+    - mkdir -p .cache
     - conda -V !! wget -nv https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O .cache/miniconda.sh && bash .cache/miniconda.sh -b -p .cache/miniconda3
    # - conda env create -f environment.yml
    # - conda activate cbi_toolbox
