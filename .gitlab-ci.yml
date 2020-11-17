@@ -10,7 +10,7 @@ default:
     - export PATH="$CI_PROJECT_DIR/.cache/miniconda3/:$PATH"
     - mkdir -p .cache
     - .cache/miniconda3/bin/conda -V || wget -nv https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O .cache/miniconda.sh && bash .cache/miniconda.sh -b -p .cache/miniconda3
-   # - conda env create -f environment.yml
+    - .cache/miniconda3/bin/conda env create -f environment.yml
    # - conda activate cbi_toolbox
     #- python -v
 
