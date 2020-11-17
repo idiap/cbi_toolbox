@@ -3,7 +3,7 @@ import numpy as np
 from scipy import fft
 
 from cbi_toolbox.simu import primitives, imaging, optics
-from cbi_toolbox.reconstruct import deconv
+from cbi_toolbox.reconstruct import deconv, psnr
 from cbi_toolbox import splineradon as spl
 
 
@@ -31,7 +31,7 @@ class TestDeconv(unittest.TestCase):
     def test_deconv(self):
         size = 100
         sample = primitives.boccia(
-            size, radius=(0.8 * size) // 2, n_stripes=4)
+            size, radius=(0.5 * size) // 2, n_stripes=4)
         theta = np.arange(90)
 
         radon = spl.radon(sample, theta=theta, circle=True)
@@ -39,9 +39,11 @@ class TestDeconv(unittest.TestCase):
         for psf in self.psfs:
             fpsopt = imaging.fps_opt(sample, psf, theta=theta)
             decon = deconv.deconvolve_sinogram(fpsopt, psf, l=1e-12)
+            snr = psnr(radon, decon)
 
-            np.testing.assert_allclose(decon, radon, atol=5e-4)
+            self.assertGreater(snr, 60)
 
 
 if __name__ == "__main__":
     unittest.main()
+
