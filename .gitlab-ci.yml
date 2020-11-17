@@ -10,7 +10,7 @@ default:
       - .cache/
 
   before_script:
-    - mkdir -p .cache
+    - mkdir .cache
     - conda -V !! wget -nv https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O .cache/miniconda.sh && bash .cache/miniconda.sh -b -p .cache/miniconda3
    # - conda env create -f environment.yml
    # - conda activate cbi_toolbox
