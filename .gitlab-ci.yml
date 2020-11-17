@@ -11,6 +11,12 @@ default:
       - .cache/pip
 
   before_script:
+    - whoami
+    - pwd
+    - hostname
+    - ls
+    - wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ./miniconda.sh
+    - ls
     - python -v
     - nvcc --version
     - conda env create -f environment.yml
