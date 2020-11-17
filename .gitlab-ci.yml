@@ -8,7 +8,7 @@ default:
 
   before_script:
     - ls
-    - wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O .cache/miniconda.sh
+    - mkdir .cache && wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O .cache/miniconda.sh
    # - conda env create -f environment.yml
    # - conda activate cbi_toolbox
     #- python -v
