@@ -11,6 +11,8 @@ default:
       - .cache/pip
 
   before_script:
+    - python -v
+    - nvcc --version
     - conda env create -f environment.yml
     - conda activate cbi_toolbox
     - python -v
