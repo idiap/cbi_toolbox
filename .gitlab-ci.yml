@@ -1,32 +1,23 @@
-# Change pip's cache directory to be inside the project directory since we can
-# only cache local items.
-variables:
-    PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
-
 default:
+  # This does not seem to work as of now...
   image: gpuci/miniconda-cuda:11.0-devel-ubuntu16.04
 
   cache:
     paths:
-      - .cache/pip
+      - .cache/
 
   before_script:
-    - whoami
-    - pwd
-    - hostname
     - ls
-    - wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ./miniconda.sh
-    - ls
-    - python -v
-    - nvcc --version
-    - conda env create -f environment.yml
-    - conda activate cbi_toolbox
-    - python -v
+    - wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O .cache/miniconda.sh
+   # - conda env create -f environment.yml
+   # - conda activate cbi_toolbox
+    #- python -v
 
 test:
   script:
-    - python -m unittest
-    - python -c "import cbi_toolbox.cudaradon"
+    - echo "test"
+    #- python -m unittest
+    #- python -c "import cbi_toolbox.cudaradon"
 
 
 #pages:
