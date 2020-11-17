@@ -1,18 +1,19 @@
-image: gpuci/miniconda-cuda:11.0-devel-ubuntu16.04
+default:
+  image: gpuci/miniconda-cuda:11.0-devel-ubuntu16.04
 
 # Change pip's cache directory to be inside the project directory since we can
 # only cache local items.
-variables:
-  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  variables:
+    PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
 
-cache:
-  paths:
-    - .cache/pip
+  cache:
+    paths:
+      - .cache/pip
 
-before_script:
-  - conda env create -f environment.yml
-  - conda activate cbi_toolbox
-  - python -v
+  before_script:
+    - conda env create -f environment.yml
+    - conda activate cbi_toolbox
+    - python -v
 
 test:
   script:
