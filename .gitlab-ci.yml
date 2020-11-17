@@ -1,21 +1,24 @@
+variables:
+  PATH: "$CI_PROJECT_DIR/.cache/miniconda3/:$PATH"
+
 default:
   # This does not seem to work as of now...
-  image: gpuci/miniconda-cuda:11.0-devel-ubuntu16.04
+  #image: gpuci/miniconda-cuda:11.0-devel-ubuntu16.04
 
   cache:
     paths:
       - .cache/
 
   before_script:
-    - ls
-    - mkdir .cache && wget -nv https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O .cache/miniconda.sh
+    - mkdir -p .cache
+    - conda -V !! wget -nv https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O .cache/miniconda.sh && bash .cache/miniconda.sh -b -p .cache/miniconda3
    # - conda env create -f environment.yml
    # - conda activate cbi_toolbox
     #- python -v
 
 test:
   script:
-    - echo "test2"
+    - conda -V
     #- python -m unittest
     #- python -c "import cbi_toolbox.cudaradon"
 
