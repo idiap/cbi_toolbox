@@ -17,11 +17,6 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
 
-# Find python inside virtual environment first, pass it to pybind11
-set(Python3_FIND_STRATEGY LOCATION)
-find_package(Python3 COMPONENTS Interpreter REQUIRED)
-set(PYTHON_EXECUTABLE ${Python3_EXECUTABLE})
-
 find_package(pybind11 REQUIRED)
 find_package(OpenMP 4.5 REQUIRED)
 
