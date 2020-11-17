@@ -8,14 +8,14 @@ default:
 
   before_script:
     - ls
-    - mkdir .cache && wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O .cache/miniconda.sh
+    - mkdir .cache && wget -nv https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O .cache/miniconda.sh
    # - conda env create -f environment.yml
    # - conda activate cbi_toolbox
     #- python -v
 
 test:
   script:
-    - echo "test"
+    - echo "test2"
     #- python -m unittest
     #- python -c "import cbi_toolbox.cudaradon"
 
