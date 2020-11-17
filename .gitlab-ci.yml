@@ -1,0 +1,32 @@
+image: gpuci/miniconda-cuda:11.0-devel-ubuntu16.04
+
+# Change pip's cache directory to be inside the project directory since we can
+# only cache local items.
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+cache:
+  paths:
+    - .cache/pip
+
+before_script:
+  - conda env create -f environment.yml
+  - conda activate cbi_toolbox
+  - python -v
+
+test:
+  script:
+    - python -m unittest
+    - python -c "import cbi_toolbox.cudaradon"
+
+
+#pages:
+#  script:
+#    - pip install sphinx sphinx-rtd-theme
+#    - cd doc ; make html
+#    - mv build/html/ ../public/
+#  artifacts:
+#    paths:
+#      - public
+#  only:
+#    - master
