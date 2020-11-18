@@ -2,21 +2,15 @@ default:
   # This does not seem to work as of now...
   #image: gpuci/miniconda-cuda:11.0-devel-ubuntu16.04
 
-  cache:
-    paths:
-      - .cache/
-
   before_script:
-    - export PATH="$CI_PROJECT_DIR/.cache/miniconda3/:$PATH"
-    - mkdir -p .cache
-    - .cache/miniconda3/bin/conda -V || ( wget -nv https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O .cache/miniconda.sh && bash .cache/miniconda.sh -b -p .cache/miniconda3 )
-    - .cache/miniconda3/bin/conda env create -f environment.yml
+    - gcc --version
+    - mpicc --version
    # - conda activate cbi_toolbox
     #- python -v
 
 test:
   script:
-    - .cache/miniconda3/bin/conda -V
+    - python -v
     #- python -m unittest
     #- python -c "import cbi_toolbox.cudaradon"
 
