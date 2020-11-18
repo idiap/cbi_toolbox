@@ -4,15 +4,15 @@ channels:
   - defaults
 dependencies:
   - cmake>=3.18*
-  - noise>=1.2*
-  - scipy>=1.4*
-  - scikit-image
+  - cxx-compiler
   - python>=3*
   - numpy>=1.17*
-  - gxx_linux-64>=6*
+  - scipy>=1.4*
+  - noise>=1.2*
+  - scikit-image
+  - mpi4py
   - pip
   - pip:
       - opencv-python
-      - mpi4py
       - apeer-ometiff-library
       - poppy
