@@ -2,7 +2,7 @@ default:
   #image: gpuci/miniconda-cuda:11.0-devel-ubuntu16.04
 
   before_script:
-    - python3 -v
+    - python3 --version
     - pip3 --version
     - pip3 install .
 
