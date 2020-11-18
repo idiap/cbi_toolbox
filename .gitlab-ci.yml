@@ -1,17 +1,13 @@
 default:
-  # This does not seem to work as of now...
   #image: gpuci/miniconda-cuda:11.0-devel-ubuntu16.04
 
   before_script:
-    - gcc --version
-    - mpicc --version
-   # - conda activate cbi_toolbox
-    #- python -v
+    - python3 -v
+    - pip3 install .
 
 test:
   script:
-    - python -v
-    #- python -m unittest
+    - python -m unittest
     #- python -c "import cbi_toolbox.cudaradon"
 
 
