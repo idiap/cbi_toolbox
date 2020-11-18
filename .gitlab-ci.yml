@@ -9,7 +9,7 @@ default:
     - python3 --version
     - pip3 install --upgrade pip setuptools wheel
     - pip3 --version
-    - pip3 install .
+    - pip3 install . -v
 
   cache:
     paths:
