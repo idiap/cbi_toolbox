@@ -12,10 +12,9 @@ requires = [
     'numpy',
     'opencv-python',
     'apeer-ometiff-library',
-    'pybind11>=2.2',
     'scipy>=1.4.0',
     'mpi4py',
-    'skimage',
+    'scikit-image',
     'noise',
     'poppy',
 ]
