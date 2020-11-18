@@ -11,13 +11,11 @@ else()
   message(WARNING "If your CUDAToolkit is not being detected, try setting the environment variable CUDAToolkit_ROOT.")
 endif()
 
-# set(CMAKE_VERBOSE_MAKEFILE TRUE)
-
 if(NOT CMAKE_BUILD_TYPE) 
     set(CMAKE_BUILD_TYPE Release)
 endif()
 
-find_package(pybind11 REQUIRED)
+add_subdirectory(pybind11)
 find_package(OpenMP 4.5 REQUIRED)
 
 string(APPEND CMAKE_CXX_FLAGS " -Wall -Wextra -pedantic")
