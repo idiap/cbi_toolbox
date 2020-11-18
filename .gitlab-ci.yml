@@ -6,8 +6,6 @@ default:
   #image: gpuci/miniconda-cuda:11.0-devel-ubuntu16.04
 
   before_script:
-    - apt-get update
-    - apt-get install python3.8
     - python3 --version
     - pip3 install --upgrade pip setuptools wheel
     - pip3 --version
@@ -19,6 +17,8 @@ default:
 
 test:
   script:
+    - ls
+    - pwd
     - python -m unittest
     #- python -c "import cbi_toolbox.cudaradon"
 
