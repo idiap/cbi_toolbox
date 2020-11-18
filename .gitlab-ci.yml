@@ -6,6 +6,7 @@ default:
   #image: gpuci/miniconda-cuda:11.0-devel-ubuntu16.04
 
   before_script:
+    - rm -rf .cache
     - python3 --version
     - pip3 install --upgrade pip setuptools wheel
     - pip3 --version
