@@ -1,3 +1,7 @@
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
 default:
   #image: gpuci/miniconda-cuda:11.0-devel-ubuntu16.04
 
@@ -6,6 +10,10 @@ default:
     - pip3 install --upgrade pip setuptools wheel
     - pip3 --version
     - pip3 install .
+
+  cache:
+    paths:
+      - .cache/pip
 
 test:
   script:
