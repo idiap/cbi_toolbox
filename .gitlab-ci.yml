@@ -17,9 +17,7 @@ default:
 
 test:
   script:
-    - ls
-    - pwd
-    - python -m unittest
+    - python3 -m unittest
     #- python -c "import cbi_toolbox.cudaradon"
 
 
