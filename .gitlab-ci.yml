@@ -17,8 +17,8 @@ default:
 
 test:
   script:
+    - cd tests
     - python3 -m unittest
-    #- python -c "import cbi_toolbox.cudaradon"
 
 
 #pages:
