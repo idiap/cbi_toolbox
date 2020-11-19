@@ -6,25 +6,13 @@ import numpy as np
 
 from cbi_toolbox.splineradon import filter_sinogram, spline_kernels
 from cbi_toolbox.bsplines import change_basis
-import cbi_toolbox.ompradon as ompradon
-
-try:
-    import cbi_toolbox.cudaradon as cudaradon
-    from cbi_toolbox.cudaradon import is_cuda_available as _cuda_available
-
-except ImportError:
-    cudaradon = None
-
-    def _cuda_available():
-        raise ModuleNotFoundError(
-            "cbi_toolbox.cudaradon not found, did you install with CUDA?\n"
-            "Try verbose install to spot errors (pip install -v).")
+import cbi_toolbox.splineradon.cradon as cradon
 
 
 def is_cuda_available(verbose=False):
     try:
-        return _cuda_available()
-    except Exception as e:
+        return cradon.is_cuda_available()
+    except RuntimeError as e:
         if verbose:
             print(e)
         return False
@@ -162,36 +150,21 @@ def radon_inner(spline_image, theta=np.arange(180), angledeg=True, n=None,
         spline_image = spline_image[..., np.newaxis]
         squeeze = True
 
-    if not use_cuda:
-        sinogram = ompradon.radon(
-            spline_image,
-            h,
-            ni,
-            center[0],
-            center[1],
-            -theta,
-            kernel[0],
-            kernel[1],
-            nc,
-            s,
-            ns,
-            captors_center
-        )
-    else:
-        sinogram = cudaradon.radon_cuda(
-            spline_image,
-            h,
-            ni,
-            center[0],
-            center[1],
-            -theta,
-            kernel[0],
-            kernel[1],
-            nc,
-            s,
-            ns,
-            captors_center
-        )
+    sinogram = cradon.radon(
+        spline_image,
+        h,
+        ni,
+        center[0],
+        center[1],
+        -theta,
+        kernel[0],
+        kernel[1],
+        nc,
+        s,
+        ns,
+        captors_center,
+        use_cuda
+    )
 
     if squeeze:
         sinogram = np.squeeze(sinogram)
@@ -304,38 +277,22 @@ def iradon_inner(sinogram_filtered, theta=None, angledeg=True,
         sinogram_filtered = sinogram_filtered[..., np.newaxis]
         squeeze = True
 
-    if not use_cuda:
-        image = ompradon.iradon(
-            sinogram_filtered,
-            s,
-            ns,
-            captors_center,
-            -theta,
-            kernel[0],
-            kernel[1],
-            nz,
-            nx,
-            h,
-            ni,
-            center[0],
-            center[1]
-        )
-    else:
-        image = cudaradon.iradon_cuda(
-            sinogram_filtered,
-            s,
-            ns,
-            captors_center,
-            -theta,
-            kernel[0],
-            kernel[1],
-            nz,
-            nx,
-            h,
-            ni,
-            center[0],
-            center[1]
-        )
+    image = cradon.iradon(
+        sinogram_filtered,
+        s,
+        ns,
+        captors_center,
+        -theta,
+        kernel[0],
+        kernel[1],
+        nz,
+        nx,
+        h,
+        ni,
+        center[0],
+        center[1],
+        use_cuda
+    )
 
     if squeeze:
         image = np.squeeze(image)

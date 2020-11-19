@@ -1,7 +1,7 @@
 //
 // Created by fmarelli on 05/07/19.
 //
-#include "cudaradon.h"
+#include "cradon.h"
 
 #include <cuda_runtime.h>
 
@@ -38,7 +38,7 @@ std::vector<int> compatible_cuda_devices() {
         }
     }
     if (dev_list.empty()) {
-        throw std::runtime_error("No CUDA device with compute capability >= 6.0 found.");
+        throw std::runtime_error("No CUDA device with compute capability >=6.0 found.");
     }
 
     return dev_list;
@@ -246,40 +246,8 @@ py::array_t<double, py::array::c_style> radon_cuda(
     auto image_info = image.request();
     auto kernel_info = kernel.request();
     auto theta_info = theta.request();
-
-    if (image_info.ndim != 3) {
-        throw py::value_error("image must be a 3D array.");
-    }
-
-    if (theta_info.ndim != 1) {
-        throw py::value_error("theta must be a 1D array.");
-    }
-
-    if (kernel_info.ndim != 2) {
-        throw py::value_error("kernel must be a 2D array.");
-    }
-
-    if (nI < 0L) {
-        throw py::value_error("nI must be greater or equal to 0.");
-    }
-
-    if (a < 0.0) {
-        throw py::value_error("a, the maximal argument of the lookup table must be a positive.");
-    }
-
-    if (Nc < 1L) {
-        throw py::value_error("The number of captor must at least be 1.");
-    }
-
-    if (nS < -1L) {
-        throw py::value_error("nS must be greater of equal to -1.");
-    }
-
+    
     const long NAngles = theta_info.shape[0];
-
-    if (NAngles != kernel_info.shape[0]) {
-        throw py::value_error("The kernel must have NAngles rows.");
-    }
 
     auto dev_list = compatible_cuda_devices();
     auto device_id = dev_list[0];
@@ -403,46 +371,8 @@ py::array_t<double, py::array::c_style> iradon_cuda(
     auto kernel_info = kernel.request();
     auto theta_info = theta.request();
 
-    if (sinogram_info.ndim != 3) {
-        throw py::value_error("sinogram must be a 3D array.");
-    }
-
-    if (theta_info.ndim != 1) {
-        throw py::value_error("theta must be a 1D array.");
-    }
-
-    if (kernel_info.ndim != 2) {
-        throw py::value_error("kernel must be a 2D array.");
-    }
-
-    if (nS < 0L) {
-        throw py::value_error("nS must be greater or equal to 0.");
-    }
-
     const long NAngles = sinogram_info.shape[0];
 
-    if (NAngles != theta_info.size) {
-        throw py::value_error("The number of angles in theta in incompatible with the sinogram.");
-    }
-
-    if (nI < -1L) {
-        throw py::value_error("nI must be greater or equal to -1.");
-    }
-
-    if (NAngles != kernel_info.shape[0]) {
-        throw py::value_error("The kernel table must have NAngles rows.");
-    }
-
-    if (a < 0) {
-        throw py::value_error("a, the max argument of the lookup table must be positive.");
-    }
-
-    if (Nx < 1L) {
-        throw py::value_error("Nx must at least be 1.");
-    }
-    if (Nz < 1L) {
-        throw py::value_error("Nz must at least be 1.");
-    }
 
     auto dev_list = compatible_cuda_devices();
     auto device_id = dev_list[0];
