@@ -1,5 +1,5 @@
 """
-The reconstruct module provides reconstruction algorithm,
+The reconstruct module provides reconstruction algorithms,
 as well as preprocessing tools and performance scores.
 """
 
