@@ -5,7 +5,7 @@ channels:
 dependencies:
   - cmake>=3.18*
   - cxx-compiler
-  - python>=3*
+  - python>=3.7*
   - numpy>=1.17*
   - scipy>=1.4*
   - noise>=1.2*

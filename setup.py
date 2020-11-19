@@ -92,6 +92,7 @@ setup(
     ],
     packages=find_packages(exclude=('tests', )),
     install_requires=requires,
+    python_requires='>=3.7',
     extras_require=extras_require,
     cmdclass={'build_ext': CMakeBuild},
     zip_safe=False,
