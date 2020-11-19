@@ -13,14 +13,14 @@ requires = [
     'opencv-python',
     'apeer-ometiff-library',
     'scipy>=1.4.0',
-    'mpi4py',
     'scikit-image',
     'noise',
     'poppy',
 ]
 
 extras_require = {
-    'plots': ['napari', 'matplotlib']
+    'plots': ['napari', 'matplotlib'],
+    'distributed': ['mpi4py'],
 }
 
 

@@ -1,8 +1,13 @@
 import numpy as np
-from cbi_toolbox import distributed
 from cbi_toolbox import utils
 import os
 import unittest
+try:
+    from cbi_toolbox import distributed
+    MPI_AVAILABLE = True
+except ImportError:
+    distributed = None
+    MPI_AVAILABLE = False
 
 
 def check_distributed_array(reference, array, axis):
@@ -31,6 +36,7 @@ def test_distributed_save(file_name, reference, array, axis):
         return True
 
 
+@unittest.skipUnless(MPI_AVAILABLE, "MPI optional dependency not installed.")
 class TestDistributedArrays(unittest.TestCase):
     ref_file = 'test_source.npy'
     tmp_file = 'test_save.npy'
