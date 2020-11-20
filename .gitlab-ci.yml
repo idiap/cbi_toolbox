@@ -8,7 +8,7 @@ default:
     - python3 --version
     - pip3 install --upgrade pip setuptools wheel
     - pip3 --version
-    - pip3 install . -v
+    - pip3 install .
   
   tags:
     - lidiap
