@@ -9,6 +9,9 @@ default:
     - pip3 install --upgrade pip setuptools wheel
     - pip3 --version
     - pip3 install . -v
+  
+  tags:
+    - lidiap
 
 test:
   script:
