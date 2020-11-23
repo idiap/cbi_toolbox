@@ -2,16 +2,12 @@ variables:
   GIT_SUBMODULE_STRATEGY: recursive
 
 default:
-  #image: gpuci/miniconda-cuda:11.0-devel-ubuntu16.04
 
   before_script:
-    - python3 --version
     - pip3 install --upgrade pip setuptools wheel
     - pip3 install pipenv
-    - PIPENV_VENV_IN_PROJECT=1 pipenv shell
-    - which python
-    - which pip
-    - pip install .
+    - PIPENV_VENV_IN_PROJECT=1 pipenv install .
+    - pipenv run python --version
 
   after_script:
     - pipenv --rm
@@ -19,7 +15,7 @@ default:
 test:
   script:
     - cd tests
-    - python -m unittest
+    - pipenv run python -m unittest
 
 
 #pages:
