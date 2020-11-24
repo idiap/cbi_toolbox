@@ -5,17 +5,20 @@ default:
 
   before_script:
     - pip3 install --upgrade pip setuptools wheel
-    - pip3 install pipenv
-    - PIPENV_VENV_IN_PROJECT=1 pipenv install .
-    - pipenv run python --version
+    - python3 -m venv .venv
+    - source .venv/bin/activate
+    - python --version
+    - pip --version
+    - which pip
+    - pip install .
 
   after_script:
-    - pipenv --rm
+    - rm -rf .venv
 
 test:
   script:
     - cd tests
-    - pipenv run python -m unittest
+    - python -m unittest
 
 
 #pages:
