@@ -9,8 +9,6 @@ default:
     - python3 -m virtualenv -p python3 .venv
     - source .venv/bin/activate
     - python --version
-    - pip --version
-    - which pip
     - pip install .
 
   after_script:
