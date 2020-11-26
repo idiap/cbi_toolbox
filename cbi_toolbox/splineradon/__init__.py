@@ -1,15 +1,36 @@
 """
-This package implements radon and inverse radon transforms using b-spline interpolation formulas.
+The splineradon package implements radon and inverse radon transforms using
+b-spline interpolation formulas described in [1] using multithreading and GPU
+acceleration.
+
+[1] *S. Horbelt, M. Liebling, M. Unser, "Discretization of the Radon Transform
+and of Its Inverse by Spline Convolutions," IEEE Transactions on Medical Imaging,
+vol 21, no 4, pp. 363-376, April 2002.*
 """
 
 import numpy as np
 
-from cbi_toolbox.splineradon import filter_sinogram, spline_kernels
+from ._filter_sinogram import *
+from ._spline_kernel import *
 from cbi_toolbox.bsplines import change_basis
 import cbi_toolbox.splineradon.cradon as cradon
 
 
 def is_cuda_available(verbose=False):
+    """
+    Check if CUDA can be used for computations.
+
+    Parameters
+    ----------
+    verbose : bool, optional
+        Print verbose errors, by default False.
+
+    Returns
+    -------
+    bool
+        Whether CUDA is available.
+    """
+
     try:
         return cradon.is_cuda_available()
     except RuntimeError as e:
@@ -21,29 +42,48 @@ def is_cuda_available(verbose=False):
 def radon(image, theta=np.arange(180), angledeg=True, n=None,
           b_spline_deg=(2, 3), sampling_steps=(1, 1),
           center=None, captors_center=None, circle=False,
-          kernel=None, use_cuda=False):
+          nt=200, use_cuda=False):
     """
     Perform a radon transform on the image.
 
-    :param image: [z, x, y]
-    :param theta:
-    :param angledeg:
-    :param n:
-    :param b_spline_deg: (ni, ns)
-    :param sampling_steps:
-    :param center:
-    :param captors_center:
-    :param circle: if the object is contained in the inner circle/cylinder (will produce sinogram with same width as image)
-    :param kernel:
-    :param use_cuda:
-    :return: sinogram [angles, captors, y]
+    Parameters
+    ----------
+    image : numpy.ndarray [ZXY] or [ZX]
+        The input image.
+    theta : array_like, optional
+        The sinogram angles, by default numpy.arange(180).
+    angledeg : bool, optional
+        Give angles in degrees instead of radians, by default True.
+    n : int, optional
+        The number of captors (overrides sampling_steps[1]), by default None.
+    b_spline_deg : tuple, optional
+        (ni, ns) the degrees of the image and sinogram bspline bases,
+        by default (2, 3).
+    sampling_steps : tuple, optional
+        Pixel sampling steps on the image and the sinogram, by default (1, 1).
+    center : tuple, optional
+        (z, x) the center of rotation of the image, by default None (centered).
+    captors_center : [type], optional
+        The position of the center of rotation in the sinogram, by default None.
+    circle : bool, optional
+        If the object is contained in the inner circle/cylinder (will produce a
+        sinogram with same width as the image), by default False.
+    nt : int, optional
+        Number of points stored in the spline kernel, by default 200.
+    use_cuda : bool, optional
+        Use CUDA GPU acceleration, by default False.
+
+    Returns
+    -------
+    numpy.ndarray [TPY]
+        The computed sinogram.
     """
 
-    spline_image = radon_pre(image, b_spline_deg)
+    spline_image = radon_pre(image, b_spline_deg[0])
     sinogram = radon_inner(spline_image, theta, angledeg, n, b_spline_deg, sampling_steps,
-                           center, captors_center, circle, kernel, use_cuda=use_cuda)
+                           center, captors_center, circle, nt, use_cuda=use_cuda)
 
-    sinogram = radon_post(sinogram, b_spline_deg)
+    sinogram = radon_post(sinogram, b_spline_deg[1])
 
     return sinogram
 
@@ -51,43 +91,71 @@ def radon(image, theta=np.arange(180), angledeg=True, n=None,
 def iradon(sinogram, theta=None, angledeg=True, filter_type='RAM-LAK',
            b_spline_deg=(2, 3), sampling_steps=(1, 1),
            center=None, captors_center=None, circle=False,
-           kernel=None, use_cuda=False):
+           nt=200, use_cuda=False):
     """
-    Perform an inverse radon transform (backprojection) on the sinogram.
+    Perform a filtered back projection on the sinogram.
 
-    :param sinogram: [angles, captors, y]
-    :param theta:
-    :param angledeg:
-    :param n:
-    :param filter_type:
-    :param b_spline_deg: (ni, ns)
-    :param sampling_steps:
-    :param center:
-    :param captors_center:
-    :param circle: if radon was computed with circle=True
-    :param kernel:
-    :param use_cuda:
-    :return: image [z, x, y]
+    Parameters
+    ----------
+    sinogram : numpy.ndarray [TPY]
+        The input sinogram.
+    theta : array_like, optional
+        The sinogram angles, by default numpy.arange(180).
+    angledeg : bool, optional
+        Give angles in degrees instead of radians, by default True.
+    filter_type : str, optional
+        The type of filter used for FBP, by default 'RAM-LAK'.
+        Can be one of ['None', 'Ram-Lak', 'Shepp-Logan', 'Cosine'].
+    b_spline_deg : tuple, optional
+        (ni, ns) the degrees of the image and sinogram bspline bases,
+        by default (2, 3).
+    sampling_steps : tuple, optional
+        Pixel sampling steps on the image and the sinogram, by default (1, 1).
+    center : tuple, optional
+        (z, x) the center of rotation of the image, by default None (centered).
+    captors_center : [type], optional
+        The position of the center of rotation in the sinogram, by default None.
+    circle : bool, optional
+        If the object is contained in the inner circle/cylinder (will produce a
+        sinogram with same width as the image), by default False.
+    nt : int, optional
+        Number of points stored in the spline kernel, by default 200.
+    use_cuda : bool, optional
+        Use CUDA GPU acceleration, by default False.
+
+    Returns
+    -------
+    numpy.ndarray [ZXY]
+        The reconstructed image.
     """
 
-    sinogram = iradon_pre(sinogram, b_spline_deg, filter_type, circle)
+    sinogram = iradon_pre(sinogram, b_spline_deg[1], filter_type, circle)
 
     image, theta = iradon_inner(sinogram, theta, angledeg, b_spline_deg, sampling_steps,
-                                center, captors_center, kernel, use_cuda=use_cuda)
-    image = iradon_post(image, theta, b_spline_deg)
+                                center, captors_center, nt, use_cuda=use_cuda)
+    image = iradon_post(image, theta, b_spline_deg[0])
 
     return image
 
 
-def radon_pre(image, b_spline_deg=(2, 3)):
+def radon_pre(image, ni=2):
     """
     Pre-processing step for radon transform.
+    Projects the image onto a bspline basis.
 
-    :param image:
-    :param b_spline_deg:
-    :return:
+    Parameters
+    ----------
+    image : numpy.ndarray [ZXY] or [ZX]
+        The raw input image.
+    ni : tuple, optional
+        The degree of the image bspline basis, by default 2.
+
+    Returns
+    -------
+    np.ndarray
+        The projected image.
     """
-    ni = b_spline_deg[0]
+
     return change_basis(image, 'cardinal', 'b-spline', ni, (0, 1),
                         boundary_condition='periodic')
 
@@ -95,23 +163,44 @@ def radon_pre(image, b_spline_deg=(2, 3)):
 def radon_inner(spline_image, theta=np.arange(180), angledeg=True, n=None,
                 b_spline_deg=(2, 3), sampling_steps=(1, 1),
                 center=None, captors_center=None, circle=False,
-                kernel=None, use_cuda=False):
+                nt=200, use_cuda=False):
     """
-    Raw radon transform, require pre and post-processing. This can be run in parallel by splitting theta.
+    Raw radon transform, requires pre and post-processing (projections onto
+    bspline bases). This can be run in parallel by splitting theta.
 
-    :param spline_image:
-    :param theta:
-    :param angledeg:
-    :param n:
-    :param b_spline_deg:
-    :param sampling_steps:
-    :param center:
-    :param captors_center:
-    :param circle:
-    :param kernel:
-    :param use_cuda:
-    :return:
+    Parameters
+    ----------
+    spline_image : numpy.ndarray
+        The input image in a bspline basis.
+    theta : array_like, optional
+        The sinogram angles, by default numpy.arange(180).
+    angledeg : bool, optional
+        Give angles in degrees instead of radians, by default True.
+    n : int, optional
+        The number of captors (overrides sampling_steps[1]), by default None.
+    b_spline_deg : tuple, optional
+        (ni, ns) the degrees of the image and sinogram bspline bases,
+        by default (2, 3).
+    sampling_steps : tuple, optional
+        Pixel sampling steps on the image and the sinogram, by default (1, 1).
+    center : tuple, optional
+        (z, x) the center of rotation of the image, by default None (centered).
+    captors_center : [type], optional
+        The position of the center of rotation in the sinogram, by default None.
+    circle : bool, optional
+        If the object is contained in the inner circle/cylinder (will produce a
+        sinogram with same width as the image), by default False.
+    nt : int, optional
+        Number of points stored in the spline kernel, by default 200.
+    use_cuda : bool, optional
+        Use CUDA GPU acceleration, by default False.
+
+    Returns
+    -------
+    numpy.ndarray [TPY]
+        The computed sinogram in a bspline basis.
     """
+
     nz = spline_image.shape[0]
     nx = spline_image.shape[1]
     h = sampling_steps[0]
@@ -140,10 +229,7 @@ def radon_inner(spline_image, theta=np.arange(180), angledeg=True, n=None,
     if angledeg:
         theta = np.deg2rad(theta)
 
-    if kernel is None:
-        nt = 200
-        kernel = spline_kernels.get_kernel_table(
-            nt, ni, ns, h, s, -theta, degree=False)
+    kernel = get_kernel_table(nt, ni, ns, h, s, -theta, degree=False)
 
     squeeze = False
     if spline_image.ndim < 3:
@@ -172,15 +258,23 @@ def radon_inner(spline_image, theta=np.arange(180), angledeg=True, n=None,
     return sinogram
 
 
-def radon_post(sinogram, b_spline_deg=(2, 3)):
+def radon_post(sinogram, ns=3):
     """
     Post-processing for the radon transform.
+    Projects the sinogram back from a bspline basis.
 
-    :param sinogram:
-    :param b_spline_deg:
-    :return:
+    Parameters
+    ----------
+    sinogram : numpy.ndarray
+        The sinogram in bspline basis.
+    ns : tuple, optional
+        The degree of the sinogram bspline basis, by default 3
+
+    Returns
+    -------
+    numpy.ndarray
+        The sinogram.
     """
-    ns = b_spline_deg[1]
 
     if ns > -1:
         sinogram = change_basis(sinogram, 'dual', 'cardinal',
@@ -188,17 +282,29 @@ def radon_post(sinogram, b_spline_deg=(2, 3)):
     return sinogram
 
 
-def iradon_pre(sinogram, b_spline_deg=(2, 3), filter_type='RAM-LAK', circle=False):
+def iradon_pre(sinogram, ns=3, filter_type='RAM-LAK', circle=False):
     """
     Pre-processing for the inverse radon transform.
+    Filters the sinogram and projects it onto a bspline basis.
 
-    :param sinogram:
-    :param b_spline_deg:
-    :param filter_type:
-    :param circle:
-    :return:
+    Parameters
+    ----------
+    sinogram : numpy.ndarray
+        The raw sinogram.
+    ns : tuple, optional
+        Degree of the sinogram bspline basis, by default 3.
+    filter_type : str, optional
+        The type of filter used for FBP, by default 'RAM-LAK'.
+        Can be one of ['None', 'Ram-Lak', 'Shepp-Logan', 'Cosine'].
+    circle : bool, optional
+        If the object is contained in the inner circle/cylinder (will produce a
+        sinogram with same width as the image), by default False.
+
+    Returns
+    -------
+    numpy.ndarray
+        The filtered and projected sinogram.
     """
-    ns = b_spline_deg[1]
 
     if circle:
         shape = sinogram.shape[1]
@@ -209,8 +315,7 @@ def iradon_pre(sinogram, b_spline_deg=(2, 3), filter_type='RAM-LAK', circle=Fals
         padding[1] = (pad, )
         sinogram = np.pad(sinogram, padding)
 
-    sinogram, pre_filter = filter_sinogram.filter_sinogram(
-        sinogram, filter_type, ns)
+    sinogram, pre_filter = filter_sinogram(sinogram, filter_type, ns)
 
     if pre_filter:
         sinogram = change_basis(sinogram, 'CARDINAL', 'B-SPLINE', ns, 1,
@@ -221,22 +326,40 @@ def iradon_pre(sinogram, b_spline_deg=(2, 3), filter_type='RAM-LAK', circle=Fals
 def iradon_inner(sinogram_filtered, theta=None, angledeg=True,
                  b_spline_deg=(2, 3), sampling_steps=(1, 1),
                  center=None, captors_center=None,
-                 kernel=None, use_cuda=False):
+                 nt=200, use_cuda=False):
     """
-    Raw inverse radon transform, requires pre and post-processing. 
+    Raw inverse radon transform, requires pre and post-processing for sinogram
+    filtering and change to bspline basis.
     Can be run in parallel by splitting the sinogram and theta.
 
-    :param sinogram_filtered:
-    :param theta:
-    :param angledeg:
-    :param b_spline_deg:
-    :param sampling_steps:
-    :param center:
-    :param captors_center:
-    :param kernel:
-    :param use_cuda:
-    :return:
+    Parameters
+    ----------
+    sinogram_filtered : numpy.ndarray [TPY]
+        The pre-processed sinogram.
+    theta : array_like, optional
+        The sinogram angles, by default numpy.arange(180).
+    angledeg : bool, optional
+        Give angles in degrees instead of radians, by default True.
+    b_spline_deg : tuple, optional
+        (ni, ns) the degrees of the image and sinogram bspline bases,
+        by default (2, 3).
+    sampling_steps : tuple, optional
+        Pixel sampling steps on the image and the sinogram, by default (1, 1).
+    center : tuple, optional
+        (z, x) the center of rotation of the image, by default None (centered).
+    captors_center : [type], optional
+        The position of the center of rotation in the sinogram, by default None.
+    nt : int, optional
+        Number of points stored in the spline kernel, by default 200.
+    use_cuda : bool, optional
+        Use CUDA GPU acceleration, by default False.
+
+    Returns
+    -------
+    numpy.ndarray
+        The image in bspline basis.
     """
+
     nc = sinogram_filtered.shape[1]
     na = sinogram_filtered.shape[0]
 
@@ -257,10 +380,7 @@ def iradon_inner(sinogram_filtered, theta=None, angledeg=True,
     if angledeg:
         theta = np.deg2rad(theta)
 
-    if kernel is None:
-        nt = 200
-        kernel = spline_kernels.get_kernel_table(
-            nt, ni, ns, h, s, -theta, degree=False)
+    kernel = get_kernel_table(nt, ni, ns, h, s, -theta, degree=False)
 
     nx = int(np.floor(nc / np.sqrt(2)))
     nx -= (nx % 2 != nc % 2)
@@ -300,17 +420,26 @@ def iradon_inner(sinogram_filtered, theta=None, angledeg=True,
     return image, theta
 
 
-def iradon_post(image, theta, b_spline_deg=(2, 3)):
+def iradon_post(image, theta, ni=2):
     """
-    Post-processing for the inverse radon transform.
+    Post-processing for the inverse Radon transform.
+    Projects the image back from a bspline basis and normalizes it.
 
-    :param image:
-    :param theta:
-    :param b_spline_deg:
-    :return:
+    Parameters
+    ----------
+    image : numpy.ndarray
+        The image in bspline basis.
+    theta : array_like
+        The projection angles of the sinogram.
+    ni : tuple, optional
+        The degree of the image bspline basis, by default 2.
+
+    Returns
+    -------
+    numpy.ndarray
+        The reconstructed image.
     """
 
-    ni = b_spline_deg[0]
     if ni > -1:
         image = change_basis(image, 'DUAL', 'CARDINAL', ni,
                              (0, 1), boundary_condition='periodic', in_place=True)

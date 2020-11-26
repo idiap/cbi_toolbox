@@ -13,11 +13,20 @@ import skimage.transform
 
 
 def quadrant_symmetry(quadrant):
-    '''
-    Generate a quadrant by rotating itself 90° on all 3 axes and summing
-    :param quadrant:
-    :return:
-    '''
+    """
+    Generate a binary quadrant by rotating itself 90° on all 3 axes and summing.
+
+    Parameters
+    ----------
+    quadrant : numpy.ndarray(bool)
+        The original 3D quadrant.
+
+    Returns
+    -------
+    numpy.ndarray
+        The symmetrized quadrant. Will have cubic shape equal to the largest
+        dimension of the original quadrant.
+    """
 
     size = np.max(quadrant.shape)
 
@@ -33,13 +42,23 @@ def quadrant_symmetry(quadrant):
 
 
 def quadrant_to_volume(quadrant, odd=(False, False, False)):
-    '''
-    Generate a volume by mirroring a quadrant in all 8 corners
+    """
+    Generate a volume by mirroring a quadrant in all 8 corners.
 
-    :param quadrant:
-    :param odd: if the corresponding axis has an odd dimension
-    :return:
-    '''
+    Parameters
+    ----------
+    quadrant : numpy.ndarray
+        The quadrant corresponding to the end of the axes.
+    odd : tuple, optional
+        If the target dimensions are odd, by default (False, False, False).
+        If even, the dimension will be ``2 * quandrant.shape``.
+        If odd, the dimension will be ``2 * quadrant.shape - 1``.
+
+    Returns
+    -------
+    numpy.ndarray
+        The full volume.
+    """
 
     volume = np.empty(
         (2 * quadrant.shape[0] - odd[0], 2 * quadrant.shape[1] - odd[1], 2 * quadrant.shape[2] - odd[2]), dtype=quadrant.dtype)
@@ -57,18 +76,42 @@ def quadrant_to_volume(quadrant, odd=(False, False, False)):
 
 def boccia(size, radius=None, n_stripes=3, deg_space=15, deg_width=7.5, rad_thick=0.12,
            antialias=2, dtype=np.float64):
-    '''
+    """
     Create a boccia simulated sample: resolution stripes on a sphere
 
-    :param size: side of the cube containing the volume
-    :param radius: radius of the boccia
-    :param n_stripes: number of stripes to generate
-    :param deg_space: spacing in degrees between the center of the stripes
-    :param deg_width: width in degrees of the stripes
-    :param rad_thick: thickness of the stripes, as a proportion of the radius
-    :param antialias: antialiasing scale factor
-    :return:
-    '''
+    Parameters
+    ----------
+    size : int
+        side of the cube containing the volume (must be even)
+    radius : float, optional
+        radius of the boccia, by default None (will be size-1)
+    n_stripes : int, optional
+        number of stripes to generate, by default 3
+    deg_space : int, optional
+        spacing in degrees between the center of the stripes, by default 15
+    deg_width : float, optional
+        width in degrees of the stripes, by default 7.5
+    rad_thick : float, optional
+        thickness of the stripes, as a proportion of the radius, by default 0.12
+    antialias : int, optional
+        antialiasing scale factor, by default 2
+    dtype : numpy.dtype or str, optional
+        the datatype, by default numpy.float64
+
+    Returns
+    -------
+    numpy.ndarray
+        The volume containing the boccia.
+
+    Raises
+    ------
+    ValueError
+        if the size is odd
+    ValueError
+        if the antialias is negative
+    ValueError
+        if the angle surpasses 90°
+    """
 
     if size % 2:
         raise ValueError('The size must be even to cut it in quadrants')
@@ -125,17 +168,40 @@ def boccia(size, radius=None, n_stripes=3, deg_space=15, deg_width=7.5, rad_thic
 
 def torus_boccia(size, radius=None, n_stripes=3, deg_space=15, torus_radius=0.075,
                  antialias=2, dtype=np.float64):
-    '''
+    """
     Generate a boccia with torus stripes
 
-    :param size: side of the cube containing the volume
-    :param radius: radius of the boccia
-    :param n_stripes: number of torus stripes
-    :param deg_space: spacing of the torus on the sphere in degrees
-    :param torus_radius: radius of the torus, as a fraction of the sphere radius
-    :param antialias: antialiasing scale factor
-    :return:
-    '''
+    Parameters
+    ----------
+    size : int
+        side of the cube containing the volume (must be even)
+    radius : [type], optional
+        radius of the boccia, by default None
+    n_stripes : int, optional
+        number of torus stripes, by default 3
+    deg_space : int, optional
+        spacing of the torus on the sphere in degrees, by default 15
+    torus_radius : float, optional
+        radius of the torus, as a fraction of the sphere radius, by default 0.075
+    antialias : int, optional
+        antialiasing scale factor, by default 2
+    dtype : numpy.dtype or str, optional
+        the datatype, by default numpy.float64
+
+    Returns
+    -------
+    numpy.ndarray
+        The volume containing the torus boccia.
+
+    Raises
+    ------
+    ValueError
+        if the size is odd
+    ValueError
+        if the antialias is negative
+    ValueError
+        if the angle surpasses 90°
+    """
 
     if size % 2:
         raise ValueError('The size must be even to cut it in quadrants')
@@ -187,15 +253,40 @@ def torus_boccia(size, radius=None, n_stripes=3, deg_space=15, torus_radius=0.07
 
 
 def ball(size, radius=None, in_radius=0, antialias=2, dtype=np.float64):
-    '''
-    Generate a boccia with torus stripes
+    """
+    Generate hollow ball.
 
-    :param size: side of the cube containing the volume
-    :param radius: radius of the ball
+    :param size: 
+    :param radius: 
     :param in_radius: inner radius fraction (set to 0 for full ball)
     :param antialias: antialiasing scale factor
-    :return:
-    '''
+
+    Parameters
+    ----------
+    size : int
+        side of the cube containing the volume
+    radius : float, optional
+        radius of the ball, by default None
+    in_radius : float, optional
+        radius of the inner (empty) sphere expressed as a fraction of the outer
+        radius [0-1], by default 0 (plain ball)
+    antialias : int, optional
+        antialiasing scale factor, by default 2
+    dtype : numpy.dtype or str, optional
+        the datatype, by default numpy.float64
+
+    Returns
+    -------
+    numpy.ndarray
+        The volume containing the ball.
+
+    Raises
+    ------
+    ValueError
+        if the size is odd
+    ValueError
+        if the antialias is negative
+    """
 
     if size % 2:
         raise ValueError('The size must be even to cut it in quadrants')

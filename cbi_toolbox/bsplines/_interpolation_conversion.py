@@ -1,9 +1,14 @@
-# B-spline interpolation function for degree up to 7
-# Christian Jaques, june 2016, Computational Bioimaging Group, Idiap
-# Francois Marelli, may 2019, Computational Bioimaging Group, Idiap
-# This code is a translation of Michael Liebling's matlab code,
-# which was already largely based on a C-library written by Philippe
-# Thevenaz, BIG, EPFL
+"""
+This modules implements signal conversion to bspline interpolation coefficients
+and back.
+
+B-spline interpolation function for degree up to 7
+Christian Jaques, june 2016, Computational Bioimaging Group, Idiap
+Francois Marelli, may 2019, Computational Bioimaging Group, Idiap
+This code is a translation of Michael Liebling's matlab code,
+which was already largely based on a C-library written by Philippe
+Thevenaz, BIG, EPFL
+"""
 
 import math
 
@@ -12,14 +17,16 @@ from scipy import signal
 from scipy import ndimage
 
 from cbi_toolbox.utils import make_broadcastable
-from cbi_toolbox.bsplines import compute_bspline
+from cbi_toolbox import bsplines
 
 
-def initial_causal_coefficient(coeff, z, tolerance, boundary_condition='Mirror'):
+def initial_causal_coefficient(coeff, z, tolerance, boundary_condition='mirror'):
     """
-        Computes the initial causal coefficient from an array of coefficients
-        In the input array, signals are considered to be along the first dimension (1D computations)
+    Computes the initial causal coefficient from an array of coefficients
+    In the input array, signals are considered to be along the first dimension 
+    (1D computations).
     """
+
     n = coeff.shape[0]
 
     # mirror boundaries condition (mirror is on last sample)
@@ -96,8 +103,9 @@ def initial_causal_coefficient(coeff, z, tolerance, boundary_condition='Mirror')
 
 def initial_anticausal_coefficient(c, z, boundary_condition='Mirror'):
     """
-        Computes the initial anti-causal coefficient from an array of coefficients
-        In the input array, signals are considered to be along the first dimension (1D computations)
+    Computes the initial anti-causal coefficient from an array of coefficients
+    In the input array, signals are considered to be along the first dimension
+    (1D computations).
     """
     if boundary_condition.upper() == 'MIRROR':
         c0 = -z * (c[-1, ...] + z * c[-2, ...]) / (1 - z ** 2)
@@ -123,10 +131,13 @@ def initial_anticausal_coefficient(c, z, boundary_condition='Mirror'):
     return c0
 
 
-def convert_to_interpolation_coefficients(c, degree, tolerance=1e-9, boundary_condition='Mirror', in_place=False):
+def convert_to_interpolation_coefficients(c, degree, tolerance=1e-9,
+                                          boundary_condition='Mirror',
+                                          in_place=False):
     """
-        Computes the b-spline interpolation coefficients of a signal
-        In the input array, the signals are considered along the first dimension (1D computations)
+    Computes the b-spline interpolation coefficients of a signal
+    In the input array, the signals are considered along the first
+    dimension (1D computations).
     """
 
     if degree == 0 or degree == 1 or c.shape[0] == 1:
@@ -211,8 +222,9 @@ def convert_to_interpolation_coefficients(c, degree, tolerance=1e-9, boundary_co
 
 def convert_to_samples(c, deg, boundary_condition='Mirror', in_place=False):
     """
-        Convert interpolation coefficients into samples
-        In the input array, the signals are considered along the first dimension (1D computations)
+    Convert interpolation coefficients into samples
+    In the input array, the signals are considered along the first dimension
+    (1D computations).
     """
 
     n = c.shape[0]
@@ -222,7 +234,7 @@ def convert_to_samples(c, deg, boundary_condition='Mirror', in_place=False):
     kerlen = int(2 * math.floor(deg / 2.) + 1)
 
     k = -math.floor(deg / 2.) + np.arange(kerlen)
-    kernel = compute_bspline(deg, k)
+    kernel = bsplines.bspline(k, deg)
 
     # different extensions based on boundary condition
     if boundary_condition.upper() == 'MIRROR':

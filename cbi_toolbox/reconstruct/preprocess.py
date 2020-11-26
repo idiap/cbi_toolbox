@@ -1,8 +1,29 @@
+"""
+The preprocess module implements functions to preprocess experimental images.
+"""
+
 import cv2
 import numpy as np
 
 
 def erase_corners(image_array, corner_size=300):
+    """
+    Fill the corners of the image with the closest pixel value.
+    This is useful when a diaphragm is visible in the field of view.
+
+    Parameters
+    ----------
+    image_array : numpy.ndarray
+        The original image.
+    corner_size : int, optional
+        The size of the corner to fill, by default 300
+
+    Returns
+    -------
+    numpy.ndarray
+        The new image with corners filled.
+    """
+
     if corner_size > 0:
         image_array[..., :corner_size, :corner_size] = image_array[...,
                                                                    corner_size, corner_size, None, None]
@@ -17,6 +38,23 @@ def erase_corners(image_array, corner_size=300):
 
 
 def transmission_to_absorption(image_array, max_value=4096):
+    """
+    Convert a transmission image into an absorption one.
+    This inverses the black-white contrast.
+
+    Parameters
+    ----------
+    image_array : numpy.ndarray
+        The absorption image.
+    max_value : float, optional
+        The max value for scaling the original image, by default 4096.
+
+    Returns
+    -------
+    numpy.ndarray
+        The absorption contrast image.
+    """
+
     scaled_array = image_array / max_value
 
     absorption = np.log(1 / scaled_array)
@@ -24,7 +62,32 @@ def transmission_to_absorption(image_array, max_value=4096):
     return absorption
 
 
-def remove_background_illumination(image_array, threshold=0.5, hole_size=250, margin_size=100, border_axis=-1):
+def remove_background_illumination(image_array, threshold=0.5, hole_size=250,
+                                   margin_size=100, border_axis=-1):
+    """
+    Removes the background illumination from images using thresholding and
+    morphological filtering.
+
+    Parameters
+    ----------
+    image_array : numpy.ndarray
+        The images to be processed as a 3D array, the first dimension iterates
+        over the different images.
+    threshold : float, optional
+        The relative threshold used to detect background, by default 0.5.
+    hole_size : int, optional
+        Biggest holes removed by filtering, by default 250.
+    margin_size : int, optional
+        Margin kept around the useful information, by default 100.
+    border_axis : int, optional
+        Axis used to detect the outer edge of the image, by default -1.
+
+    Returns
+    -------
+    numpy.ndarray
+        The array of images without background illumination.
+    """
+
     mask_bool = image_array < threshold
     mask_int = mask_bool.astype(np.uint8)
 
@@ -66,28 +129,3 @@ def remove_background_illumination(image_array, threshold=0.5, hole_size=250, ma
     image_array[mask_bool] = 0
 
     return image_array
-
-# def shift_axis_correlation(image, project_axis, padding=100, max_shift=100, rel_corr_threshold=0.5):
-#     project = image.sum(project_axis)
-#     if padding > 0:
-#         project = project[..., padding:-padding]
-#
-#     project = project - project.mean()
-#     p_mean = project.mean(0)
-#
-#     if max_shift > 0:
-#         project = project[..., max_shift:-max_shift]
-#
-#     shifts = np.empty(project.shape[0], dtype=int)
-#     correlations = np.empty(shifts.shape)
-#
-#     for index, sub_project in enumerate(project):
-#         correlation = np.correlate(p_mean, sub_project)
-#         shift = correlation.argmax()
-#         correlations[index] = correlation[shift]
-#         shifts[index] = shift
-#     shifts = shifts - max_shift
-#     correlations = correlations / correlations.max()
-#     shifts[correlations < rel_corr_threshold] = 0
-#
-#     return shifts

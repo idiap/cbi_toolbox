@@ -1,5 +1,5 @@
 """
-The reconstruct module provides reconstruction algorithms,
+The reconstruct package provides reconstruction algorithms,
 as well as preprocessing tools and performance scores.
 """
 
@@ -8,24 +8,25 @@ import numpy as np
 
 def psnr(ref, target, norm=None, limit=None):
     """
-    Computes the Peak Signal-to-Noise Ratio
+    Computes the Peak Signal-to-Noise Ratio:
     PSNR = 10 log( limit ^ 2 / MSE(ref, target) )
 
     Parameters
     ----------
-    ref : array
-        the ground-truth reference array
-    target : array
-        the reconstructed array
+    ref : numpy.ndarray
+        The ground-truth reference array.
+    target : numpy.ndarray
+        The reconstructed array.
     norm : str
-        normalize the images before computing snr, default is None
+        Normalize the images before computing snr, default is None.
     limit: float, optional
-        the maximum pixel value used for PSNR computation, default is None (max(ref))
+        The maximum pixel value used for PSNR computation,
+        default is None (max(ref)).
 
     Returns
     -------
     float
-        the PSNR
+        The PSNR.
     """
 
     if norm is None:
@@ -48,15 +49,15 @@ def mse(ref, target):
 
     Parameters
     ----------
-    ref : array
-        reference array
-    target : array
-        target array
+    ref : numpy.ndarray
+        Reference array.
+    target : numpy.ndarray
+        Target array.
 
     Returns
     -------
     float
-        the MSE
+        The MSE.
     """
 
     return np.square(np.subtract(ref, target)).mean()
@@ -64,25 +65,27 @@ def mse(ref, target):
 
 def normalize(image, mode='std'):
     """
-    Normalize an image according to the given criterion
+    Normalize an image according to the given criterion.
 
     Parameters
     ----------
-    image : array
-        image to normalize, will be modified
+    image : numpy.ndarray
+        Image to normalize, will be modified.
     mode : str, optional
-        type of normalization to use, by default 'std'
+        Type of normalization to use, by default 'std'.
+        Allowed: ['std', 'max', 'sum']
 
     Returns
     -------
     array
-        the normalized image (same as input)
+        The normalized image (same as input).
 
     Raises
     ------
     ValueError
-        for unknown mode
+        For unknown mode.
     """
+
     if mode == 'std':
         f = np.std(image)
     elif mode == 'max':
@@ -102,15 +105,15 @@ def scale_to_mse(ref, target):
 
     Parameters
     ----------
-    ref : array
-        the reference for MSE
-    target : array
-        the array to rescale (will be done in-place)
+    ref : numpy.ndarray
+        The reference for MSE.
+    target : numpy.ndarray
+        The array to rescale (will be done in-place).
 
     Returns
     -------
-    array
-        the rescaled target
+    numpy.ndarray
+        The rescaled target.
     """
     w = np.sum(ref * target) / np.sum(target ** 2)
     target *= w

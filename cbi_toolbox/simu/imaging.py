@@ -1,6 +1,6 @@
 """
 The imaging module provides simulations of different imaging systems
-and acquisition techniques for microscopy
+and acquisition techniques for microscopy.
 
 Conventions:
     arrays follow the ZXY convention, with

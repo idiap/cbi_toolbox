@@ -1,6 +1,8 @@
 """
-The utils module provides various utility functions to work with files and arrays
+The utils package provides various utility functions to work with files and
+arrays.
 """
+
 import json
 import os
 import numpy as np
@@ -11,17 +13,17 @@ from cbi_toolbox.utils._arrays import *
 
 def load_ome_tiff(file_path):
     """
-    Load an OME tiff file as a numpy array [ZXY]
+    Load an OME tiff file as a numpy array [ZXY].
 
     Parameters
     ----------
     file_path : string
-        the file to load
+        The file to load.
 
     Returns
     -------
     array [ZXY]
-        the loaded array
+        The loaded array.
     """
 
     array, xmlstring = omeio.read_ometiff(file_path)
@@ -33,16 +35,16 @@ def load_ome_tiff(file_path):
 
 def save_ome_tiff(file_path, image, xmlstring=None):
     """
-    Save numpy array to OME tiff format
+    Save numpy array to OME tiff format.
 
     Parameters
     ----------
     file_path : string
-        where to save the data
+        Where to save the data.
     image : array[ZXY]
-        the array to save
+        The array to save.
     xmlstring : str, optional
-        xml metadata, by default None
+        Xml metadata, by default None.
     """
 
     image = image.transpose((0, 2, 1))
@@ -53,12 +55,12 @@ def save_ome_tiff(file_path, image, xmlstring=None):
 def fft_size(n):
     """
     Returns the smallest power of 2 above n, but no less than 64
-    for efficient FFT computations
+    for efficient FFT computations.
 
     Parameters
     ----------
     n : int
-        size of the signal
+        Size of the signal.
     """
 
     return max(64, int(2 ** np.ceil(np.log2(n))))

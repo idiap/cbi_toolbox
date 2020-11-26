@@ -1,19 +1,51 @@
-# B-spline interpolation function for degree up to 7
-# Christian Jaques, june 2016, Computational Bioimaging Group, Idiap
-# Francois Marelli, may 2019, Computational Bioimaging Group, Idiap
-# This code is a translation of Michael Liebling's matlab code,
-# which was already largely based on a C-library written by Philippe
-# Thevenaz, BIG, EPFL
+"""
+This module implements change of basis for bsplines.
+
+Christian Jaques, june 2016, Computational Bioimaging Group, Idiap
+Francois Marelli, may 2019, Computational Bioimaging Group, Idiap
+This code is a translation of Michael Liebling's matlab code,
+which was already largely based on a C-library written by Philippe
+Thevenaz, BIG, EPFL
+"""
 
 import numpy as np
 
-from cbi_toolbox.bsplines.interpolation_conversion import convert_to_samples, convert_to_interpolation_coefficients
+from ._interpolation_conversion import convert_to_samples, convert_to_interpolation_coefficients
 from cbi_toolbox.utils import transpose_dim_to
 
 
-def change_basis(in_array, from_basis, to_basis, degree, axes=(0,), tolerance=1e-9, boundary_condition='Mirror',
+def change_basis(in_array, from_basis, to_basis, degree, axes=(0,),
+                 tolerance=1e-9, boundary_condition='Mirror',
                  in_place=False):
-    """Change the basis along the provided axes (e.g. to convert a 2D signal, use axes=(0, 1))"""
+    """
+    Change the basis along the provided axes
+    (e.g. to convert a 2D signal, use axes=(0, 1)).
+
+    Parameters
+    ----------
+    in_array : numpy.ndarray
+        The input signal.
+    from_basis : str
+        Source basis, one of ['cardinal', 'dual', b-spline'] (case insensitive).
+    to_basis : str
+        Target basis, one of ['cardinal', 'dual', b-spline'] (case insensitive).
+    degree : int
+        Degree of the basis.
+    axes : tuple, optional
+        Axes on which to compute the change of basis, by default (0,).
+    tolerance : float, optional
+        Precision of the computations, by default 1e-9.
+    boundary_condition : str, optional
+        Boundary conditions, one of ['mirror', 'periodic'], by default 'Mirror'.
+        (case insensitive)
+    in_place : bool, optional
+        Overwrite the source data to save memory space, by default False.
+
+    Returns
+    -------
+    numpy.ndarray
+        The signal in the target base.
+    """
 
     if not in_place:
         in_array = in_array.copy()
@@ -31,7 +63,34 @@ def change_basis(in_array, from_basis, to_basis, degree, axes=(0,), tolerance=1e
     return in_array
 
 
-def change_basis_inner(in_array, from_basis, to_basis, degree, tolerance=1e-9, boundary_condition='Mirror'):
+def change_basis_inner(in_array, from_basis, to_basis, degree, tolerance=1e-9,
+                       boundary_condition='Mirror'):
+    """
+    Inner implementation of the change the basis.
+    Applies only on the first axis, and always in-place.
+
+    Parameters
+    ----------
+    in_array : numpy.ndarray
+        The input signal.
+    from_basis : str
+        Source basis, one of ['cardinal', 'dual', b-spline'] (case insensitive).
+    to_basis : str
+        Target basis, one of ['cardinal', 'dual', b-spline'] (case insensitive).
+    degree : int
+        Degree of the basis.
+    tolerance : float, optional
+        Precision of the computations, by default 1e-9.
+    boundary_condition : str, optional
+        Boundary conditions, one of ['mirror', 'periodic'], by default 'Mirror'.
+        (case insensitive)
+
+    Returns
+    -------
+    numpy.ndarray
+        The signal in the target base.
+    """
+
     from_basis = from_basis.upper()
     to_basis = to_basis.upper()
 

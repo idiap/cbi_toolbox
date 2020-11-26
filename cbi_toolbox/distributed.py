@@ -15,8 +15,15 @@ def get_size(mpi_comm=MPI.COMM_WORLD):
     """
     Get the process count in the communicator.
 
-    :param mpi_comm:
-    :return:
+    Parameters
+    ----------
+    mpi_comm : mpi4py.MPI.Comm, optional
+        The MPI communicator, by default MPI.COMM_WORLD.
+
+    Returns
+    -------
+    int
+        The size of the MPI communicator.
     """
 
     return mpi_comm.Get_size()
@@ -24,10 +31,17 @@ def get_size(mpi_comm=MPI.COMM_WORLD):
 
 def is_root_process(mpi_comm=MPI.COMM_WORLD):
     """
-    Check if current process is root.
+    Check if the current process is root.
 
-    :param mpi_comm:
-    :return:
+    Parameters
+    ----------
+    mpi_comm : mpi4py.MPI.Comm, optional
+        The MPI communicator, by default MPI.COMM_WORLD.
+
+    Returns
+    -------
+    bool
+        True if the current process is the root of the communicator.
     """
 
     return mpi_comm.Get_rank() == 0
@@ -35,10 +49,17 @@ def is_root_process(mpi_comm=MPI.COMM_WORLD):
 
 def get_rank(mpi_comm=MPI.COMM_WORLD):
     """
-    Get process rank.
+    Get this process number in the communicator.
 
-    :param mpi_comm:
-    :return:
+    Parameters
+    ----------
+    mpi_comm : mpi4py.MPI.Comm, optional
+        The communicator, by default MPI.COMM_WORLD.
+
+    Returns
+    -------
+    int
+        The rank of the process.
     """
 
     return mpi_comm.Get_rank()
@@ -49,8 +70,10 @@ def wait_all(mpi_comm=MPI.COMM_WORLD):
     Wait for all processes to reach this line (MPI barrier)
     This is just a wrapper for ease.
 
-    :param mpi_comm:
-    :return:
+    Parameters
+    ----------
+    mpi_comm : mpi4py.MPI.Comm, optional
+        The communicator, by default MPI.COMM_WORLD.
     """
 
     mpi_comm.Barrier()
@@ -58,13 +81,31 @@ def wait_all(mpi_comm=MPI.COMM_WORLD):
 
 def distribute_bin(dimension, mpi_comm=MPI.COMM_WORLD, rank=None, size=None):
     """
-    Computes the start and stop indexes to split computations across a communicator.
+    Computes the start index and bin size to evenly split array-like data into
+    multiple bins.
 
-    :param dimension: the dimension of the work to split
-    :param mpi_comm:
-    :param size: optional
-    :param rank: optional
-    :return: bin start index, bin size
+    Parameters
+    ----------
+    dimension : int
+        The size of the array to distribute.
+    mpi_comm : mpi4py.MPI.Comm, optional
+        The communicator, by default MPI.COMM_WORLD.
+    rank : int, optional
+        The rank of the process, by default None (taken from communicator).
+    size : int, optional
+        The size of the communicator (number of splits to distribute to), by
+        default None (taken from the communicator).
+
+    Returns
+    -------
+    (int, int)
+        The start index of this bin, and its size.
+        The distributed data should be array[start:start + bin_size].
+
+    Raises
+    ------
+    ValueError
+        If rank and size are not both given or both None.
     """
 
     if rank is None and size is None:
@@ -72,7 +113,7 @@ def distribute_bin(dimension, mpi_comm=MPI.COMM_WORLD, rank=None, size=None):
         size = mpi_comm.Get_size()
 
     if rank is None or size is None:
-        raise ValueError('Rank and size must be given, or none')
+        raise ValueError('Rank and size must be both given, or None')
 
     if size > dimension:
         size = dimension
@@ -97,12 +138,22 @@ def distribute_bin(dimension, mpi_comm=MPI.COMM_WORLD, rank=None, size=None):
 
 def distribute_bin_all(dimension, mpi_comm=MPI.COMM_WORLD, size=None):
     """
-    Computes the start and stop indexes of all jobs to split computations across a communicator.
+    Computes the start indexes and bin sizes of all splits to distribute
+    computations across a communicator.
 
-    :param dimension: the dimension of the work to split
-    :param mpi_comm:
-    :param size: optional if mpi_comm given
-    :return: bin start indexes list, bin sizes list
+    Parameters
+    ----------
+    dimension : int
+        the size of the array to be distributed
+    mpi_comm : mpi4py.MPI.Comm, optional
+        the communicator, by default MPI.COMM_WORLD
+    size : int, optional
+        the size of the communicator, by default None (taken from communicator)
+
+    Returns
+    -------
+    ([int], [int])
+        The list of start indexes and the list of bin sizes to distribute data.
     """
 
     if size is None:
@@ -141,8 +192,21 @@ def to_mpi_datatype(np_datatype):
     """
     Returns the MPI datatype corresponding to the numpy dtype provided.
 
-    :param np_datatype: numpy.dtype or string
-    :return:
+
+    Parameters
+    ----------
+    np_datatype : numpy.dtype or str
+        The numpy datatype, or name.
+
+    Returns
+    -------
+    mpi4py.MPI.Datatype
+        The corresponding MPI datatype.
+
+    Raises
+    ------
+    NotImplementedError
+        If the numpy datatype is not listed in the conversion table.
     """
     if isinstance(np_datatype, np.dtype):
         dtype = np_datatype.name
@@ -157,13 +221,32 @@ def to_mpi_datatype(np_datatype):
 
 def create_slice_view(axis, n_slices, array=None, shape=None, dtype=None):
     """
-    Create a MPI vector datatype to access given slices of a non distributed array.
+    Create a MPI vector datatype to access given slices of a non distributed
+    array. If the array is not provided, its shape and dtype must be
+    specified.
 
-    :param axis:
-    :param array:
-    :param shape:
-    :param dtype:
-    :return:
+    Parameters
+    ----------
+    axis : int
+        The axis on which to slice.
+    n_slices : int
+        How many contiguous slices to take.
+    array : numpy.ndarray, optional
+        The array to slice, by default None (then shape and dtype must be given).
+    shape : the shape of the array to slice, optional
+        The shape of the array, by default None.
+    dtype : numpy.dtype or str, optional
+        The datatype of the array, by default None.
+
+    Returns
+    -------
+    mpi4py.MPI.Datatype
+        The strided datatype allowing to access slices in the array.
+
+    Raises
+    ------
+    ValueError
+        If array, shape and dtype are all None.
     """
 
     if array is not None:
@@ -186,13 +269,28 @@ def create_slice_view(axis, n_slices, array=None, shape=None, dtype=None):
 
 def compute_vector_extent(axis, array=None, shape=None, dtype=None):
     """
-    Compute the extent in bytes of a sliced view of a given array
+    Compute the extent in bytes of a sliced view of a given array.
 
-    :param axis:
-    :param array:
-    :param shape:
-    :param dtype:
-    :return:
+    Parameters
+    ----------
+    axis : int
+        Axis on which the slices are taken.
+    array : numpy.ndarray, optional
+        The array to slice, by default None (then shape and dtype must be given).
+    shape : the shape of the array to slice, optional
+        The shape of the array, by default None.
+    dtype : numpy.dtype or str, optional
+        The datatype of the array, by default None.
+
+    Returns
+    -------
+    int
+        The extent of the slices underlying data.
+
+    Raises
+    ------
+    ValueError
+        If array, shape and dtype are all None.
     """
 
     if array is not None:
@@ -209,17 +307,42 @@ def compute_vector_extent(axis, array=None, shape=None, dtype=None):
     return np.prod(shape[axis + 1:], dtype=int) * base_type.extent
 
 
-def create_vector_type(src_axis, tgt_axis, array=None, shape=None, dtype=None, block_size=1):
+def create_vector_type(src_axis, tgt_axis, array=None, shape=None, dtype=None,
+                       block_size=1):
     """
-    Create a MPI vector datatype to communicate a distributed array.
+    Create a MPI vector datatype to communicate a distributed array and split it
+    along a different axis.
 
-    :param src_axis:
-    :param tgt_axis:
-    :param array:
-    :param shape:
-    :param dtype:
-    :param block_size:
-    :return:
+    Parameters
+    ----------
+    src_axis : int
+        The original axis on which the array is distributed.
+    tgt_axis : int
+        The axis on which the array is to be distributed.
+    array : numpy.ndarray, optional
+        The array to slice, by default None (then shape and dtype must be given).
+    shape : the shape of the array to slice, optional
+        The shape of the array, by default None.
+    dtype : numpy.dtype or str, optional
+        The datatype of the array, by default None.
+    block_size : int, optional
+        The size of the distributed bin, by default 1.
+
+    Returns
+    -------
+    mpi4py.MPI.Datatype
+        The vector datatype used for transmission/reception of the data.
+
+    Raises
+    ------
+    ValueError
+        If array, shape and dtype are all None.
+    ValueError
+        If the source and destination axes are the same.
+    NotImplementedError
+        If the array has more than 4 axes (should work, but tests needed).
+    ValueError
+        If the block size is bigger than the source axis.
     """
 
     if array is not None:
@@ -235,11 +358,14 @@ def create_vector_type(src_axis, tgt_axis, array=None, shape=None, dtype=None, b
 
     if src_axis == tgt_axis:
         raise ValueError(
-            "Source and target are identical, no communication should be performed")
+            "Source and target are identical, no communication should be "
+            "performed")
 
     if len(shape) > 4:
-        raise NotImplementedError("This has never been tested for arrays with more than 4 axes.\n"
-                                  "It will probably work, but please run a test before (and if works, tell me!)")
+        raise NotImplementedError(
+            "This has never been tested for arrays with more than 4 axes.\n"
+            "It will probably work, but please run a test before"
+            "(and if works, tell me!)")
 
     if block_size > shape[src_axis]:
         raise ValueError(
@@ -276,12 +402,22 @@ def create_vector_type(src_axis, tgt_axis, array=None, shape=None, dtype=None, b
 
 def gather_full_shape(array, axis, mpi_comm=MPI.COMM_WORLD):
     """
-    Gather the full shape of an array distributed across an MPI communicator along a given axis.
+    Gather the full shape of an array distributed across an MPI communicator
+    along a given axis.
 
-    :param array:
-    :param axis:
-    :param mpi_comm:
-    :return:
+    Parameters
+    ----------
+    array : numpy.ndarray
+        The distributed array.
+    axis : int
+        The axis on which the array is distributed.
+    mpi_comm : mpi4py.MPI.Comm, optional
+        The communicator, by default MPI.COMM_WORLD.
+
+    Raises
+    ------
+    NotImplementedError
+        This is not implemented yet.
     """
 
     raise NotImplementedError
@@ -290,12 +426,28 @@ def gather_full_shape(array, axis, mpi_comm=MPI.COMM_WORLD):
 def load(file_name, axis, mpi_comm=MPI.COMM_WORLD):
     """
     Load a numpy array across parallel jobs in the MPI communicator.
-    The array is sliced along the chosen dimension.
+    The array is sliced along the chosen dimension, with minimal bandwidth.
 
-    :param file_name:
-    :param axis: dimension on which to slice
-    :param mpi_comm:
-    :return: array slice, shape of the full array
+    Parameters
+    ----------
+    file_name : str
+        The numpy array file to load.
+    axis : int
+        The axis on which to distribute the array.
+    mpi_comm : mpi4py.MPI.Comm, optional
+        The MPI communicator used to distribute, by default MPI.COMM_WORLD.
+
+    Returns
+    -------
+    (numpy.ndarray, tuple(int))
+        The distributed array, and the size of the full array.
+
+    Raises
+    ------
+    ValueError
+        If the numpy version used to save the file is not supported.
+    NotImplementedError
+        If the array is saved in Fortran order.
     """
 
     header = None
@@ -356,12 +508,18 @@ def save(file_name, array, axis, full_shape=None, mpi_comm=MPI.COMM_WORLD):
     Save a numpy array from parallel jobs in the MPI communicator.
     The array is gathered along the chosen dimension.
 
-    :param file_name:
-    :param array:
-    :param axis: dimension on which the array is distributed
-    :param full_shape:
-    :param mpi_comm:
-    :return: array slice, shape of the full array
+    Parameters
+    ----------
+    file_name : str
+        The numpy array file to load.
+    array : numpy.ndarray
+        The distributed array.
+    axis : int
+        The axis on which to distribute the array.
+    full_shape : tuple(int), optional
+        The size of the full array, by default None.
+    mpi_comm : mpi4py.MPI.Comm, optional
+        The MPI communicator used to distribute, by default MPI.COMM_WORLD.
     """
 
     if full_shape is None:
@@ -405,16 +563,28 @@ def save(file_name, array, axis, full_shape=None, mpi_comm=MPI.COMM_WORLD):
     slice_type.Free()
 
 
-def redistribute(array, src_axis, tgt_axis, full_shape=None, mpi_comm=MPI.COMM_WORLD):
+def redistribute(array, src_axis, tgt_axis, full_shape=None,
+                 mpi_comm=MPI.COMM_WORLD):
     """
     Redistribute an array along a different dimension.
 
-    :param array: slice of the array to redistribute
-    :param src_axis: initial distribution dimension
-    :param tgt_axis: target distribution dimension
-    :param full_shape: shape of the full array
-    :param mpi_comm:
-    :return:
+    Parameters
+    ----------
+    array : numpy.ndarray
+        The distributed array.
+    src_axis : int
+        The original axis on which the array is distributed.
+    tgt_axis : int
+        The axis on which the array is to be distributed.
+    full_shape : tuple(int), optional
+        The full shape of the array, by default None.
+    mpi_comm : mpi4py.MPI.Comm, optional
+        The MPI communicator used to distribute, by default MPI.COMM_WORLD.
+
+    Returns
+    -------
+    np.ndarray
+        The array distributed along the new axis.
     """
 
     if full_shape is None:

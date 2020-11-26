@@ -1,3 +1,18 @@
+"""
+The deconv module implements algorithms to deconvolve images blurred with a PSF.
+
+Conventions:
+arrays follow the ZXY convention, with
+    Z : depth axis (axial, focus axis)
+    X : horizontal axis (lateral)
+    Y : vertical axis (lateral, rotation axis when relevant)
+
+sinograms follow the TPY convention, with
+    T : angles (theta)
+    P : captor axis
+    Y : rotation axis
+"""
+
 from scipy import fft
 import numpy as np
 from cbi_toolbox.utils import fft_size
@@ -6,31 +21,33 @@ from cbi_toolbox.utils import fft_size
 def inverse_psf_rfft(psf, shape=None, l=20, mode='laplacian'):
     """
     Computes the real FFT of a regularized inversed 2D PSF (or projected 3D)
-    This follows the convention of fft.rfft: only half the spectrum is computed
+    This follows the convention of fft.rfft: only half the spectrum is computed.
 
     Parameters
     ----------
     psf : array [ZXY] or [XY]
-        the 2D PSF (if 3D, will be projected on Z axis)
+        The 2D PSF (if 3D, will be projected on Z axis).
     shape : tuple (int, int), optional
-        shape of the full-sized desired PSF
-        (if None, will be the same as the PSF), by default None
+        Shape of the full-sized desired PSF
+        (if None, will be the same as the PSF), by default None.
     l : int, optional
-        regularization lambda, by default 20
+        Regularization lambda, by default 20
     mode : str, optional
-        the regularizer used, by default laplacian
+        The regularizer used, by default laplacian.
+        One of: ['laplacian', 'constant']
 
     Returns
     -------
     array [XY]
-        the real FFT of the inverse PSF
+        The real FFT of the inverse PSF.
 
     Raises
     ------
     ValueError
-        if the PSF has incorrect number of dimensions
-        if the regularizer is unknown
+        If the PSF has incorrect number of dimensions.
+        If the regularizer is unknown.
     """
+
     if psf.ndim == 3:
         psf = psf.sum(0)
     elif psf.ndim != 2:
@@ -65,23 +82,23 @@ def inverse_psf_rfft(psf, shape=None, l=20, mode='laplacian'):
 
 def deconvolve_sinogram(sinogram, psf, l=20, mode='laplacian', clip=True):
     """
-    Deconvolve a sinogram with given PSF
+    Deconvolve a sinogram with given PSF.
 
     Parameters
     ----------
-    sinogram : array [TPY]
-        the blurred sinogram
-    psf : array [ZXY] or [XY]
-        the PSF used to deconvolve
+    sinogram : numpy.ndarray [TPY]
+        The blurred sinogram.
+    psf : numpy.ndarray [ZXY] or [XY]
+        The PSF used to deconvolve.
     l : float, optional
-        strength of the regularization
+        Strength of the regularization.
     clip : bool, optional
-        clip negative values to 0, default is True
+        Clip negative values to 0, default is True.
 
     Returns
     -------
-    array [TPY]
-        the deconvolved sinogram
+    numpy.ndarray [TPY]
+        The deconvolved sinogram.
     """
 
     fft_shape = [fft_size(s) for s in sinogram.shape[1:]]

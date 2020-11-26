@@ -1,3 +1,7 @@
+"""
+This module implements sinogram filtering for the FBP algorithm.
+"""
+
 import numpy as np
 from scipy import fft
 
@@ -5,6 +9,29 @@ from cbi_toolbox.utils import make_broadcastable, fft_size
 
 
 def get_filter(n, filter_name: str, degree=None):
+    """
+    Compute the frequency coefficients of the filter for the FBP.
+    Only the positive frequencies are computed for use with RFFT/IRFFT (scipy).
+
+    Parameters
+    ----------
+    n : int
+        Size of the filter.
+    filter_name : str
+        Type of filter, one of: ['None', 'Ram-Lak', 'Shepp-Logan', 'Cosine'].
+    degree : int, optional
+        Degree of the filter, when applicable, by default None
+
+    Returns
+    -------
+    numpy.ndarray
+        The frequency coefficients of the FBP filter.
+
+    Raises
+    ------
+    ValueError
+        If the type of filter asked is not known.
+    """
 
     filter_name = filter_name.upper()
     pre_filter = True
@@ -69,6 +96,24 @@ def get_filter(n, filter_name: str, degree=None):
 
 
 def filter_sinogram(sinogram, filter_name, degree=None):
+    """
+    Filter a sinogram for FBP reconstruction.
+
+    Parameters
+    ----------
+    sinogram : numpy.ndarray
+        The raw sinogram.
+    filter_name : str
+        Type of filter, one of: ['None', 'Ram-Lak', 'Shepp-Logan', 'Cosine'].
+    degree : int, optional
+        Degree of the filter, when applicable, by default None
+
+    Returns
+    -------
+    numpy.ndarray
+        The filtered sinogram.
+    """
+
     length = sinogram.shape[1]
     n = fft_size(length)
 
