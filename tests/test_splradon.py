@@ -1,4 +1,3 @@
-from cbi_toolbox.bsplines.bspline import bspline
 import numpy as np
 import unittest
 
