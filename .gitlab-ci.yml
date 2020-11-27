@@ -16,4 +16,4 @@ default:
 test:
   script:
     - cd cbi_toolbox
-    - python -m unittest discover cbi_toolbox/tests
+    - python -m unittest discover cbi_toolbox.tests
