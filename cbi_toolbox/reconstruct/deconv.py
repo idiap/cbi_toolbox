@@ -1,16 +1,19 @@
 """
 The deconv module implements algorithms to deconvolve images blurred with a PSF.
 
-Conventions:
+**Conventions:**
+
 arrays follow the ZXY convention, with
-    Z : depth axis (axial, focus axis)
-    X : horizontal axis (lateral)
-    Y : vertical axis (lateral, rotation axis when relevant)
+
+    - Z : depth axis (axial, focus axis)
+    - X : horizontal axis (lateral)
+    - Y : vertical axis (lateral, rotation axis when relevant)
 
 sinograms follow the TPY convention, with
-    T : angles (theta)
-    P : captor axis
-    Y : rotation axis
+
+    - T : angles (theta)
+    - P : captor axis
+    - Y : rotation axis
 """
 
 from scipy import fft

@@ -1,11 +1,13 @@
 """
 The primitives module generates basic 3D objects
 
-Conventions:
-        arrays follow the ZXY convention, with
-            Z : depth axis (axial, focus axis)
-            X : horizontal axis (lateral)
-            Y : vertical axis (lateral, rotation axis when relevant)
+**Conventions:**
+
+arrays follow the ZXY convention, with
+
+    - Z : depth axis (axial, focus axis)
+    - X : horizontal axis (lateral)
+    - Y : vertical axis (lateral, rotation axis when relevant)
 """
 
 import numpy as np

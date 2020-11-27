@@ -20,16 +20,16 @@ find_package(OpenMP 4.5 REQUIRED)
 
 string(APPEND CMAKE_CXX_FLAGS " -Wall -Wextra -pedantic")
 
-pybind11_add_module(cradon cbi_toolbox/splineradon/src/cradon.h cbi_toolbox/splineradon/src/cradon.cpp cbi_toolbox/splineradon/src/ompradon.cpp cbi_toolbox/splineradon/src/cudaradon.cpp)
-set_property(TARGET cradon PROPERTY LIBRARY_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}splineradon/")
-target_link_libraries(cradon PUBLIC OpenMP::OpenMP_CXX)
+pybind11_add_module(_cradon cbi_toolbox/splineradon/src/cradon.h cbi_toolbox/splineradon/src/cradon.cpp cbi_toolbox/splineradon/src/ompradon.cpp cbi_toolbox/splineradon/src/cudaradon.cpp)
+set_property(TARGET _cradon PROPERTY LIBRARY_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}splineradon/")
+target_link_libraries(_cradon PUBLIC OpenMP::OpenMP_CXX)
 
 if(CUDAToolkit_FOUND)
   message(STATUS "CUDA support enabled.")
   add_definitions(-DCUDA)
 
-  target_sources(cradon PRIVATE cbi_toolbox/splineradon/src/cudaradon.cu)
-  set_property(TARGET cradon PROPERTY CUDA_ARCHITECTURES 60-virtual 61-real)
-  set_property(TARGET cradon PROPERTY LIBRARY_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}splineradon/")  
+  target_sources(_cradon PRIVATE cbi_toolbox/splineradon/src/cudaradon.cu)
+  set_property(TARGET _cradon PROPERTY CUDA_ARCHITECTURES 60-virtual 61-real)
+  set_property(TARGET _cradon PROPERTY LIBRARY_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}splineradon/")  
 endif()
 

@@ -166,7 +166,7 @@ py::array_t<double, py::array::c_style> iradon(
     }
 }
 
-PYBIND11_MODULE(cradon, m)
+PYBIND11_MODULE(_cradon, m)
 {
     m.doc() = "Radon transform (and inverse) using spline convolutions discretization and OMP/CUDA acceleration.";
 

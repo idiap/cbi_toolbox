@@ -1,11 +1,13 @@
 """
 The optics module provides simulations of the optics of imaging systems for microscopy
 
-Conventions:
-        arrays follow the ZXY convention, with
-            Z : depth axis (axial, focus axis)
-            X : horizontal axis (lateral)
-            Y : vertical axis (lateral, rotation axis when relevant)
+**Conventions:**
+
+arrays follow the ZXY convention, with
+
+    - Z : depth axis (axial, focus axis)
+    - X : horizontal axis (lateral)
+    - Y : vertical axis (lateral, rotation axis when relevant)
 """
 
 import math

@@ -2,16 +2,19 @@
 The imaging module provides simulations of different imaging systems
 and acquisition techniques for microscopy.
 
-Conventions:
-    arrays follow the ZXY convention, with
-        Z : depth axis (axial, focus axis)
-        X : horizontal axis (lateral)
-        Y : vertical axis (lateral, rotation axis when relevant)
+**Conventions:**
 
-    sinograms follow the TPY convention, with
-        T : angles (theta)
-        P : captor axis
-        Y : rotation axis
+arrays follow the ZXY convention, with
+
+    - Z : depth axis (axial, focus axis)
+    - X : horizontal axis (lateral)
+    - Y : vertical axis (lateral, rotation axis when relevant)
+
+sinograms follow the TPY convention, with
+
+    - T : angles (theta)
+    - P : captor axis
+    - Y : rotation axis
 """
 
 import scipy.signal as sig
@@ -48,7 +51,7 @@ def widefield(obj, psf, pad=False):
     return image
 
 
-def opt(obj, psf, theta=np.arange(180), pad=False):
+def opt(obj, psf, theta=None, pad=False):
     """
     Simulate the OPT imaging of an object
 
@@ -59,7 +62,8 @@ def opt(obj, psf, theta=np.arange(180), pad=False):
     psf : array [ZXY]
         the PSF of the imaging system, Z dimension must match object ZX
     theta : array, optional
-        array of rotation angles (in degrees), by default np.arange(180)
+        array of rotation angles (in degrees), by default None
+        If None, uses numpy.arange(180).
     pad : bool, optional
         extend the field of view to see all contributions
         (needed if the object is not contained in the inner cylinder to the array), by default False
@@ -82,6 +86,9 @@ def opt(obj, psf, theta=np.arange(180), pad=False):
     if psf.shape[0] % 2 != obj.shape[0] % 2:
         raise ValueError('In order to correctly center the PSF,'
                          ' please profide a PSF with the same Z axis parity as the object Z axis')
+
+    if theta is None:
+        theta = np.arange(180)
 
     full_size = obj.shape[0]
 

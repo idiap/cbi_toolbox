@@ -3,6 +3,20 @@ The splineradon package implements radon and inverse radon transforms using
 b-spline interpolation formulas described in [1] using multithreading and GPU
 acceleration.
 
+**Conventions:**
+
+arrays follow the ZXY convention, with
+
+    - Z : depth axis (axial, focus axis)
+    - X : horizontal axis (lateral)
+    - Y : vertical axis (lateral, rotation axis when relevant)
+
+sinograms follow the TPY convention, with
+
+    - T : angles (theta)
+    - P : captor axis
+    - Y : rotation axis
+
 [1] *S. Horbelt, M. Liebling, M. Unser, "Discretization of the Radon Transform
 and of Its Inverse by Spline Convolutions," IEEE Transactions on Medical Imaging,
 vol 21, no 4, pp. 363-376, April 2002.*
@@ -10,10 +24,10 @@ vol 21, no 4, pp. 363-376, April 2002.*
 
 import numpy as np
 
+from cbi_toolbox.bsplines import change_basis
+import cbi_toolbox.splineradon._cradon as cradon
 from ._filter_sinogram import *
 from ._spline_kernel import *
-from cbi_toolbox.bsplines import change_basis
-import cbi_toolbox.splineradon.cradon as cradon
 
 
 def is_cuda_available(verbose=False):
@@ -39,7 +53,7 @@ def is_cuda_available(verbose=False):
         return False
 
 
-def radon(image, theta=np.arange(180), angledeg=True, n=None,
+def radon(image, theta=None, angledeg=True, n=None,
           b_spline_deg=(2, 3), sampling_steps=(1, 1),
           center=None, captors_center=None, circle=False,
           nt=200, use_cuda=False):
@@ -51,7 +65,8 @@ def radon(image, theta=np.arange(180), angledeg=True, n=None,
     image : numpy.ndarray [ZXY] or [ZX]
         The input image.
     theta : array_like, optional
-        The sinogram angles, by default numpy.arange(180).
+        The sinogram angles, by default None.
+        If None, uses numpy.arange(180).
     angledeg : bool, optional
         Give angles in degrees instead of radians, by default True.
     n : int, optional
@@ -79,6 +94,9 @@ def radon(image, theta=np.arange(180), angledeg=True, n=None,
         The computed sinogram.
     """
 
+    if theta is None:
+        theta = np.arange(180)
+
     spline_image = radon_pre(image, b_spline_deg[0])
     sinogram = radon_inner(spline_image, theta, angledeg, n, b_spline_deg, sampling_steps,
                            center, captors_center, circle, nt, use_cuda=use_cuda)
@@ -100,7 +118,8 @@ def iradon(sinogram, theta=None, angledeg=True, filter_type='RAM-LAK',
     sinogram : numpy.ndarray [TPY]
         The input sinogram.
     theta : array_like, optional
-        The sinogram angles, by default numpy.arange(180).
+        The sinogram angles, by default None.
+        If None, uses numpy.arange(180).
     angledeg : bool, optional
         Give angles in degrees instead of radians, by default True.
     filter_type : str, optional
@@ -160,7 +179,7 @@ def radon_pre(image, ni=2):
                         boundary_condition='periodic')
 
 
-def radon_inner(spline_image, theta=np.arange(180), angledeg=True, n=None,
+def radon_inner(spline_image, theta=None, angledeg=True, n=None,
                 b_spline_deg=(2, 3), sampling_steps=(1, 1),
                 center=None, captors_center=None, circle=False,
                 nt=200, use_cuda=False):
@@ -173,7 +192,8 @@ def radon_inner(spline_image, theta=np.arange(180), angledeg=True, n=None,
     spline_image : numpy.ndarray
         The input image in a bspline basis.
     theta : array_like, optional
-        The sinogram angles, by default numpy.arange(180).
+        The sinogram angles, by default None.
+        If None, uses numpy.arange(180).
     angledeg : bool, optional
         Give angles in degrees instead of radians, by default True.
     n : int, optional
@@ -200,6 +220,9 @@ def radon_inner(spline_image, theta=np.arange(180), angledeg=True, n=None,
     numpy.ndarray [TPY]
         The computed sinogram in a bspline basis.
     """
+
+    if theta is None:
+        theta = np.arange(180)
 
     nz = spline_image.shape[0]
     nx = spline_image.shape[1]
@@ -337,7 +360,8 @@ def iradon_inner(sinogram_filtered, theta=None, angledeg=True,
     sinogram_filtered : numpy.ndarray [TPY]
         The pre-processed sinogram.
     theta : array_like, optional
-        The sinogram angles, by default numpy.arange(180).
+        The sinogram angles, by default None.
+        If None, uses numpy.arange(180).
     angledeg : bool, optional
         Give angles in degrees instead of radians, by default True.
     b_spline_deg : tuple, optional

@@ -34,26 +34,26 @@ def bspline(x, deg):
     """
 
     if deg == 0:
-        return bspline00(x)
+        return _bspline00(x)
     elif deg == 1:
-        return bspline01(x)
+        return _bspline01(x)
     elif deg == 2:
-        return bspline02(x)
+        return _bspline02(x)
     elif deg == 3:
-        return bspline03(x)
+        return _bspline03(x)
     elif deg == 4:
-        return bspline04(x)
+        return _bspline04(x)
     elif deg == 5:
-        return bspline05(x)
+        return _bspline05(x)
     elif deg == 6:
-        return bspline06(x)
+        return _bspline06(x)
     elif deg == 7:
-        return bspline07(x)
+        return _bspline07(x)
     else:
         return signal.bspline(x, deg)
 
 
-def bspline00(x):
+def _bspline00(x):
     """
     Bspline of degree 0.
 
@@ -77,7 +77,7 @@ def bspline00(x):
     return y
 
 
-def bspline01(x):
+def _bspline01(x):
     """
     Bspline of degree 1.
 
@@ -99,7 +99,7 @@ def bspline01(x):
     return y
 
 
-def bspline02(x):
+def _bspline02(x):
     """
     Bspline of degree 2.
 
@@ -123,7 +123,7 @@ def bspline02(x):
     return y
 
 
-def bspline03(x):
+def _bspline03(x):
     """
     Bspline of degree 3.
 
@@ -147,7 +147,7 @@ def bspline03(x):
     return y
 
 
-def bspline04(x):
+def _bspline04(x):
     """
     Bspline of degree 4.
 
@@ -176,7 +176,7 @@ def bspline04(x):
     return y
 
 
-def bspline05(x):
+def _bspline05(x):
     """
     Bspline of degree 5.
 
@@ -207,7 +207,7 @@ def bspline05(x):
     return y
 
 
-def bspline06(x):
+def _bspline06(x):
     """
     Bspline of degree 6.
 
@@ -240,7 +240,7 @@ def bspline06(x):
     return y
 
 
-def bspline07(x):
+def _bspline07(x):
     """
     Bspline of degree 7.
 

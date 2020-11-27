@@ -8,3 +8,5 @@ tmp/
 cmake-build-*/
 .vscode/
 scripts/
+doc/_build/
+doc/api/
