@@ -2,7 +2,6 @@ variables:
   GIT_SUBMODULE_STRATEGY: recursive
 
 default:
-
   before_script:
     - pip3 install --upgrade pip setuptools wheel
     - pip3 install virtualenv
@@ -16,17 +15,5 @@ default:
 
 test:
   script:
-    - cd tests
-    - python -m unittest
-
-
-#pages:
-#  script:
-#    - pip install sphinx sphinx-rtd-theme
-#    - cd doc ; make html
-#    - mv build/html/ ../public/
-#  artifacts:
-#    paths:
-#      - public
-#  only:
-#    - master
+    - cd cbi_toolbox
+    - python -m unittest discover cbi_toolbox/tests

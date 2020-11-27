@@ -5,4 +5,10 @@
    :caption: API Reference
    
    api/cbi_toolbox
-   
+
+
+Index
+=====
+
+* :ref:`genindex`
+
