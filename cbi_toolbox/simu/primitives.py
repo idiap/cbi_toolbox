@@ -177,7 +177,7 @@ def torus_boccia(size, radius=None, n_stripes=3, deg_space=15, torus_radius=0.07
     ----------
     size : int
         side of the cube containing the volume (must be even)
-    radius : [type], optional
+    radius : float, optional
         radius of the boccia, by default None
     n_stripes : int, optional
         number of torus stripes, by default 3

@@ -40,8 +40,8 @@ def widefield(obj, psf, pad=False):
 
     Returns
     -------
-    [type]
-        [description]
+    numpy.ndarray
+        the widefield image
     """
 
     mode = 'full' if pad else 'same'

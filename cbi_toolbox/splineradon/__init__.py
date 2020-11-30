@@ -78,7 +78,7 @@ def radon(image, theta=None, angledeg=True, n=None,
         Pixel sampling steps on the image and the sinogram, by default (1, 1).
     center : tuple, optional
         (z, x) the center of rotation of the image, by default None (centered).
-    captors_center : [type], optional
+    captors_center : float, optional
         The position of the center of rotation in the sinogram, by default None.
     circle : bool, optional
         If the object is contained in the inner circle/cylinder (will produce a
@@ -132,7 +132,7 @@ def iradon(sinogram, theta=None, angledeg=True, filter_type='RAM-LAK',
         Pixel sampling steps on the image and the sinogram, by default (1, 1).
     center : tuple, optional
         (z, x) the center of rotation of the image, by default None (centered).
-    captors_center : [type], optional
+    captors_center : float, optional
         The position of the center of rotation in the sinogram, by default None.
     circle : bool, optional
         If the object is contained in the inner circle/cylinder (will produce a
@@ -205,7 +205,7 @@ def radon_inner(spline_image, theta=None, angledeg=True, n=None,
         Pixel sampling steps on the image and the sinogram, by default (1, 1).
     center : tuple, optional
         (z, x) the center of rotation of the image, by default None (centered).
-    captors_center : [type], optional
+    captors_center : float, optional
         The position of the center of rotation in the sinogram, by default None.
     circle : bool, optional
         If the object is contained in the inner circle/cylinder (will produce a
@@ -371,7 +371,7 @@ def iradon_inner(sinogram_filtered, theta=None, angledeg=True,
         Pixel sampling steps on the image and the sinogram, by default (1, 1).
     center : tuple, optional
         (z, x) the center of rotation of the image, by default None (centered).
-    captors_center : [type], optional
+    captors_center : float, optional
         The position of the center of rotation in the sinogram, by default None.
     nt : int, optional
         Number of points stored in the spline kernel, by default 200.

@@ -29,8 +29,8 @@ def get_kernel_table(nt, n1, n2, h, s, angles, degree=True):
 
     Returns
     -------
-    [type]
-        [description]
+    (numpy.ndarray, float)
+        The kernel lookup table and its maximum element.
     """
 
     pad_fact = 4
