@@ -1,3 +1,20 @@
+# Copyright (c) 2020 Idiap Research Institute, http://www.idiap.ch/
+# Written by François Marelli <francois.marelli@idiap.ch>
+
+# This file is part of CBI Toolbox.
+
+# CBI Toolbox is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3 as
+# published by the Free Software Foundation.
+
+# CBI Toolbox is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with CBI Toolbox. If not, see <http://www.gnu.org/licenses/>.
+
 import time
 import numpy as np
 import napari
@@ -12,7 +29,7 @@ TEST_SIZE = 64
 sample = primitives.boccia(
     TEST_SIZE, radius=(0.8 * TEST_SIZE) // 2, n_stripes=4)
 s_psf = optics.gaussian_psf(
-    numerical_aperture=0.3,
+    numerical_aperture=0.5,
     npix_axial=TEST_SIZE+1, npix_lateral=TEST_SIZE+1)
 opt_psf = optics.gaussian_psf(
     numerical_aperture=0.1, npix_axial=TEST_SIZE, npix_lateral=TEST_SIZE+1)

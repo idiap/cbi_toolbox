@@ -1,6 +1,13 @@
 .. include:: ../README.rst
    
 .. toctree::
+   :maxdepth: 1
+   :caption: Documentation
+
+   self
+   about
+
+.. toctree::
    :maxdepth: 5
    :caption: API Reference
    
@@ -11,4 +18,3 @@ Index
 =====
 
 * :ref:`genindex`
-

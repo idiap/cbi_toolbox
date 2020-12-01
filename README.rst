@@ -4,6 +4,10 @@ CBI Toolbox
 
 CBI toolbox is a collection of algorithms used for computational bioimaging and microscopy.
 
+Copyright (c) 2020 Idiap Research Institute, http://www.idiap.ch/
+
+Written by François Marelli <francois.marelli@idiap.ch>
+
 
 Install instructions
 ====================
@@ -22,7 +26,7 @@ Using conda
 - Clone the project with its submodules: ``git clone --recursive <url>``
 - Create a new environment unsing the envoronment.yml file: 
   ``conda env create -f environment.yml -n <environment name>``
-- Run pip install on the root folder: ``pip install .``
+- Run pip install on the root folder: ``pip install .[mpi,plots]``
 
 If you already have an MPI implementation installed on your system, it is possible
 that conda installs a different one. If you want compatibility with your system MPI,
@@ -36,16 +40,28 @@ Using pip
 Pip >=10 is highly recommended to ensure the install works.
 
 - Clone the project with its submodules: ``git clone --recursive <url>``
-- Run pip install in the root folder: ``pip install .``
+- Run pip install in the root folder: ``pip install .[mpi,plots]``
+
+
+Optional dependencies
+---------------------
+
+The package provides optional dependencies that can be selected  at will during
+the install (in the square brackets):
+
+- **mpi**: allows to use the ``cbi_toolbox.distributed`` with MPI support,
+  requires a functional MPI installation
+- **plots**: installs tools to visualize 3D objects easily
 
 
 CUDA support
 ============
 
-Installing with CUDA support requires the machine to have nvcc installed.
-If compiling with CUDA support, make sure your CUDAToolkit_ROOT points to the
-correct toolkit if you have multiple versions, or if CMake does not find it
-automatically.
+If nvcc is present on the machine, the installation will automatically attempt
+to compile the software with CUDA support. If you have multiple versions of the
+CUDA toolkit installed, or if CMake fails to find nvcc automatically, make sure
+to set the environment variable ``CUDAToolkit_ROOT`` to point to the correct
+tookit folder.
 
 To debug potential installation errors, use ``pip install . -v`` to get verbose
 build logs.
@@ -59,5 +75,3 @@ After install, run the following::
 
 If the output is other than ``CUDA support is not installed.``, the CUDA acceleration
 was installed successfully.
-
---François Marelli <francois.marelli@idiap.ch>
