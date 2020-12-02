@@ -14,18 +14,22 @@ please cite the following paper:
     Imaging (ISBI). IEEE, 2021.
 
 
-Licensing
----------
+.. include:: ../LICENSE.rst
 
-Copyright (c) 2020 Idiap Research Institute, <http://www.idiap.ch/>
 
-Written by François Marelli <francois.marelli@idiap.ch>
+Other Projects
+--------------
 
-CBI Toolbox is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License version 3 as
-published by the Free Software Foundation.
+This project contains code from other projects as listed below. The original
+license text is included in their respective source files.
 
-CBI Toolbox is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-:ref:`GNU General Public License<licensing>` for more details.
+- The splineradon module is inspired from `SPLRADON`
+  <http://sybil.ece.ucsb.edu/pages/splineradon/splineradon.html>. Its source
+  code is used under the 3-Clause BSD License with the author's permission.
+- The fpsopt module is derived from `fpsopt`
+  <http://sybil.ece.ucsb.edu/pages/fpsopt/index.html>, which uses a Modified
+  BSD-2 License - for Non-Commercial Research and Educational Use Only. Any
+  contributions to this code must be made under the terms of both licenses.
+- The bsplines module is derived from `Spline Interpolation`
+  <http://bigwww.epfl.ch/thevenaz/interpolation/>. Its source code is used under
+  the 3-Clause BSD License with the author's permission.

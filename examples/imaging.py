@@ -1,19 +1,20 @@
 # Copyright (c) 2020 Idiap Research Institute, http://www.idiap.ch/
 # Written by François Marelli <francois.marelli@idiap.ch>
-
+#
 # This file is part of CBI Toolbox.
-
+#
 # CBI Toolbox is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
-# published by the Free Software Foundation.
-
+# it under the terms of the 3-Clause BSD License.
+#
 # CBI Toolbox is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-
-# You should have received a copy of the GNU General Public License
-# along with CBI Toolbox. If not, see <http://www.gnu.org/licenses/>.
+# 3-Clause BSD License for more details.
+#
+# You should have received a copy of the 3-Clause BSD License along
+# with CBI Toolbox. If not, see https://opensource.org/licenses/BSD-3-Clause.
+#
+# SPDX-License-Identifier: BSD-3-Clause
 
 import time
 import numpy as np
@@ -22,7 +23,7 @@ import napari
 from cbi_toolbox.simu import primitives, optics
 from cbi_toolbox.simu import imaging
 from cbi_toolbox import splineradon as spl
-from cbi_toolbox.reconstruct import deconv
+from cbi_toolbox.reconstruct import fpsopt
 
 TEST_SIZE = 64
 
@@ -66,7 +67,7 @@ s_radon = spl.radon(sample, theta=s_theta, circle=True)
 print('Time for radon: \t{}s'.format(time.time() - start))
 
 start = time.time()
-s_deconv = deconv.deconvolve_sinogram(s_fpsopt, s_psf)
+s_deconv = fpsopt.deconvolve_sinogram(s_fpsopt, s_psf)
 print('Time for deconv: \t{}s'.format(time.time() - start))
 
 

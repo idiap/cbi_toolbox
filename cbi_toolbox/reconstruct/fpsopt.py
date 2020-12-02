@@ -1,5 +1,6 @@
 """
-The deconv module implements algorithms to deconvolve images blurred with a PSF.
+The fpsopt module implements algorithms to deconvolve sinograms acquired using
+Focal-Plane-Scanning OPT [1].
 
 **Conventions:**
 
@@ -14,24 +15,61 @@ sinograms follow the TPY convention, with
     - T : angles (theta)
     - P : captor axis
     - Y : rotation axis
+
+[1] K. G. Chan and M. Liebling, *"Direct inversion algorithm for focal plane
+scanning optical projection tomography"*, in Biomedical Optics Express, vol. 8,
+no. 11, pp. 5349-5358, 2017.
 """
 
 # Copyright (c) 2020 Idiap Research Institute, http://www.idiap.ch/
 # Written by François Marelli <francois.marelli@idiap.ch>
-
+#
 # This file is part of CBI Toolbox.
-
+#
 # CBI Toolbox is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
-# published by the Free Software Foundation.
-
+# it under the terms of the 3-Clause BSD License.
+#
 # CBI Toolbox is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
+# 3-Clause BSD License for more details.
+#
+# You should have received a copy of the 3-Clause BSD License along
+# with CBI Toolbox. If not, see https://opensource.org/licenses/BSD-3-Clause.
+#
+# SPDX-License-Identifier: BSD-3-Clause
 
-# You should have received a copy of the GNU General Public License
-# along with CBI Toolbox. If not, see <http://www.gnu.org/licenses/>.
+
+# This code is derived from `fpsopt`, which includes the following license:
+#
+#  Modified BSD-2 License - for Non-Commercial Research and Educational Use Only
+#
+# Copyright (c) 2017, The Regents of the University of California
+#
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted for non-commercial research and educational use
+# only provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# For permission to use for commercial purposes, please contact UCSB's Office of
+# Technology & Industry Alliances at 805-893-5180 or info@tia.ucsb.edu.
 
 from scipy import fft
 import numpy as np
