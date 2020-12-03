@@ -1,5 +1,8 @@
 """
-The distributed module allows to distribute operations in MPI communicators.
+The mpi module allows to distribute operations in MPI communicators.
+
+It is an optional feature of cbi_toolbox that requires a working implementation
+of MPI.
 """
 
 # Copyright (c) 2020 Idiap Research Institute, http://www.idiap.ch/
@@ -25,6 +28,7 @@ import numpy as np
 import numpy.lib.format as npformat
 from cbi_toolbox import utils
 
+from . import distribute_bin, distribute_bin_all
 
 _MPI_dtypes = {'float64': MPI.DOUBLE}
 
@@ -97,10 +101,10 @@ def wait_all(mpi_comm=MPI.COMM_WORLD):
     mpi_comm.Barrier()
 
 
-def distribute_bin(dimension, mpi_comm=MPI.COMM_WORLD, rank=None, size=None):
+def distribute_mpi(dimension, mpi_comm=MPI.COMM_WORLD):
     """
     Computes the start index and bin size to evenly split array-like data into
-    multiple bins.
+    multiple bins on an MPI communicator.
 
     Parameters
     ----------
@@ -108,56 +112,21 @@ def distribute_bin(dimension, mpi_comm=MPI.COMM_WORLD, rank=None, size=None):
         The size of the array to distribute.
     mpi_comm : mpi4py.MPI.Comm, optional
         The communicator, by default MPI.COMM_WORLD.
-    rank : int, optional
-        The rank of the process, by default None (taken from communicator).
-    size : int, optional
-        The size of the communicator (number of splits to distribute to), by
-        default None (taken from the communicator).
 
     Returns
     -------
     (int, int)
         The start index of this bin, and its size.
         The distributed data should be array[start:start + bin_size].
-
-    Raises
-    ------
-    ValueError
-        If rank and size are not both given or both None.
     """
 
-    if rank is None and size is None:
-        rank = mpi_comm.Get_rank()
-        size = mpi_comm.Get_size()
-
-    if rank is None or size is None:
-        raise ValueError('Rank and size must be both given, or None')
-
-    if size > dimension:
-        size = dimension
-
-    if rank >= size:
-        return 0, 0
-
-    bin_size = dimension // size
-    large_bin_number = dimension - bin_size * size
-
-    bin_index = 0
-
-    if rank < large_bin_number:
-        bin_size += 1
-    else:
-        bin_index += large_bin_number
-
-    bin_index += rank * bin_size
-
-    return bin_index, bin_size
+    return distribute_bin(dimension, mpi_comm.Get_rank(), mpi_comm.Get_size())
 
 
-def distribute_bin_all(dimension, mpi_comm=MPI.COMM_WORLD, size=None):
+def distribute_mpi_all(dimension, mpi_comm=MPI.COMM_WORLD):
     """
     Computes the start indexes and bin sizes of all splits to distribute
-    computations across a communicator.
+    computations across an MPI communicator.
 
     Parameters
     ----------
@@ -165,8 +134,6 @@ def distribute_bin_all(dimension, mpi_comm=MPI.COMM_WORLD, size=None):
         the size of the array to be distributed
     mpi_comm : mpi4py.MPI.Comm, optional
         the communicator, by default MPI.COMM_WORLD
-    size : int, optional
-        the size of the communicator, by default None (taken from communicator)
 
     Returns
     -------
@@ -174,36 +141,7 @@ def distribute_bin_all(dimension, mpi_comm=MPI.COMM_WORLD, size=None):
         The list of start indexes and the list of bin sizes to distribute data.
     """
 
-    if size is None:
-        size = mpi_comm.Get_size()
-
-    original_size = size
-    if size > dimension:
-        size = dimension
-
-    bin_size = dimension // size
-    large_bin_number = dimension - bin_size * size
-
-    bin_index = 0
-    bin_indexes = []
-    bin_sizes = []
-
-    for j_index in range(original_size):
-        if j_index >= size:
-            bin_indexes.append(0)
-            bin_sizes.append(0)
-            continue
-
-        l_bin_size = bin_size
-        if j_index < large_bin_number:
-            l_bin_size += 1
-
-        bin_indexes.append(bin_index)
-        bin_sizes.append(l_bin_size)
-
-        bin_index += l_bin_size
-
-    return bin_indexes, bin_sizes
+    return distribute_bin_all(dimension, mpi_comm.Get_size())
 
 
 def to_mpi_datatype(np_datatype):
@@ -493,7 +431,7 @@ def load(file_name, axis, mpi_comm=MPI.COMM_WORLD):
     ndims = len(full_shape)
     axis = utils.positive_index(axis, ndims)
 
-    i_start, bin_size = distribute_bin(full_shape[axis], mpi_comm)
+    i_start, bin_size = distribute_mpi(full_shape[axis], mpi_comm)
 
     l_shape = list(full_shape)
     l_shape[axis] = bin_size
@@ -560,7 +498,7 @@ def save(file_name, array, axis, full_shape=None, mpi_comm=MPI.COMM_WORLD):
             header_offset = fp.tell()
     header_offset = mpi_comm.bcast(header_offset, root=0)
 
-    i_start, bin_size = distribute_bin(full_shape[axis], mpi_comm)
+    i_start, bin_size = distribute_mpi(full_shape[axis], mpi_comm)
 
     slice_type = create_slice_view(
         axis, bin_size, shape=full_shape, dtype=array.dtype)
@@ -618,8 +556,8 @@ def redistribute(array, src_axis, tgt_axis, full_shape=None,
     rank = mpi_comm.Get_rank()
     size = mpi_comm.Get_size()
 
-    src_starts, src_bins = distribute_bin_all(full_shape[src_axis], mpi_comm)
-    tgt_starts, tgt_bins = distribute_bin_all(full_shape[tgt_axis], mpi_comm)
+    src_starts, src_bins = distribute_mpi_all(full_shape[src_axis], mpi_comm)
+    tgt_starts, tgt_bins = distribute_mpi_all(full_shape[tgt_axis], mpi_comm)
 
     src_has_data = np.atleast_1d(src_bins)
     src_has_data[src_has_data > 0] = 1

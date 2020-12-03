@@ -30,6 +30,3 @@ license text is included in their respective source files.
   <http://sybil.ece.ucsb.edu/pages/fpsopt/index.html>, which uses a Modified
   BSD-2 License - for Non-Commercial Research and Educational Use Only. Any
   contributions to this code must be made under the terms of both licenses.
-- The bsplines module is derived from `Spline Interpolation`
-  <http://bigwww.epfl.ch/thevenaz/interpolation/>. Its source code is used under
-  the 3-Clause BSD License with the author's permission.

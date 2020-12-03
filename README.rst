@@ -49,7 +49,7 @@ Optional dependencies
 The package provides optional dependencies that can be selected  at will during
 the install (in the square brackets):
 
-- **mpi**: allows to use the ``cbi_toolbox.distributed`` with MPI support,
+- **mpi**: allows to use the ``cbi_toolbox.parallel.mpi`` module,
   requires a functional MPI installation
 - **plots**: installs tools to visualize 3D objects easily
 

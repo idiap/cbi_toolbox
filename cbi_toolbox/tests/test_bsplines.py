@@ -69,7 +69,7 @@ class TestBsplines(unittest.TestCase):
         tolerance = 1e-15
         data_size = 50
         condition_list = ['mirror', 'periodic']
-        data_size_list = [(data_size,), (data_size, 2), (data_size, 2, 2)]
+        data_size_list = [(data_size,), (data_size, 4), (data_size, 2, 2)]
 
         for degree in range(8):
             for size in data_size_list:

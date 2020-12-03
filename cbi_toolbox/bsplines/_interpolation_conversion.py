@@ -34,12 +34,13 @@ from scipy import ndimage
 
 from cbi_toolbox.utils import make_broadcastable
 from cbi_toolbox import bsplines
+from cbi_toolbox import parallel
 
 
 def initial_causal_coefficient(coeff, z, tolerance, boundary_condition='mirror'):
     """
     Computes the initial causal coefficient from an array of coefficients
-    In the input array, signals are considered to be along the first dimension 
+    In the input array, signals are considered to be along the first dimension
     (1D computations).
     """
 
@@ -166,12 +167,33 @@ def convert_to_interpolation_coefficients(c, degree, tolerance=1e-9,
             mode = 'mirror'
         elif boundary_condition.upper() == 'PERIODIC':
             mode = 'wrap'
+        else:
+            raise ValueError(
+                'Invalid boundary condidiont: {}'.format(boundary_condition))
 
         output = None
         if in_place:
             output = c
 
-        return ndimage.spline_filter1d(c, degree, axis=0, mode=mode, output=output)
+        if c.ndim < 2:
+            output = ndimage.spline_filter1d(
+                c, degree, axis=0, mode=mode, output=output)
+
+        else:
+            if output is None:
+                output = np.empty_like(c)
+
+            split_size = c.shape[-1]
+
+            def to_spline(start, width):
+                in_array = c[:, ..., start:start+width]
+                out_array = output[:, ..., start:start+width]
+                ndimage.spline_filter1d(
+                    in_array, degree, axis=0, mode=mode, output=out_array)
+
+            parallel.parallelize(to_spline, split_size)
+
+        return output
 
     if not in_place:
         c = c.copy()
@@ -221,16 +243,41 @@ def convert_to_interpolation_coefficients(c, degree, tolerance=1e-9,
         # causal filter
         zinit = pole * c[0, ...]
         zinit = zinit[np.newaxis, ...]
-        c[1:, ...], zf = signal.lfilter(
-            [1], [1, -pole], c[1:, ...], axis=0, zi=zinit)
+
+        if c.ndim < 2:
+            c[1:, ...], _ = signal.lfilter(
+                [1], [1, -pole], c[1:, ...], axis=0, zi=zinit)
+
+        else:
+            split_size = c.shape[-1]
+
+            def lfilt(start, width):
+                c[1:, ..., start:start+width], _ = signal.lfilter(
+                    [1], [1, -pole], c[1:, ..., start:start+width], axis=0, zi=zinit[:, ..., start:start+width])
+
+            parallel.parallelize(lfilt, split_size)
+
         # anticausal initialization
         c[-1, ...] = initial_anticausal_coefficient(
             c, pole, boundary_condition=boundary_condition)
         # anticausal filter
         zinit = pole * c[-1, ...]
         zinit = zinit[np.newaxis, ...]
-        c[:-1], zf = signal.lfilter([-pole], [1, -pole],
-                                    np.flipud(c[0:-1, ...]), axis=0, zi=zinit)
+
+        if c.ndim < 2:
+            c[:-1], _ = signal.lfilter([-pole], [1, -pole],
+                                       np.flipud(c[0:-1, ...]), axis=0, zi=zinit)
+
+        else:
+            split_size = c.shape[-1]
+            fc = np.flipud(c[0:-1, ...])
+
+            def lfilt2(start, width):
+                c[:-1, ...,  start:start+width], _ = signal.lfilter([-pole], [1, -pole],
+                                                                    fc[:, ...,  start:start+width], axis=0, zi=zinit[:, ..., start:start+width])
+
+            parallel.parallelize(lfilt2, split_size)
+
         c[:-1] = np.flipud(c[:-1])
 
     return c
