@@ -8,7 +8,7 @@ default:
     - python3 -m virtualenv -p python3 .venv
     - source .venv/bin/activate
     - python --version
-    - pip install .
+    - pip install .[mpi]
 
   after_script:
     - rm -rf .venv
