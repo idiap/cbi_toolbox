@@ -32,6 +32,7 @@ help:
 
 autodoc:
 	cd $(SOURCEDIR)
+	rm $(SOURCEDIR)/api -r
 	sphinx-apidoc -T -f -t _templates/ -d 5 -o api -e ../cbi_toolbox ../cbi_toolbox/tests/*
 
 .PHONY: help Makefile

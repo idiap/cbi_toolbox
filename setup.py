@@ -111,6 +111,7 @@ setup(
     author_email='francois.marelli@idiap.ch',
     description='A python toolbox for computational bioimaging',
     long_description='',
+    license='BSD-3',
     ext_modules=[
         CMakeExtension('cbi_toolbox.cmake_ext'),
     ],

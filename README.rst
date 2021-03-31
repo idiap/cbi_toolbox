@@ -16,7 +16,7 @@ Requirements:
 
 - Python>=3.7
 - OpenMP>=4.5 (i.e. gcc>=6)
-- MPI (optional, for distributed module)
+- MPI (optional, for parallel module)
 - CudaToolkit>=8 (optional, for GPU support)
 
 

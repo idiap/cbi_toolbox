@@ -383,60 +383,106 @@ def phantom(size, scale=1, antialias=2):
 
     size *= antialias
 
-    mat = np.zeros((size, size, size), dtype=np.float64)
-    coords = 2 * np.indices(mat.shape) / size - 1
-    coords /= scale
+    full_mat = np.zeros((size, size, size), dtype=np.float64)
 
-    for ellipse in ellipses:
-        A = ellipse[0]
-        a2 = ellipse[1] ** 2
-        b2 = ellipse[2] ** 2
-        c2 = ellipse[3] ** 2
-        x0 = ellipse[4]
-        y0 = ellipse[5]
-        z0 = ellipse[6]
-        phi = ellipse[7] * np.pi / 180
-        theta = ellipse[8] * np.pi / 180
-        psi = ellipse[9] * np.pi / 180
+    for quad in range(8):
+        if quad == 0:
+            mat = full_mat[:size//2, :size//2, :size//2]
+            coords = 2 * np.indices(mat.shape,
+                                    dtype=np.float64) / (size - 1) - 1
+        elif quad == 1:
+            mat = full_mat[size//2:, :size//2, :size//2]
+            coords = 2 * np.indices(mat.shape,
+                                    dtype=np.float64) / (size - 1) - 1
+            coords[0] += size//2 * 2 / (size - 1)
+        elif quad == 2:
+            mat = full_mat[size//2:, size//2:, :size//2]
+            coords = 2 * np.indices(mat.shape,
+                                    dtype=np.float64) / (size - 1) - 1
+            coords[0] += size//2 * 2 / (size - 1)
+            coords[1] += size//2 * 2 / (size - 1)
+        elif quad == 3:
+            mat = full_mat[size//2:, size//2:, size//2:]
+            coords = 2 * np.indices(mat.shape,
+                                    dtype=np.float64) / (size - 1) - 1
+            coords[0] += size//2 * 2 / (size - 1)
+            coords[1] += size//2 * 2 / (size - 1)
+            coords[2] += size//2 * 2 / (size - 1)
+        elif quad == 4:
+            mat = full_mat[:size//2, size//2:, size//2:]
+            coords = 2 * np.indices(mat.shape,
+                                    dtype=np.float64) / (size - 1) - 1
+            coords[1] += size//2 * 2 / (size - 1)
+            coords[2] += size//2 * 2 / (size - 1)
+        elif quad == 5:
+            mat = full_mat[:size//2:, :size//2, size//2:]
+            coords = 2 * np.indices(mat.shape,
+                                    dtype=np.float64) / (size - 1) - 1
+            coords[2] += size//2 * 2 / (size - 1)
+        elif quad == 6:
+            mat = full_mat[size//2:, :size//2, size//2:]
+            coords = 2 * np.indices(mat.shape,
+                                    dtype=np.float64) / (size - 1) - 1
+            coords[0] += size//2 * 2 / (size - 1)
+            coords[2] += size//2 * 2 / (size - 1)
+        elif quad == 7:
+            mat = full_mat[:size//2, size//2:, :size//2]
+            coords = 2 * np.indices(mat.shape,
+                                    dtype=np.float64) / (size - 1) - 1
+            coords[1] += size//2 * 2 / (size - 1)
 
-        cphi = np.cos(phi)
-        sphi = np.sin(phi)
-        ctheta = np.cos(theta)
-        stheta = np.sin(theta)
-        cpsi = np.cos(psi)
-        spsi = np.sin(psi)
+        coords /= scale
 
-        # Euler rotation matrix with ZXY convention
-        rotmat = np.array([
-            [
-                ctheta,
-                stheta * sphi,
-                -stheta * cphi,
-            ],
-            [
-                spsi * stheta,
-                cpsi * cphi - ctheta * sphi * spsi,
-                cpsi * sphi + ctheta * cphi * spsi,
-            ],
-            [
-                cpsi * stheta,
-                -spsi * cphi - ctheta * sphi * cpsi,
-                -spsi * sphi + ctheta * cphi * cpsi,
-            ],
-        ])
+        for ellipse in ellipses:
+            A = ellipse[0]
+            a2 = ellipse[1] ** 2
+            b2 = ellipse[2] ** 2
+            c2 = ellipse[3] ** 2
+            x0 = ellipse[4]
+            y0 = ellipse[5]
+            z0 = ellipse[6]
+            phi = ellipse[7] * np.pi / 180
+            theta = ellipse[8] * np.pi / 180
+            psi = ellipse[9] * np.pi / 180
 
-        rcoords = np.tensordot(rotmat, coords, 1)
-        idx = ((rcoords[1, :] - x0) ** 2.0 / a2 +
-               (rcoords[2, :] - y0) ** 2.0 / b2 +
-               (rcoords[0, :] - z0) ** 2.0 / c2 <= 1)
+            cphi = np.cos(phi)
+            sphi = np.sin(phi)
+            ctheta = np.cos(theta)
+            stheta = np.sin(theta)
+            cpsi = np.cos(psi)
+            spsi = np.sin(psi)
 
-        mat[idx] += A
+            # Euler rotation matrix with ZXY convention
+            rotmat = np.array([
+                [
+                    ctheta,
+                    stheta * sphi,
+                    -stheta * cphi,
+                ],
+                [
+                    spsi * stheta,
+                    cpsi * cphi - ctheta * sphi * spsi,
+                    cpsi * sphi + ctheta * cphi * spsi,
+                ],
+                [
+                    cpsi * stheta,
+                    -spsi * cphi - ctheta * sphi * cpsi,
+                    -spsi * sphi + ctheta * cphi * cpsi,
+                ],
+            ])
+
+            rcoords = np.tensordot(rotmat, coords, 1)
+            idx = ((rcoords[1, :] - x0) ** 2.0 / a2 +
+                   (rcoords[2, :] - y0) ** 2.0 / b2 +
+                   (rcoords[0, :] - z0) ** 2.0 / c2 <= 1)
+
+            mat[idx] += A
 
     if antialias > 1:
-        mat = skimage.transform.rescale(
-            mat, 1 / antialias, mode='constant')
+        full_mat = skimage.transform.rescale(
+            full_mat, 1 / antialias, mode='constant')
 
-    return mat
+    return full_mat
 
 
 if __name__ == '__main__':

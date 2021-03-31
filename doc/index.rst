@@ -5,6 +5,7 @@
    :caption: Documentation
 
    self
+   experiments
    about
 
 .. toctree::
