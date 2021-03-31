@@ -166,10 +166,10 @@ def convert_to_interpolation_coefficients(c, degree, tolerance=1e-9,
         if boundary_condition.upper() == 'MIRROR':
             mode = 'mirror'
         elif boundary_condition.upper() == 'PERIODIC':
-            mode = 'wrap'
+            mode = 'grid-wrap'
         else:
             raise ValueError(
-                'Invalid boundary condidiont: {}'.format(boundary_condition))
+                'Invalid boundary condition: {}'.format(boundary_condition))
 
         output = None
         if in_place:

@@ -36,7 +36,7 @@ requires = [
     'numpy',
     'opencv-python',
     'apeer-ometiff-library',
-    'scipy>=1.4.0',
+    'scipy>=1.6.0',
     'scikit-image',
     'noise',
     'poppy',

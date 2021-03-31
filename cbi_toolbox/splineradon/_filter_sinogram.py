@@ -58,8 +58,8 @@ def get_filter(n, filter_name: str, degree=None):
     filter_name = filter_name.upper()
     pre_filter = True
 
-    freq = np.concatenate((np.arange(1, n / 2 + 1, 2, dtype=np.int),
-                           np.arange(n / 2 - 1, 0, -2, dtype=np.int)))
+    freq = np.concatenate((np.arange(1, n / 2 + 1, 2, dtype=int),
+                           np.arange(n / 2 - 1, 0, -2, dtype=int)))
 
     filter_f = np.zeros(n)
     filter_f[0] = 0.25

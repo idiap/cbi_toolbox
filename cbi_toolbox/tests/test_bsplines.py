@@ -24,41 +24,43 @@ from scipy import signal
 from cbi_toolbox import bsplines
 
 
-def test_convert(signal, degree, tolerance, condition):
-    source = signal.copy()
-    coeffs = bsplines.convert_to_interpolation_coefficients(signal, degree, tolerance,
+def test_convert(sig, degree, tolerance, condition):
+    source = sig.copy()
+    coeffs = bsplines.convert_to_interpolation_coefficients(source, degree, tolerance,
                                                             boundary_condition=condition, in_place=True)
     r_signal = bsplines.convert_to_samples(
         coeffs, degree, condition, in_place=True)
-    np.testing.assert_allclose(source, r_signal)
+    np.testing.assert_allclose(sig, r_signal)
 
 
 def test_basis(data, from_b, to_b, degree, axes, tolerance, condition):
     source = data.copy()
     c_out = bsplines.change_basis(
-        data, from_b, to_b, degree, axes, tolerance, condition, in_place=True)
+        source, from_b, to_b, degree, axes, tolerance, condition, in_place=True)
     ar = bsplines.change_basis(
         c_out, to_b, from_b, degree, axes, tolerance, condition, in_place=True)
 
-    np.testing.assert_allclose(source, ar, rtol=tolerance * 10, atol=1e-12)
+    np.testing.assert_allclose(data, ar, rtol=tolerance * 10, atol=1e-12)
 
 
 def test_dims(data, from_b, to_b, degree, axes, tolerance, condition):
     source = data.copy()
+    sourceb = data.copy()
     out_1 = bsplines.change_basis(
-        data, from_b, to_b, degree, axes, tolerance, condition, in_place=True)
+        source, from_b, to_b, degree, axes, tolerance, condition, in_place=True)
     out_2 = bsplines.change_basis(
-        source[..., 0], from_b, to_b, degree, axes, tolerance, condition, in_place=True)
+        sourceb[..., 0], from_b, to_b, degree, axes, tolerance, condition, in_place=True)
 
     np.testing.assert_allclose(
         out_1[..., 0], out_2)
 
 
-def test_dims_conversion(data, degree, axes, tolerance, condition):
+def test_dims_conversion(data, degree, tolerance, condition):
     source = data.copy()
-    c_1 = bsplines.convert_to_interpolation_coefficients(data, degree, tolerance,
+    sourceb = data.copy()
+    c_1 = bsplines.convert_to_interpolation_coefficients(source, degree, tolerance,
                                                          boundary_condition=condition, in_place=True)
-    c_2 = bsplines.convert_to_interpolation_coefficients(source[..., 0], degree, tolerance,
+    c_2 = bsplines.convert_to_interpolation_coefficients(sourceb[..., 0], degree, tolerance,
                                                          boundary_condition=condition, in_place=True)
 
     np.testing.assert_allclose(c_1[..., 0], c_2)
@@ -73,26 +75,26 @@ class TestBsplines(unittest.TestCase):
 
         for degree in range(8):
             for size in data_size_list:
-                signal = np.random.default_rng().random(size)
+                sig = np.random.default_rng().random(size)
                 for condition in condition_list:
-                    test_convert(signal, degree, tolerance, condition)
+                    test_convert(sig, degree, tolerance, condition)
 
     def test_basis(self):
         tolerance = 1e-15
         data_size = 50
-        condition_list = ['mirror', 'periodic']
+        condition_list = ['mirror',  'periodic']
         data_size_list = [(data_size, data_size), (data_size, data_size, 2)]
         axes_list = [(0,), (0, 1)]
         bases_list = [('cardinal', 'b-spline'), ('cardinal', 'dual')]
 
         for degree in range(4):
             for size in data_size_list:
-                signal = np.random.default_rng().random(size)
+                sig = np.random.default_rng().random(size)
                 for condition in condition_list:
                     for axis in axes_list:
                         for base in bases_list:
                             from_b, to_b = base
-                            test_basis(signal, from_b, to_b, degree,
+                            test_basis(sig, from_b, to_b, degree,
                                        axis, tolerance, condition)
 
     def test_dims(self):
@@ -107,9 +109,9 @@ class TestBsplines(unittest.TestCase):
             for size in data_size_list:
                 sig = np.random.default_rng().random(size)
                 for condition in condition_list:
+                    test_dims_conversion(
+                        sig, degree, tolerance, condition)
                     for axis in axes_list:
-                        test_dims_conversion(
-                            sig, degree, axis, tolerance, condition)
                         for base in bases_list:
                             from_b, to_b = base
                             test_dims(sig, from_b, to_b, degree,
