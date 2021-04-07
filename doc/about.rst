@@ -14,6 +14,15 @@ please cite the following paper:
     Imaging (ISBI). IEEE, 2021.
 
 
+Acknowledgements
+----------------
+    
+This work was supported by the Swiss National Science Foundation (SNSF), grants:
+
+* 206021_164022 *Platform for Reproducible Acquisition, Processing, and Sharing of Dynamic, Multi-Modal Data.* (PLATFORM_MMD)
+* 200020_179217 *Computational biomicroscopy: advanced image processing methods to quantify live biological systems* (COMPBIO)
+
+
 .. include:: ../LICENSE.rst
 
 

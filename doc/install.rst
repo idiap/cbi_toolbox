@@ -1,20 +1,5 @@
-***********
-CBI Toolbox
-***********
-
-CBI Toolbox is a collection of algorithms used for computational bioimaging and microscopy.
-
-CBI Toolbox is suitable for large scale 3D simulations to reproduce realistic sample sizes and sampling resolution thanks to hardware acceleration (both GPU and multithreading) and optimized implementation of the algorithms.
-It is flexible enough to emulate different acquisition geometries, and also contains a set of tools used for quantitative evaluation of imaging methods.
-The framework can also be used for experiment design, as geometries can be virtually tested before being implemented on real acquisition devices.
-
-Copyright (c) 2020 Idiap Research Institute, http://www.idiap.ch/
-
-Written by François Marelli <francois.marelli@idiap.ch>
-
-
-Install instructions
-====================
+Installation
+============
 
 Requirements:
 
@@ -59,7 +44,7 @@ the install (in the square brackets):
 
 
 CUDA support
-============
+------------
 
 If nvcc is present on the machine, the installation will automatically attempt
 to compile the software with CUDA support. If you have multiple versions of the
@@ -79,24 +64,3 @@ After install, run the following::
 
 If the output is other than ``CUDA support is not installed.``, the CUDA acceleration
 was installed successfully.
-
-
-Citing CBI Toolbox
-==================
-
-If you use this package and wish to aknowledge it in an academic publication,
-please cite the following paper:
-
-    Marelli, F. and Liebling, M. *"Optics versus computation: influence of
-    illumination and reconstruction model accuracy in Focal-plane-scanning optical
-    projection tomography."* 2021 IEEE 18th International Symposium on Biomedical
-    Imaging (ISBI). IEEE, 2021.
-
-
-Acknowledgements
-================
-
-This work was supported by the Swiss National Science Foundation (SNSF), Grants:
-
-* 206021_164022 *Platform for Reproducible Acquisition, Processing, and Sharing of Dynamic, Multi-Modal Data.* (PLATFORM_MMD)
-* 200020_179217 *Computational biomicroscopy: advanced image processing methods to quantify live biological systems* (COMPBIO)

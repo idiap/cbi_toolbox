@@ -35,6 +35,11 @@ autodoc:
 	rm $(SOURCEDIR)/api -r
 	sphinx-apidoc -T -f -t _templates/ -d 5 -o api -e ../cbi_toolbox ../cbi_toolbox/tests/*
 
+docs:
+	make clean
+	make autodoc
+	make html
+
 .PHONY: help Makefile
 
 # Catch-all target: route all unknown targets to Sphinx using the new
