@@ -26,6 +26,7 @@ vol 21, no 4, pp. 363-376, April 2002.
 
 # Copyright (c) 2020 Idiap Research Institute, http://www.idiap.ch/
 # Written by François Marelli <francois.marelli@idiap.ch>
+# and Michael Liebling <michael.liebling@idiap.ch>
 #
 # This file is part of CBI Toolbox.
 #
