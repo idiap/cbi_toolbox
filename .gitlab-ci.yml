@@ -1,0 +1,19 @@
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+
+default:
+  before_script:
+    - pip3 install --upgrade pip setuptools wheel
+    - pip3 install virtualenv
+    - python3 -m virtualenv -p python3 .venv
+    - source .venv/bin/activate
+    - python --version
+    - pip install .[mpi]
+
+  after_script:
+    - rm -rf .venv
+
+test:
+  script:
+    - cd cbi_toolbox
+    - python -m unittest discover cbi_toolbox.tests

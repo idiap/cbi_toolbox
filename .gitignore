@@ -1,0 +1,11 @@
+.idea/
+*~
+__pycache__/
+*.egg-info/
+build/
+*.so
+tmp/
+cmake-build-*/
+.vscode/
+doc/_build/
+doc/api/
