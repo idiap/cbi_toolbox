@@ -30,4 +30,5 @@ jobs:
         python -m pip install .
     - name: Unittests
       run: |
+        cd cbi_toolbox
         python -m unittest discover cbi_toolbox.tests
