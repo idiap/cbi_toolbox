@@ -127,7 +127,8 @@ if __name__ == '__main__':
 
     phantom = primitives.phantom(TEST_SIZE) * (s_simplex * 0.5 + 0.75)
 
-    with napari.gui_qt():
-        viewer = napari.view_image(s_spheres)
-        viewer.add_image(s_simplex)
-        viewer.add_image(phantom)
+    viewer = napari.view_image(s_spheres)
+    viewer.add_image(s_simplex)
+    viewer.add_image(phantom)
+
+    napari.run()

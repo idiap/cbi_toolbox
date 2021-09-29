@@ -421,6 +421,7 @@ if __name__ == '__main__':
     illu = openspim_illumination(
         simu_size=1024, npix_fov=256, oversample=8, rel_thresh=1e-6)
 
-    with napari.gui_qt():
-        viewer = napari.view_image(s_psf)
-        viewer.add_image(illu)
+    viewer = napari.view_image(s_psf)
+    viewer.add_image(illu)
+
+    napari.run()

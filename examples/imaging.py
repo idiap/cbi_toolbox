@@ -92,28 +92,29 @@ r_fssopt = spl.iradon(s_fssopt, s_theta, circle=True)
 print('Time for reconstruct FSS-OPT: \t{}s'.format(time.time() - start))
 
 
-with napari.gui_qt():
-    viewer = napari.view_image(
-        sample, rendering='attenuated_mip', attenuation=0.2, colormap='plasma')
-    viewer.add_image(s_widefield, rendering='attenuated_mip',
-                     attenuation=0.2, colormap='plasma')
-    viewer.add_image(noisy, rendering='attenuated_mip',
-                     attenuation=0.2, colormap='plasma')
-    viewer.add_image(s_spim, rendering='attenuated_mip',
-                     attenuation=0.2, colormap='plasma')
-    viewer.add_image(r_radon, rendering='attenuated_mip',
-                     attenuation=0.2, colormap='plasma')
-    viewer.add_image(r_opt, rendering='attenuated_mip',
-                     attenuation=0.2, colormap='plasma')
-    viewer.add_image(r_fpsopt, rendering='attenuated_mip',
-                     attenuation=0.2, colormap='plasma')
-    viewer.add_image(r_deconv, rendering='attenuated_mip',
-                     attenuation=0.2, colormap='plasma')
-    viewer.add_image(r_fssopt, rendering='attenuated_mip',
-                     attenuation=0.2, colormap='plasma')
+viewer = napari.view_image(
+    sample, rendering='attenuated_mip', attenuation=0.2, colormap='plasma')
+viewer.add_image(s_widefield, rendering='attenuated_mip',
+                    attenuation=0.2, colormap='plasma')
+viewer.add_image(noisy, rendering='attenuated_mip',
+                    attenuation=0.2, colormap='plasma')
+viewer.add_image(s_spim, rendering='attenuated_mip',
+                    attenuation=0.2, colormap='plasma')
+viewer.add_image(r_radon, rendering='attenuated_mip',
+                    attenuation=0.2, colormap='plasma')
+viewer.add_image(r_opt, rendering='attenuated_mip',
+                    attenuation=0.2, colormap='plasma')
+viewer.add_image(r_fpsopt, rendering='attenuated_mip',
+                    attenuation=0.2, colormap='plasma')
+viewer.add_image(r_deconv, rendering='attenuated_mip',
+                    attenuation=0.2, colormap='plasma')
+viewer.add_image(r_fssopt, rendering='attenuated_mip',
+                    attenuation=0.2, colormap='plasma')
 
-    viewer = napari.view_image(s_radon, colormap='plasma')
-    viewer.add_image(s_opt, colormap='plasma')
-    viewer.add_image(s_fpsopt, colormap='plasma')
-    viewer.add_image(s_deconv, colormap='plasma')
-    viewer.add_image(s_fssopt, colormap='plasma')
+viewer = napari.view_image(s_radon, colormap='plasma')
+viewer.add_image(s_opt, colormap='plasma')
+viewer.add_image(s_fpsopt, colormap='plasma')
+viewer.add_image(s_deconv, colormap='plasma')
+viewer.add_image(s_fssopt, colormap='plasma')
+
+napari.run()

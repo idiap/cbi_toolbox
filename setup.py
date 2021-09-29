@@ -27,11 +27,12 @@ import os
 import platform
 import subprocess
 import sys
+import glob
 
 from setuptools import setup, Extension, find_packages
 from setuptools.command.build_ext import build_ext
 
-__version__ = '1.0'
+__version__ = '1.0.3'
 
 requires = [
     'numpy',
@@ -44,7 +45,7 @@ requires = [
 ]
 
 extras_require = {
-    'plots': ['napari', 'matplotlib'],
+    'plots': ['napari>=0.4', 'matplotlib'],
     'mpi': ['mpi4py'],
     'docs': ['sphinx', 'sphinxcontrib-apidoc'],
 }
@@ -52,8 +53,15 @@ extras_require = {
 
 class CMakeExtension(Extension):
     def __init__(self, name, sourcedir=''):
-        Extension.__init__(self, name, sources=[])
         self.sourcedir = os.path.abspath(sourcedir)
+
+        sources = glob.glob('pybind11/tools/*')
+        sources.extend(glob.glob('pybind11/include/**/*', recursive=True))
+        sources.append('pybind11/CMakeLists.txt')
+        sources.extend(glob.glob('**/src/*', recursive=True))
+        sources.append('CMakeLists.txt')
+
+        Extension.__init__(self, name, sources=sources)
 
 
 class CMakeBuild(build_ext):
@@ -109,6 +117,7 @@ class CMakeBuild(build_ext):
 this_directory = path.abspath(path.dirname(__file__))
 with open(path.join(this_directory, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
+
 
 setup(
     name='cbi_toolbox',

@@ -196,13 +196,12 @@ if __name__ == '__main__':
 
     s_deconv = deconvolve_sinogram(s_fpsopt, s_psf, l=0)
 
-    print(np.square(s_deconv - s_radon).max()**0.5)
+    viewer = napari.view_image(s_radon)
+    viewer.add_image(s_fpsopt)
+    viewer.add_image(s_deconv)
 
-    with napari.gui_qt():
-        viewer = napari.view_image(s_radon)
-        viewer.add_image(s_fpsopt)
-        viewer.add_image(s_deconv)
+    viewer = napari.view_image(fft.fftshift(
+        np.abs(i_psf), 0), name='inverse PSF FFT')
+    viewer.add_image(dirac)
 
-        viewer = napari.view_image(fft.fftshift(
-            np.abs(i_psf), 0), name='inverse PSF FFT')
-        viewer.add_image(dirac)
+    napari.run()

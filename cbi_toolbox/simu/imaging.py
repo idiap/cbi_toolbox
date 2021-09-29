@@ -253,8 +253,7 @@ def fss_opt(obj, psf, illu, pad=False, **kwargs):
 
     illu = np.pad(illu, ((0,), (pad_x,), (pad_y,)))
 
-    image = np.zeros_like(sinogram, shape=(
-        sinogram.shape[0], sinogram.shape[1] + psf_xw - 1, sinogram.shape[2] + psf_yw - 1))
+    image = np.zeros((sinogram.shape[0], sinogram.shape[1] + psf_xw - 1, sinogram.shape[2] + psf_yw - 1), dtype=sinogram.dtype)
 
     for x in range(sinogram.shape[1]):
         for y in range(sinogram.shape[2]):
@@ -340,6 +339,8 @@ def noise(image, photons=200, background=3, seed=None, in_place=False):
         the background level of photons per pixel, by default 3
     seed : int, optional
         the seed for rng, by default None
+    in_place: bool, optional
+        perform computations in-place and store the results in the input array, by default False
 
     Returns
     -------
@@ -357,7 +358,7 @@ def noise(image, photons=200, background=3, seed=None, in_place=False):
     rng = random.default_rng(seed)
     poisson = rng.poisson(image)
 
-    return amp * poisson / photons
+    return amp * poisson / poisson.max()
 
 
 if __name__ == "__main__":
@@ -406,13 +407,14 @@ if __name__ == "__main__":
     s_radon = spl.radon(sample, theta=s_theta, circle=True)
     print('Time for radon: \t{}s'.format(time.time() - start))
 
-    with napari.gui_qt():
-        viewer = napari.view_image(sample)
-        viewer.add_image(s_widefield)
-        viewer.add_image(noisy)
-        viewer.add_image(s_spim)
+    viewer = napari.view_image(sample)
+    viewer.add_image(s_widefield)
+    viewer.add_image(noisy)
+    viewer.add_image(s_spim)
 
-        viewer = napari.view_image(s_radon)
-        viewer.add_image(s_opt)
-        viewer.add_image(s_fpsopt)
-        viewer.add_image(s_fssopt)
+    viewer = napari.view_image(s_radon)
+    viewer.add_image(s_opt)
+    viewer.add_image(s_fpsopt)
+    viewer.add_image(s_fssopt)
+
+    napari.run()

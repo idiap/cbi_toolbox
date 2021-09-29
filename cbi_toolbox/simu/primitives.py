@@ -495,8 +495,9 @@ if __name__ == '__main__':
     s_boccia = boccia(TEST_SIZE)
     s_phantom = phantom(TEST_SIZE)
 
-    with napari.gui_qt():
-        viewer = napari.view_image(s_ball)
-        viewer.add_image(s_torus)
-        viewer.add_image(s_boccia)
-        viewer.add_image(s_phantom)
+    viewer = napari.view_image(s_ball)
+    viewer.add_image(s_torus)
+    viewer.add_image(s_boccia)
+    viewer.add_image(s_phantom)
+
+    napari.run()
