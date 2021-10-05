@@ -164,7 +164,8 @@ def fps_opt(obj, psf, pad=False, **kwargs):
         the PSF of the system, or projected PSF along the Z axis
     pad : bool, optional
         pad the vield of view to see all contributions
-        (required if the sample is not contained in the inner cylinder of the object), by default False
+        (required if the sample is not contained in the inner cylinder of the object),
+        by default False
 
     **kwargs :
         to be passed to the radon call
@@ -210,7 +211,8 @@ def fss_opt(obj, psf, illu, pad=False, **kwargs):
     pad : bool, optional
         pad the vield of view to see all contributions
         if used, illu will be required to be bigger
-        (required if the sample is not contained in the inner cylinder of the object), by default False
+        (required if the sample is not contained in the inner cylinder of the object),
+        by default False
 
     **kwargs :
         to be passed to the radon call
@@ -233,7 +235,8 @@ def fss_opt(obj, psf, illu, pad=False, **kwargs):
 
     if psf.shape[0] % 2 != illu.shape[0] % 2:
         raise ValueError('In order to correctly center the illumination on the PSF,'
-                         ' please profide a PSF with the same Z axis parity as the illumination Z axis')
+                         ' please profide a PSF with the same Z axis parity'
+                         'as the illumination Z axis')
 
     if not (psf.shape[1] % 2 and psf.shape[2] % 2):
         raise ValueError('In order to correctly center the PSF on the pixels,'
@@ -287,7 +290,8 @@ def spim(obj, psf, illu, pad=False):
 
     if psf.shape[0] % 2 != illu.shape[0] % 2:
         raise ValueError('In order to correctly center the illumination on the PSF,'
-                         ' please profide a PSF with the same Z axis parity as the illumination Z axis')
+                         ' please profide a PSF with the same Z axis parity'
+                         'as the illumination Z axis')
 
     if psf.shape[0] < illu.shape[0]:
         raise ValueError(

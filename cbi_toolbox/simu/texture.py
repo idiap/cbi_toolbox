@@ -21,7 +21,7 @@ The texture module allows to generate 3D textures for synthetic samples
 # SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
-import noise
+import opensimplex
 from cbi_toolbox.simu import primitives
 
 
@@ -74,10 +74,10 @@ def spheres(size, density=1, seed=None):
         volume[center[0] - radius:center[0] + radius, center[1] - radius:center[1] + radius,
                center[2] - radius:center[2] + radius] *= (1 - obj * intens)
 
-    return 1 - volume[volume.ndim * [slice(2*max_radius, -2*max_radius)]]
+    return 1 - volume[volume.ndim * (slice(2*max_radius, -2*max_radius),)]
 
 
-def simplex(size, scale=1, octaves=3, persistence=0.7, lacunarity=3.5, seed=None):
+def simplex(size, scale=1, seed=None):
     """
     Generates 3D simplex noise
 
@@ -87,12 +87,6 @@ def simplex(size, scale=1, octaves=3, persistence=0.7, lacunarity=3.5, seed=None
         size of the texture
     scale : int, optional
         scale of the noise, by default 1
-    octaves : int, optional
-        number of octaves used, by default 3
-    persistence : float, optional
-        relative amplitude of octaves, by default 0.7
-    lacunarity : float, optional
-        relative frequency of octaves, by default 3.5
     seed : int, optional
         seed for the noise, by default None
 
@@ -102,28 +96,31 @@ def simplex(size, scale=1, octaves=3, persistence=0.7, lacunarity=3.5, seed=None
         the texture
     """
 
+    # TODO add octaves, lacunarity and persistence?
+
     if seed is None:
         seed = int(np.random.default_rng().integers(2**10) * scale)
 
     volume = np.empty((size, size, size), dtype=np.float32)
     scale /= size
 
+    sim_gen = opensimplex.OpenSimplex(seed=seed)
+
     # TODO optimize loops
     for x in range(size):
         for y in range(size):
             for z in range(size):
-                sample = noise.snoise3(seed + x*scale, seed + y*scale, seed + z*scale,
-                                       octaves=octaves, persistence=persistence, lacunarity=lacunarity)
-                volume[x, y, z] = sample
+                volume[x, y, z] = sim_gen.noise3d(
+                    seed + x * scale, seed + y * scale, seed + z*scale)
     return volume
 
 
 if __name__ == '__main__':
     import napari
 
-    TEST_SIZE = 128
+    TEST_SIZE = 64
     s_spheres = spheres(TEST_SIZE)
-    s_simplex = simplex(TEST_SIZE)
+    s_simplex = simplex(TEST_SIZE, scale=8)
 
     phantom = primitives.phantom(TEST_SIZE) * (s_simplex * 0.5 + 0.75)
 

@@ -8,6 +8,9 @@ CBI Toolbox is suitable for large scale 3D simulations to reproduce realistic sa
 It is flexible enough to emulate different acquisition geometries, and also contains a set of tools used for quantitative evaluation of imaging methods.
 The framework can also be used for experiment design, as geometries can be virtually tested before being implemented on real acquisition devices.
 
+.. image:: docs/cover.svg
+  :alt: Demo image
+
 Copyright (c) 2020 Idiap Research Institute, http://www.idiap.ch/
 
 Written by François Marelli <francois.marelli@idiap.ch>
@@ -20,7 +23,7 @@ Install instructions
 Requirements:
 
 - Python>=3.7
-- OpenMP>=4.5 (i.e. gcc>=6)
+- OpenMP>=2
 - MPI (optional, for parallel module)
 - CudaToolkit>=8 (optional, for GPU support)
 
@@ -30,12 +33,12 @@ Using pip
 
 Pip >=10 is highly recommended to ensure the install works.
 
-- Run pip install: ``pip install cbi-toolbox[mpi,plots,docs]``
+- Run pip install: ``pip install cbi-toolbox[mpi,plots,docs]`` (choose optional packages according to your needs)
 
-Alternatively:
+Install from sources:
 
 - Clone the project with its submodules: ``git clone --recursive <url>``
-- Run pip install in the root folder: ``pip install .[mpi,plots]``
+- Run pip install in the root folder: ``pip install .[mpi,plots,docs]`` (choose optional packages according to your needs)
 
 
 Optional dependencies
@@ -54,9 +57,9 @@ Using conda
 -----------
 
 - Clone the project with its submodules: ``git clone --recursive <url>``
-- Create a new environment unsing the envoronment.yml file: 
+- Create a new environment unsing the environment.yml file: 
   ``conda env create -f environment.yml -n <environment name>``
-- Run pip install on the root folder: ``pip install .[mpi,plots]``
+- Run pip install on the root folder: ``pip install .[mpi,plots,docs]`` (choose optional packages according to your needs)
 
 If you already have an MPI implementation installed on your system, it is possible
 that conda installs a different one. If you want compatibility with your system MPI,

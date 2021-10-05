@@ -29,17 +29,21 @@ else()
   message(WARNING "If your CUDAToolkit is not being detected, try setting the environment variable CUDAToolkit_ROOT.")
 endif()
 
-if(NOT CMAKE_BUILD_TYPE) 
+if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
 
 add_subdirectory(pybind11)
-find_package(OpenMP 4.5 REQUIRED)
+find_package(OpenMP 2 REQUIRED)
 
-string(APPEND CMAKE_CXX_FLAGS " -Wall -Wextra -pedantic")
+string(APPEND CMAKE_CXX_FLAGS " -Wall -pedantic")
+if(CMAKE_COMPILER_IS_GNUCXX)
+  string(APPEND CMAKE_CXX_FLAGS " -Wextra")
+endif()
 
 pybind11_add_module(_cradon cbi_toolbox/splineradon/src/cradon.h cbi_toolbox/splineradon/src/cradon.cpp cbi_toolbox/splineradon/src/ompradon.cpp cbi_toolbox/splineradon/src/cudaradon.cpp)
 set_property(TARGET _cradon PROPERTY LIBRARY_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}splineradon/")
+set_property(TARGET _cradon PROPERTY LIBRARY_OUTPUT_DIRECTORY_RELEASE "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}splineradon/")
 target_link_libraries(_cradon PUBLIC OpenMP::OpenMP_CXX)
 
 if(CUDAToolkit_FOUND)
@@ -48,6 +52,7 @@ if(CUDAToolkit_FOUND)
 
   target_sources(_cradon PRIVATE cbi_toolbox/splineradon/src/cudaradon.cu)
   set_property(TARGET _cradon PROPERTY CUDA_ARCHITECTURES 60-virtual 61-real)
-  set_property(TARGET _cradon PROPERTY LIBRARY_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}splineradon/")  
+  set_property(TARGET _cradon PROPERTY LIBRARY_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}splineradon/")
+  set_property(TARGET _cradon PROPERTY LIBRARY_OUTPUT_DIRECTORY_RELEASE "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}splineradon/")
 endif()
 

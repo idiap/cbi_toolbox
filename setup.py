@@ -32,7 +32,7 @@ import glob
 from setuptools import setup, Extension, find_packages
 from setuptools.command.build_ext import build_ext
 
-__version__ = '1.0.3'
+__version__ = '1.1.0'
 
 requires = [
     'numpy',
@@ -40,14 +40,14 @@ requires = [
     'apeer-ometiff-library',
     'scipy>=1.6.0',
     'scikit-image',
-    'noise',
+    'opensimplex',
     'poppy',
 ]
 
 extras_require = {
     'plots': ['napari>=0.4', 'matplotlib'],
     'mpi': ['mpi4py'],
-    'docs': ['sphinx', 'sphinxcontrib-apidoc'],
+    'docs': ['sphinx', 'sphinxcontrib-apidoc', 'sphinx_rtd_theme'],
 }
 
 
@@ -67,10 +67,10 @@ class CMakeExtension(Extension):
 class CMakeBuild(build_ext):
     def run(self):
         try:
-            out = subprocess.check_output(['cmake', '--version'])
-        except OSError:
+            _ = subprocess.check_output(['cmake', '--version'])
+        except OSError as exception:
             raise RuntimeError("CMake must be installed to build the following extensions: " +
-                               ", ".join(e.name for e in self.extensions))
+                               ", ".join(e.name for e in self.extensions)) from exception
 
         for ext in self.extensions:
             if isinstance(ext, CMakeExtension):

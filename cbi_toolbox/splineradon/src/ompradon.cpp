@@ -100,7 +100,7 @@ void radon_inner(
 
                         if (backprojection)
                         {
-#pragma omp atomic update
+#pragma omp atomic
                             image_ptr[image_index] += kernel_ptr[kernel_index] * sinogram_ptr[sinogram_index];
                         }
                         else
@@ -136,7 +136,7 @@ py::array_t<double, py::array::c_style> radon_omp(
 
     const long NAngles = theta_info.shape[0];
 
-    py::array::ShapeContainer shape = {NAngles, Nc, image_info.shape[2]};
+    py::array::ShapeContainer shape = {NAngles, Nc, (const long)image_info.shape[2]};
     auto sinogram = py::array_t<double, py::array::c_style>(shape);
     auto sinogram_info = sinogram.request();
 

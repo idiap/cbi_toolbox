@@ -196,7 +196,7 @@ def torus_boccia(size, radius=None, n_stripes=3, deg_space=15, torus_radius=0.07
     size : int
         side of the cube containing the volume (must be even)
     radius : float, optional
-        radius of the boccia, by default None
+        radius of the boccia, by default None (size - 1)
     n_stripes : int, optional
         number of torus stripes, by default 3
     deg_space : int, optional
@@ -276,17 +276,12 @@ def ball(size, radius=None, in_radius=0, antialias=2, dtype=np.float64):
     """
     Generate hollow ball.
 
-    :param size: 
-    :param radius: 
-    :param in_radius: inner radius fraction (set to 0 for full ball)
-    :param antialias: antialiasing scale factor
-
     Parameters
     ----------
     size : int
         side of the cube containing the volume
     radius : float, optional
-        radius of the ball, by default None
+        radius of the ball, by default None (size - 1)
     in_radius : float, optional
         radius of the inner (empty) sphere expressed as a fraction of the outer
         radius [0-1], by default 0 (plain ball)
