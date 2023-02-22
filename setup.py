@@ -149,7 +149,7 @@ setup(
     packages=find_packages(exclude=("tests",)),
     setup_requires=["cython"],
     install_requires=requires,
-    python_requires=">=3.7",
+    python_requires=">=3.7, <3.11",
     extras_require=extras_require,
     cmdclass={"build_ext": CMakeBuild},
     zip_safe=False,
