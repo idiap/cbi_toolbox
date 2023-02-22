@@ -60,7 +60,7 @@ Using conda
 - Clone the project with its submodules: ``git clone --recursive <url>``
 - Create a new environment unsing the environment.yml file: 
   ``conda env create -f environment.yml -n <environment name>``
-- Run pip install on the root folder: ``pip install .[mpi,plots,docs]`` (choose optional packages according to your needs)
+- Run pip install on the root folder: ``pip install .[mpi,plots,docs,ome]`` (choose optional packages according to your needs)
 
 If you already have an MPI implementation installed on your system, it is possible
 that conda installs a different one. If you want compatibility with your system MPI,
