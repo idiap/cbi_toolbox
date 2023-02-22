@@ -32,7 +32,7 @@ import glob
 from setuptools import setup, Extension, find_packages
 from setuptools.command.build_ext import build_ext
 
-__version__ = "1.3"
+__version__ = "1.3.1"
 
 requires = [
     "numpy>=1.17",
