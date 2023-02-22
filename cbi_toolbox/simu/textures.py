@@ -47,7 +47,7 @@ def spheres(shape, density=1, seed=None):
 
     Returns
     -------
-    array [*shape]
+    array [shape]
         the texture
     """
 
@@ -110,7 +110,7 @@ def simplex(shape, scale=1, seed=None):
 
     Returns
     -------
-    array [*shape]
+    array [shape]
         the simplex noise
     """
 

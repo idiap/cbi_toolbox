@@ -64,10 +64,8 @@ def sigsin_beat(
     """
     Generate coordinate grids transformed using sigsin functions.
     If used to generate an ellipse, this resembles a beating heart.
-    The sigsins control respectively the following transforms:
-        -scaling in X
-        -scaling in Y
-        -rotation
+    The sigsins control respectively the following transforms: scaling in X,
+    scaling in Y, and rotation.
 
     X is defined as the direction of propagation of the sigsins.
 

@@ -41,7 +41,7 @@ requires = [
     "scikit-image>=0.19",
     "poppy",
     "opensimplex>=0.4",
-    "csc",
+    "scs",
     "jax",
     "jaxlib",
     "optax",
@@ -54,7 +54,7 @@ requires = [
 extras_require = {
     "plots": ["napari>=0.4", "matplotlib"],
     "mpi": ["mpi4py"],
-    "docs": ["sphinx", "sphinxcontrib-apidoc", "sphinx_rtd_theme"],
+    "docs": ["sphinx>=4", "sphinxcontrib-apidoc", "sphinx_rtd_theme"],
     "ome": ["apeer-ometiff-library @ git+https://github.com/FrailHand/apeer-ometiff-library"],
 }
 

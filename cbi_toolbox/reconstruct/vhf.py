@@ -779,12 +779,9 @@ def phase_correction(
         The corrected phases
     status : tuple
         The convergence status, containing:
-        converged : bool
-            If the algorithm converged.
-        n_iter : int
-            The number of iterations ran.
-        losses : tuple(float)
-            The final distance and regularization losses, in that order.
+        converged : bool. If the algorithm converged.
+        n_iter : int. The number of iterations ran.
+        losses : tuple(float). The final distance and regularization losses, in that order.
 
     Raises
     ------
@@ -872,10 +869,8 @@ def l_curve(
     iterations : int, optional
         Maximum number of iterations for the phase correction algorithm. By default 50.
     ** kwargs : named arguments passed to the `.vhf._correction_pass` function.
-        a_tol : float, optional
-            Absolute tolerance used to define convergence, by default 1e-4
-        learning_rate : float, optional
-            The learning rate of the gradient descent, by default 1e-3
+        a_tol : float, optional. Absolute tolerance used to define convergence, by default 1e-4
+        learning_rate : float, optional. The learning rate of the gradient descent, by default 1e-3
 
     Returns
     -------

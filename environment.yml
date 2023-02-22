@@ -23,14 +23,6 @@ channels:
 dependencies:
   - cmake>=3.18*
   - cxx-compiler
-  - python>=3.7*
-  - numpy>=1.17*
-  - scipy>=1.4*
-  - noise>=1.2*
-  - scikit-image
+  - python>=3.7*,<3.11
   - mpi4py
   - pip
-  - pip:
-      - opencv-python
-      - apeer-ometiff-library
-      - poppy
