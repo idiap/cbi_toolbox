@@ -43,14 +43,18 @@ def erase_corners(image_array, corner_size=300):
     """
 
     if corner_size > 0:
-        image_array[..., :corner_size, :corner_size] = image_array[...,
-                                                                   corner_size, corner_size, None, None]
-        image_array[..., :corner_size, -corner_size:] = image_array[...,
-                                                                    corner_size, -corner_size, None, None]
-        image_array[..., -corner_size:, -corner_size:] = image_array[..., -
-                                                                     corner_size, -corner_size, None, None]
-        image_array[..., -corner_size:, :corner_size] = image_array[..., -
-                                                                    corner_size, corner_size, None, None]
+        image_array[..., :corner_size, :corner_size] = image_array[
+            ..., corner_size, corner_size, None, None
+        ]
+        image_array[..., :corner_size, -corner_size:] = image_array[
+            ..., corner_size, -corner_size, None, None
+        ]
+        image_array[..., -corner_size:, -corner_size:] = image_array[
+            ..., -corner_size, -corner_size, None, None
+        ]
+        image_array[..., -corner_size:, :corner_size] = image_array[
+            ..., -corner_size, corner_size, None, None
+        ]
 
     return image_array
 
@@ -80,8 +84,9 @@ def transmission_to_absorption(image_array, max_value=4096):
     return absorption
 
 
-def remove_background_illumination(image_array, threshold=0.5, hole_size=250,
-                                   margin_size=100, border_axis=-1):
+def remove_background_illumination(
+    image_array, threshold=0.5, hole_size=250, margin_size=100, border_axis=-1
+):
     """
     Removes the background illumination from images using thresholding and
     morphological filtering.
@@ -119,10 +124,11 @@ def remove_background_illumination(image_array, threshold=0.5, hole_size=250,
 
     for plane_idx, plane_mask in enumerate(mask_int):
         find_contours = cv2.findContours(
-            plane_mask, mode=cv2.RETR_EXTERNAL, method=cv2.CHAIN_APPROX_NONE)
+            plane_mask, mode=cv2.RETR_EXTERNAL, method=cv2.CHAIN_APPROX_NONE
+        )
 
-        major = cv2.__version__.split('.')[0]
-        if major == '2':
+        major = cv2.__version__.split(".")[0]
+        if major == "2":
             contours = find_contours[1]
         else:
             contours = find_contours[0]
@@ -131,17 +137,19 @@ def remove_background_illumination(image_array, threshold=0.5, hole_size=250,
 
         for index, contour in enumerate(contours):
             if len(contour) > 500 and (
-                    contour[..., contour_border_axis].max() == image_array.shape[border_axis] - 1 or (
-                    contour[..., contour_border_axis].min() == 0)):
+                contour[..., contour_border_axis].max()
+                == image_array.shape[border_axis] - 1
+                or (contour[..., contour_border_axis].min() == 0)
+            ):
                 temp_mask = np.zeros_like(mask_int[plane_idx, ...])
                 cv2.drawContours(temp_mask, contours, index, 1, cv2.FILLED)
 
-                temp_mask = cv2.morphologyEx(
-                    temp_mask, cv2.MORPH_CLOSE, kernel_open)
+                temp_mask = cv2.morphologyEx(temp_mask, cv2.MORPH_CLOSE, kernel_open)
                 mask_int[plane_idx, ...] |= temp_mask
 
         mask_int[plane_idx, ...] = cv2.morphologyEx(
-            mask_int[plane_idx, ...], cv2.MORPH_ERODE, kernel_dilate)
+            mask_int[plane_idx, ...], cv2.MORPH_ERODE, kernel_dilate
+        )
 
     mask_bool = mask_int.astype(bool)
     image_array[mask_bool] = 0

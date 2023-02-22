@@ -24,38 +24,33 @@ from cbi_toolbox.reconstruct import psnr
 
 nas = (30, 50, 80)
 dnas = np.arange(10, 101, 5)
-norm = 'mse'
+norm = "mse"
 
-path = os.environ['OVC_PATH']
+path = os.environ["OVC_PATH"]
 
-npath = os.path.join(path, 'noise')
-gpath = os.path.join(path, 'graph')
+npath = os.path.join(path, "noise")
+gpath = os.path.join(path, "graph")
 
-ref = np.load(os.path.join(path, 'arrays', 'phantom.npy'))
-radon = np.load(os.path.join(npath, 'iradon.npy'))
+ref = np.load(os.path.join(path, "arrays", "phantom.npy"))
+radon = np.load(os.path.join(npath, "iradon.npy"))
 
-results = {
-    'fss': {},
-    'fps': {},
-    'dc': {},
-    'fdc': {},
-}
+results = {"fss": {}, "fps": {}, "dc": {}, "fdc": {}}
 
-fss_snr = results['fss']
-fps_snr = results['fps']
-dc_snr = results['dc']
-fdc_snr = results['fdc']
+fss_snr = results["fss"]
+fps_snr = results["fps"]
+dc_snr = results["dc"]
+fdc_snr = results["fdc"]
 
-results['radon'] = psnr(ref, radon, norm)
+results["radon"] = psnr(ref, radon, norm)
 del radon
 
 for na in nas:
 
-    fss = np.load(os.path.join(npath, 'fssopt_{:03d}.npy'.format(na)))
+    fss = np.load(os.path.join(npath, "fssopt_{:03d}.npy".format(na)))
     fss_snr[na] = psnr(ref, fss, norm)
     del fss
 
-    fps = np.load(os.path.join(npath, 'fpsopt_{:03d}.npy'.format(na)))
+    fps = np.load(os.path.join(npath, "fpsopt_{:03d}.npy".format(na)))
     fps_snr[na] = psnr(ref, fps, norm)
     del fps
 
@@ -63,13 +58,12 @@ for na in nas:
     fdc_snr[na] = []
 
     for dna in dnas:
-        dc = np.load(os.path.join(npath, '{:03d}_{:03d}.npy'.format(na, dna)))
+        dc = np.load(os.path.join(npath, "{:03d}_{:03d}.npy".format(na, dna)))
         dc_snr[na].append(psnr(ref, dc, norm))
 
-        fdc = np.load(os.path.join(
-            npath, '{:03d}_{:03d}f.npy'.format(na, dna)))
+        fdc = np.load(os.path.join(npath, "{:03d}_{:03d}f.npy".format(na, dna)))
         fdc_snr[na].append(psnr(ref, fdc, norm))
 
 
-with open(os.path.join(gpath, 'noise.json'), 'w') as fp:
+with open(os.path.join(gpath, "noise.json"), "w") as fp:
     json.dump(results, fp)

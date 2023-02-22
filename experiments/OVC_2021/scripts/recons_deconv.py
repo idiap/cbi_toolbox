@@ -22,7 +22,7 @@ import numpy as np
 import cbi_toolbox.splineradon as spl
 
 parser = argparse.ArgumentParser()
-parser.add_argument('id', type=int)
+parser.add_argument("id", type=int)
 
 args = parser.parse_args()
 id = args.id - 1
@@ -35,17 +35,17 @@ dna = 10 + 5 * dna
 
 theta = np.linspace(0, 180, 360, endpoint=False)
 
-path = os.environ['OVC_PATH']
+path = os.environ["OVC_PATH"]
 
-dpath = os.path.join(path, 'deconv')
-rpath = os.path.join(path, 'reconstruct')
+dpath = os.path.join(path, "deconv")
+rpath = os.path.join(path, "reconstruct")
 
-for suffix in ('', 'f'):
-    file = '{:03d}_{:03d}{}.npy'.format(na, dna, suffix)
+for suffix in ("", "f"):
+    file = "{:03d}_{:03d}{}.npy".format(na, dna, suffix)
 
     deconv = np.load(os.path.join(dpath, file))
 
     iradon = spl.iradon(deconv, theta=theta, circle=True)
 
     np.save(os.path.join(rpath, file), iradon)
-    print('{} saved'.format(file))
+    print("{} saved".format(file))

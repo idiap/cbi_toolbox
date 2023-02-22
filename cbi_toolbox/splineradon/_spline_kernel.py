@@ -74,8 +74,11 @@ def get_kernel_table(nt, n1, n2, h, s, angles, degree=True):
     dnu = 1 / (T * (pad_fact * nt - 1))
     nu = -1 / (2 * T) + np.arange(pad_fact * nt) * dnu
 
-    trikernel_hat = np.power(np.sinc(np.outer(h1, nu)), (n1 + 1)) * np.power(
-        np.sinc(np.outer(h2, nu)), (n2 + 1)) * np.power(np.sinc(np.outer(h3, nu)), (n3 + 1))
+    trikernel_hat = (
+        np.power(np.sinc(np.outer(h1, nu)), (n1 + 1))
+        * np.power(np.sinc(np.outer(h2, nu)), (n2 + 1))
+        * np.power(np.sinc(np.outer(h3, nu)), (n3 + 1))
+    )
 
     kernel = np.abs(scipy.fft.rfft(trikernel_hat, axis=1, overwrite_x=True))
 

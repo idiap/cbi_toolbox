@@ -18,24 +18,23 @@
 
 import os
 import numpy as np
-from cbi_toolbox import utils
+from cbi_toolbox.utils import ome
 from cbi_toolbox.simu import imaging
 
-path = os.environ['OVC_PATH']
+path = os.environ["OVC_PATH"]
 
-ipath = os.path.join(path, 'imaging')
+ipath = os.path.join(path, "imaging")
 
-phantom = np.load(os.path.join(path, 'arrays', 'phantom.npy'))
+phantom = np.load(os.path.join(path, "arrays", "phantom.npy"))
 
 theta = np.linspace(0, 180, 360, endpoint=False)
 
 
 for na in (30, 50, 80):
-    psf, _ = utils.load_ome_tiff(os.path.join(
-        path, 'psf', 'BW_{:03d}.tif'.format(na)))
+    psf, _ = ome.load_ome_tiff(os.path.join(path, "psf", "BW_{:03d}.tif".format(na)))
 
     fpsopt = imaging.fps_opt(phantom, psf, theta=theta)
 
-    np.save(os.path.join(ipath, 'fpsopt_{:03d}.npy'.format(na)), fpsopt)
-    print('Saved FPS-OPT')
+    np.save(os.path.join(ipath, "fpsopt_{:03d}.npy".format(na)), fpsopt)
+    print("Saved FPS-OPT")
     del fpsopt

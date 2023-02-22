@@ -76,7 +76,7 @@ import numpy as np
 from cbi_toolbox.utils import fft_size
 
 
-def inverse_psf_rfft(psf, shape=None, l=20, mode='laplacian'):
+def inverse_psf_rfft(psf, shape=None, l=20, mode="laplacian"):
     """
     Computes the real FFT of a regularized inversed 2D PSF (or projected 3D)
     This follows the convention of fft.rfft: only half the spectrum is computed.
@@ -126,19 +126,19 @@ def inverse_psf_rfft(psf, shape=None, l=20, mode='laplacian'):
     phase_shift = freq * 2 * np.pi * ((psf.shape[0] - 1) // 2)
     psf_fft *= np.exp(1j * phase_shift[:, None])
 
-    if mode == 'laplacian':
+    if mode == "laplacian":
         # Laplacian regularization filter to avoid NaN
         filt = [[0, -0.25, 0], [-0.25, 1, -0.25], [0, -0.25, 0]]
         reg = np.abs(fft.rfft2(filt, s=shape)) ** 2
-    elif mode == 'constant':
+    elif mode == "constant":
         reg = 1
     else:
-        raise ValueError('Unknown regularizer: {}'.format(mode))
+        raise ValueError("Unknown regularizer: {}".format(mode))
 
     return psf_fft.conjugate() / (np.abs(psf_fft) ** 2 + l * reg)
 
 
-def deconvolve_sinogram(sinogram, psf, l=20, mode='laplacian', clip=True):
+def deconvolve_sinogram(sinogram, psf, l=20, mode="laplacian", clip=True):
     """
     Deconvolve a sinogram with given PSF.
 
@@ -165,14 +165,14 @@ def deconvolve_sinogram(sinogram, psf, l=20, mode='laplacian', clip=True):
 
     s_fft = fft.rfft2(sinogram, s=fft_shape)
     i_fft = fft.irfft2(s_fft * inverse, s=fft_shape, overwrite_x=True)
-    i_fft = i_fft[:, :sinogram.shape[1], :sinogram.shape[2]]
+    i_fft = i_fft[:, : sinogram.shape[1], : sinogram.shape[2]]
     if clip:
         np.clip(i_fft, 0, None, out=i_fft)
 
     return i_fft
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from cbi_toolbox.simu import optics, primitives, imaging
     import cbi_toolbox.splineradon as spl
     import napari
@@ -180,15 +180,14 @@ if __name__ == '__main__':
     TEST_SIZE = 64
 
     s_psf = optics.gaussian_psf(
-        numerical_aperture=0.3,
-        npix_axial=TEST_SIZE+1, npix_lateral=TEST_SIZE+1)
+        numerical_aperture=0.3, npix_axial=TEST_SIZE + 1, npix_lateral=TEST_SIZE + 1
+    )
 
-    i_psf = inverse_psf_rfft(s_psf, l=1e-15, mode='constant')
+    i_psf = inverse_psf_rfft(s_psf, l=1e-15, mode="constant")
     psfft = fft.rfft2(s_psf.sum(0))
     dirac = fft.irfft2(psfft * i_psf, s=s_psf.shape[1:])
 
-    sample = primitives.boccia(
-        TEST_SIZE, radius=(0.8 * TEST_SIZE) // 2, n_stripes=4)
+    sample = primitives.boccia(TEST_SIZE, radius=(0.8 * TEST_SIZE) // 2, n_stripes=4)
     s_theta = np.arange(90)
 
     s_radon = spl.radon(sample, theta=s_theta, circle=True)
@@ -200,8 +199,7 @@ if __name__ == '__main__':
     viewer.add_image(s_fpsopt)
     viewer.add_image(s_deconv)
 
-    viewer = napari.view_image(fft.fftshift(
-        np.abs(i_psf), 0), name='inverse PSF FFT')
+    viewer = napari.view_image(fft.fftshift(np.abs(i_psf), 0), name="inverse PSF FFT")
     viewer.add_image(dirac)
 
     napari.run()

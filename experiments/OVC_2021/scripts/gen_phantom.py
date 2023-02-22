@@ -20,10 +20,10 @@ import numpy as np
 import os
 from cbi_toolbox.simu import primitives
 
-path = os.environ['OVC_PATH']
+path = os.environ["OVC_PATH"]
 
-apath = os.path.join(path, 'arrays')
+apath = os.path.join(path, "arrays")
 
 phantom = primitives.phantom(256, antialias=3, scale=1)
 
-np.save(os.path.join(apath, 'phantom.npy'), phantom)
+np.save(os.path.join(apath, "phantom.npy"), phantom)

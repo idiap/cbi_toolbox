@@ -24,43 +24,37 @@ from matplotlib_scalebar import scalebar
 from cbi_toolbox.reconstruct import scale_to_mse
 from string import ascii_lowercase
 
-matplotlib.use('svg')
-matplotlib.rcParams['font.family'] = 'serif'
-matplotlib.rcParams['pdf.fonttype'] = 42
+matplotlib.use("svg")
+matplotlib.rcParams["font.family"] = "serif"
+matplotlib.rcParams["pdf.fonttype"] = 42
 
 margin = False
 
 na = 50
 
 
-path = os.environ['OVC_PATH']
+path = os.environ["OVC_PATH"]
 
 if margin:
-    path = os.path.join(path, 'margin')
+    path = os.path.join(path, "margin")
 
-rpath = os.path.join(path, 'reconstruct')
-npath = os.path.join(path, 'noise')
-gpath = os.path.join(path, 'graph')
+rpath = os.path.join(path, "reconstruct")
+npath = os.path.join(path, "noise")
+gpath = os.path.join(path, "graph")
 
 
-ref = np.load(os.path.join(path, 'arrays', 'phantom.npy'))
+ref = np.load(os.path.join(path, "arrays", "phantom.npy"))
 
-radon = np.load(os.path.join(rpath, 'iradon.npy'))
+radon = np.load(os.path.join(rpath, "iradon.npy"))
 
-fss = np.load(os.path.join(npath, 'fssopt_{:03d}.npy'.format(na)))
-fps = np.load(os.path.join(npath, 'fpsopt_{:03d}.npy'.format(na)))
-deconv = np.load(os.path.join(
-    npath, '{:03d}_{:03d}.npy'.format(na, na)))
+fss = np.load(os.path.join(npath, "fssopt_{:03d}.npy".format(na)))
+fps = np.load(os.path.join(npath, "fpsopt_{:03d}.npy".format(na)))
+deconv = np.load(os.path.join(npath, "{:03d}_{:03d}.npy".format(na, na)))
 
 scale_to_mse(fps, fss)
 
 
-arrays = [
-    ref,
-    fss,
-    fps,
-    deconv,
-]
+arrays = [ref, fss, fps, deconv]
 
 
 def array_to_image(arr):
@@ -68,17 +62,12 @@ def array_to_image(arr):
     return arr[layer, ...]
 
 
-cmap = 'magma_r'
-cmap = 'binary_r'
+cmap = "magma_r"
+cmap = "binary_r"
 
 
 titles = list(ascii_lowercase)
-titles = [
-    'Reference',
-    'FSS-OPT',
-    'FPS-OPT, no deconv',
-    'FPS-OPT, BW deconv'
-]
+titles = ["Reference", "FSS-OPT", "FPS-OPT, no deconv", "FPS-OPT, BW deconv"]
 
 figsize = (4, 4.3)
 
@@ -103,25 +92,25 @@ for arr in arrays:
 mini = 0
 
 for idx, (img, plot, title) in enumerate(zip(images, plots.flatten(), titles)):
-    im = plot.imshow(img.T, cmap=cmap,
-                     origin='lower', vmin=mini, vmax=maxi)
+    im = plot.imshow(img.T, cmap=cmap, origin="lower", vmin=mini, vmax=maxi)
 
     width = 0.4
-    axin = plot.inset_axes([0., 0.0, width, width])
-    axin.imshow(img.T, interpolation='nearest', cmap=cmap,
-                origin='lower', vmin=mini, vmax=maxi)
+    axin = plot.inset_axes([0.0, 0.0, width, width])
+    axin.imshow(
+        img.T, interpolation="nearest", cmap=cmap, origin="lower", vmin=mini, vmax=maxi
+    )
 
     origin = 110, 42
     width = 30
 
-    x1, x2, y1, y2 = origin[0], origin[0] + width, origin[1], origin[1]+width
+    x1, x2, y1, y2 = origin[0], origin[0] + width, origin[1], origin[1] + width
 
     axin.set_xlim(x1, x2)
     axin.set_ylim(y1, y2)
     axin.set_xticks([])
     axin.set_yticks([])
 
-    plot.indicate_inset_zoom(axin, edgecolor='0.5')
+    plot.indicate_inset_zoom(axin, edgecolor="0.5")
 
     plot.set_title(title)
 
@@ -130,9 +119,9 @@ for idx, (img, plot, title) in enumerate(zip(images, plots.flatten(), titles)):
 
     if idx == 0:
         scale = scalebar.ScaleBar(
-            0.635, 'um', location=2, box_color='k', color='w', box_alpha=0)
+            0.635, "um", location=2, box_color="k", color="w", box_alpha=0
+        )
         plot.add_artist(scale)
 
-plt.subplots_adjust(wspace=0.0, hspace=0.16, left=0,
-                    right=1, top=0.945, bottom=0)
-plt.savefig(os.path.join(gpath, 'images_noise.pdf'))
+plt.subplots_adjust(wspace=0.0, hspace=0.16, left=0, right=1, top=0.945, bottom=0)
+plt.savefig(os.path.join(gpath, "images_noise.pdf"))

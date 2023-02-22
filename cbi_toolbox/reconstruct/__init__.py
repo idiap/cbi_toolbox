@@ -1,6 +1,7 @@
 """
 The reconstruct package provides reconstruction algorithms,
 as well as preprocessing tools and performance scores.
+
 """
 
 # Copyright (c) 2020 Idiap Research Institute, http://www.idiap.ch/
@@ -49,7 +50,7 @@ def psnr(ref, target, norm=None, limit=None):
 
     if norm is None:
         pass
-    elif norm == 'mse':
+    elif norm == "mse":
         scale_to_mse(ref, target)
     else:
         normalize(ref)
@@ -81,7 +82,7 @@ def mse(ref, target):
     return np.square(np.subtract(ref, target)).mean()
 
 
-def normalize(image, mode='std'):
+def normalize(image, mode="std"):
     """
     Normalize an image according to the given criterion.
 
@@ -104,14 +105,14 @@ def normalize(image, mode='std'):
         For unknown mode.
     """
 
-    if mode == 'std':
+    if mode == "std":
         f = np.std(image)
-    elif mode == 'max':
+    elif mode == "max":
         f = np.max(image)
-    elif mode == 'sum':
+    elif mode == "sum":
         f = np.sum(image)
     else:
-        raise ValueError('Invalid norm: {}'.format(mode))
+        raise ValueError("Invalid norm: {}".format(mode))
 
     image /= f
     return image
@@ -133,7 +134,39 @@ def scale_to_mse(ref, target):
     numpy.ndarray
         The rescaled target.
     """
-    w = np.sum(ref * target) / np.sum(target ** 2)
+    w = np.sum(ref * target) / np.sum(target**2)
     target *= w
 
     return target
+
+
+def mutual_information(sig_a, sig_b, bins=20):
+    """
+    Compute the mutual information between two signals.
+
+    Parameters
+    ----------
+    sig_a : numpy.ndarray
+        The first signal
+    sig_b : numpy.ndarray
+        The second signal
+    bins : int, optional
+        The number of bins used for probability density estimation, by default 20
+
+    Returns
+    -------
+    float
+        The mutual information
+    """
+
+    hist, _, _ = np.histogram2d(sig_a.ravel(), sig_b.ravel(), bins=bins)
+
+    pxy = hist / float(np.sum(hist))
+    px = np.sum(pxy, axis=1)
+    py = np.sum(pxy, axis=0)
+
+    px_py = px[:, None] * py[None, :]
+
+    nonzeros = pxy > 0
+
+    return np.sum(pxy[nonzeros] * np.log(pxy[nonzeros] / px_py[nonzeros]))

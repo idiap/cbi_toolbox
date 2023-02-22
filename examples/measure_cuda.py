@@ -27,15 +27,15 @@ image = np.random.default_rng().standard_normal((width, width, depth))
 
 use_cuda = spl.is_cuda_available()
 if use_cuda:
-    print('Running with GPU acceleration')
+    print("Running with GPU acceleration")
 else:
-    print('Running on CPU')
+    print("Running on CPU")
 
 start = time.time()
 sinogram = spl.radon(image, use_cuda=use_cuda)
 stop = time.time()
 
-print('Radon : {}'.format(stop-start))
+print("Radon : {}".format(stop - start))
 
 del image
 
@@ -43,4 +43,4 @@ start = time.time()
 reconstruct = spl.iradon(sinogram, use_cuda=use_cuda)
 stop = time.time()
 
-print('IRadon : {}'.format(stop-start))
+print("IRadon : {}".format(stop - start))

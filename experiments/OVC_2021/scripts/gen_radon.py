@@ -21,15 +21,15 @@ import numpy as np
 import cbi_toolbox.splineradon as spl
 
 
-path = os.environ['OVC_PATH']
+path = os.environ["OVC_PATH"]
 
-ipath = os.path.join(path, 'imaging')
+ipath = os.path.join(path, "imaging")
 
 
-phantom = np.load(os.path.join(path, 'arrays', 'phantom.npy'))
+phantom = np.load(os.path.join(path, "arrays", "phantom.npy"))
 
 theta = np.linspace(0, 180, 360, endpoint=False)
 
 radon = spl.radon(phantom, theta=theta, circle=True)
-np.save(os.path.join(ipath, 'radon.npy'), radon)
-print('Saved Radon')
+np.save(os.path.join(ipath, "radon.npy"), radon)
+print("Saved Radon")

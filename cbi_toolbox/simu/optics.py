@@ -62,7 +62,8 @@ def create_wf_1d(wf_object, upsampling=1, scale=1, copy=False):
         wf_object = wf_object.copy()
 
     wf = np.ones(
-        (1, int(wf_object.shape[1] * upsampling)), dtype=wf_object.wavefront.dtype)
+        (1, int(wf_object.shape[1] * upsampling)), dtype=wf_object.wavefront.dtype
+    )
     y, x = np.indices(wf.shape, dtype=float)
     x -= wf.shape[1] / 2
 
@@ -106,7 +107,7 @@ def wf_to_2d(wf_object, npix=None, copy=False):
 
     new_wf = np.zeros_like(wf_object.wavefront, shape=(size, size))
 
-    new_wf[hw, :] = wf_object.wavefront[:, center - hw:center + hw]
+    new_wf[hw, :] = wf_object.wavefront[:, center - hw : center + hw]
     wf_object.wavefront = new_wf
 
     wf_object._y, wf_object._x = np.indices(wf_object.shape, dtype=float)
@@ -180,13 +181,19 @@ def resample_wavefront(wf, pixelscale, npixels):
 
     pixscale_ratio = (wf.pixelscale / pixelscale).decompose().value
 
-    def make_axis(npix, step):
-        """ Helper function to make coordinate axis for interpolation """
+    def make_axis_legacy(npix, step):
+        """Helper function to make coordinate axis for interpolation"""
         return step * (np.arange(-npix // 2, npix // 2, dtype=np.float64))
+
+    def make_axis(npix, step):
+        """Helper function to make coordinate axis for interpolation"""
+        axis = step * (np.arange(npix, dtype=np.float64))
+        axis -= axis[-1] / 2
+        return axis
 
     # Input and output axes for interpolation.  The interpolated wavefront will be evaluated
     # directly onto the detector axis, so don't need to crop afterwards.
-    x_in = make_axis(wf.shape[1], wf.pixelscale.to(u.m / u.pix).value)
+    x_in = make_axis_legacy(wf.shape[1], wf.pixelscale.to(u.m / u.pix).value)
     x_out = make_axis(npixels.value, pixelscale.to(u.m / u.pix).value)
 
     def interpolator(arr):
@@ -195,8 +202,14 @@ def resample_wavefront(wf, pixelscale, npixels):
         For data on a regular 2D grid, RectBivariateSpline is more efficient than interp2d.
         """
         return scipy.interpolate.interp1d(
-            x_in, arr, kind='slinear', copy=False, fill_value=0,
-            assume_sorted=True, bounds_error=False)
+            x_in,
+            arr,
+            kind="slinear",
+            copy=False,
+            fill_value=0,
+            assume_sorted=True,
+            bounds_error=False,
+        )
 
     # Interpolate real and imaginary parts separately
     real_resampled = interpolator(wf.wavefront.real)(x_out)
@@ -204,17 +217,29 @@ def resample_wavefront(wf, pixelscale, npixels):
     new_wf = real_resampled + 1j * imag_resampled
 
     # enforce conservation of energy:
-    new_wf *= 1. / pixscale_ratio
+    new_wf *= 1.0 / pixscale_ratio
 
-    wf.ispadded = False  # if a pupil detector, avoid auto-cropping padded pixels on output
+    wf.ispadded = (
+        False  # if a pupil detector, avoid auto-cropping padded pixels on output
+    )
     wf.wavefront = new_wf
     wf.pixelscale = pixelscale
 
 
-def openspim_illumination(wavelength=500e-9, refr_index=1.333, laser_radius=1.2e-3,
-                          objective_na=0.3, objective_focal=18e-3, slit_opening=10e-3,
-                          pixelscale=635e-9, npix_fov=512, rel_thresh=None,
-                          simu_size=2048, oversample=16):
+def openspim_illumination(
+    wavelength=500e-9,
+    refr_index=1.333,
+    laser_radius=1.2e-3,
+    objective_na=0.3,
+    objective_focal=18e-3,
+    slit_opening=10e-3,
+    pixelscale=635e-9,
+    npix_fov=512,
+    npix_z=None,
+    rel_thresh=None,
+    simu_size=2048,
+    oversample=16,
+):
     """
     Compute the illumination function of an OpenSPIM device
 
@@ -236,6 +261,8 @@ def openspim_illumination(wavelength=500e-9, refr_index=1.333, laser_radius=1.2e
         target pixelscale in meters per pixel, by default 1.3e-3/2048
     npix_fov : int, optional
         target size in pixels, by default 512
+    npix_z : int, optional
+        target depth size in pixel, by default None (uses npix_fov)
     rel_thresh: float, optional
         relative threshold to crop the beam thickness
         if a full row is below this theshold, all rows after are removed
@@ -255,25 +282,29 @@ def openspim_illumination(wavelength=500e-9, refr_index=1.333, laser_radius=1.2e
     wavelength *= u.m
     laser_radius *= u.m
     objective_focal *= u.m
-    pixelscale *= (u.m / u.pixel)
+    pixelscale *= u.m / u.pixel
     slit_opening *= u.m
 
     noop = poppy.ScalarTransmission()
     beam_ratio = 1 / oversample
 
+    if npix_z is None:
+        npix_z = npix_fov
+
     fov_pixels = npix_fov * u.pixel
+    z_pixels = npix_z * u.pixel
     detector = poppy.FresnelOpticalSystem()
     detector.add_detector(fov_pixels=fov_pixels, pixelscale=pixelscale)
 
     # We approximate the objective aperture with a square one to make it separable
     # Given the shape of the wavefront, we estimate the generated error to be negligible
-    objective_radius = math.tan(
-        math.asin(objective_na / refr_index)) * objective_focal
-    objective_aperture = poppy.RectangleAperture(name='objective aperture',
-                                                 width=2 * objective_radius,
-                                                 height=2 * objective_radius)
-    objective_lens = poppy.QuadraticLens(
-        f_lens=objective_focal, name='objective lens')
+    objective_radius = math.tan(math.asin(objective_na / refr_index)) * objective_focal
+    objective_aperture = poppy.RectangleAperture(
+        name="objective aperture",
+        width=2 * objective_radius,
+        height=2 * objective_radius,
+    )
+    objective_lens = poppy.QuadraticLens(f_lens=objective_focal, name="objective lens")
 
     obj_aperture = poppy.FresnelOpticalSystem()
     obj_aperture.add_optic(objective_aperture, objective_focal)
@@ -285,21 +316,23 @@ def openspim_illumination(wavelength=500e-9, refr_index=1.333, laser_radius=1.2e
     # Computed as following: going through T1 then CLens then T2
     # is equivalent to going through CLens with focal/4
     # Then the radius is computed as the Fourier transform of the input beam, per 2F lens system
-    w0_y = (12.5e-3 * u.m * wavelength) / (2 * np.pi ** 2 * laser_radius)
+    w0_y = (12.5e-3 * u.m * wavelength) / (2 * np.pi**2 * laser_radius)
     laser_shape_y = poppy.GaussianAperture(w=w0_y, pupil_diam=5 * w0_y)
     path_y = poppy.FresnelOpticalSystem(
-        pupil_diameter=2 * w0_y, npix=pixel_width, beam_ratio=beam_ratio)
+        pupil_diameter=2 * w0_y, npix=pixel_width, beam_ratio=beam_ratio
+    )
     path_y.add_optic(laser_shape_y)
 
     # Going through T1, slit and T2 is equivalent to going through a half-sized slit,
     # then propagating 1/4 the distance
     # Since we use 1D propagation, we can increase oversampling a lot for better results
-    laser_shape_z = poppy.GaussianAperture(
-        w=laser_radius, pupil_diam=slit_opening / 2)
+    laser_shape_z = poppy.GaussianAperture(w=laser_radius, pupil_diam=slit_opening / 2)
     slit = poppy.RectangleAperture(
-        name='Slit', width=slit_opening / 2, height=slit_opening / 2)
+        name="Slit", width=slit_opening / 2, height=slit_opening / 2
+    )
     path_z = poppy.FresnelOpticalSystem(
-        pupil_diameter=slit_opening / 2, npix=pixel_width, beam_ratio=beam_ratio)
+        pupil_diameter=slit_opening / 2, npix=pixel_width, beam_ratio=beam_ratio
+    )
     path_z.add_optic(laser_shape_z)
     path_z.add_optic(slit)
     path_z.add_optic(noop, 0.25 * 100e-3 * u.m)
@@ -322,8 +355,7 @@ def openspim_illumination(wavelength=500e-9, refr_index=1.333, laser_radius=1.2e
     obj_lens.propagate(wf_z)
     obj_lens.propagate(wf_y)
 
-    illumination = np.empty(
-        (npix_fov, npix_fov, npix_fov), dtype=wf_z.intensity.dtype)
+    illumination = np.empty((npix_z, npix_fov, npix_fov), dtype=wf_z.intensity.dtype)
 
     # Make sure it is centered even if pixels are odd or even
     offset = 0 if npix_fov % 2 else 0.5
@@ -342,7 +374,7 @@ def openspim_illumination(wavelength=500e-9, refr_index=1.333, laser_radius=1.2e
         psf.propagate(wfc_z)
 
         resample_wavefront(wfc_y, pixelscale, fov_pixels)
-        resample_wavefront(wfc_z, pixelscale, fov_pixels)
+        resample_wavefront(wfc_z, pixelscale, z_pixels)
 
         mix = wf_mix(wfc_y, wfc_z)
         mix.normalize()
@@ -350,21 +382,24 @@ def openspim_illumination(wavelength=500e-9, refr_index=1.333, laser_radius=1.2e
         illumination[:, pix, :] = mix.intensity
 
     if rel_thresh is not None:
-        illumination = utils.threshold_crop(
-            illumination, rel_thresh, 0)
+        illumination = utils.threshold_crop(illumination, rel_thresh, 0)
 
     return illumination / illumination.sum(0).mean()
 
 
-def gaussian_psf(npix_lateral=129, npix_axial=129,
-                 pixelscale=635e-9, wavelength=500e-9,
-                 numerical_aperture=0.5, refraction_index=1.33):
+def gaussian_psf(
+    npix_lateral=129,
+    npix_axial=129,
+    pixelscale=635e-9,
+    wavelength=500e-9,
+    numerical_aperture=0.5,
+    refraction_index=1.33,
+):
     """
     Compute an approximate PSF model based on gaussian beam propagation
 
     Koskela, O., Montonen, T., Belay, B. et al. Gaussian Light Model in Brightfield
     Optical Projection Tomography. Sci Rep 9, 13934 (2019).
-    https://bib-ezproxy.epfl.ch:5295/10.1038/s41598-019-50469-6
 
     Parameters
     ----------
@@ -399,27 +434,27 @@ def gaussian_psf(npix_lateral=129, npix_axial=129,
 
     w0 = wavelength / (np.pi * refraction_index * numerical_aperture)
 
-    z_rayleygh = math.pi * w0 ** 2 * refraction_index / wavelength
-    w_z = w0 * np.sqrt(1 + (z_coords/z_rayleygh)**2)
+    z_rayleygh = math.pi * w0**2 * refraction_index / wavelength
+    w_z = w0 * np.sqrt(1 + (z_coords / z_rayleygh) ** 2)
     w_zi2 = 1 / np.square(w_z)
     r_coords = np.square(r_coords)
     intens = np.sqrt(w0**2 * w_zi2)
 
-    gauss_psf = np.einsum('i, ij -> ij', intens,
-                          np.exp(- 2 * np.outer(w_zi2, r_coords)))
-    gauss_psf = np.einsum('ij, ik->ijk', gauss_psf, gauss_psf)
+    gauss_psf = np.einsum("i, ij -> ij", intens, np.exp(-2 * np.outer(w_zi2, r_coords)))
+    gauss_psf = np.einsum("ij, ik->ijk", gauss_psf, gauss_psf)
     gauss_psf = primitives.quadrant_to_volume(gauss_psf, (odd_a, odd_l, odd_l))
 
     return gauss_psf
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import napari
 
     s_psf = gaussian_psf(npix_lateral=129, npix_axial=129)
-    s_psf = np.log10(s_psf+1e-12)
+    s_psf = np.log10(s_psf + 1e-12)
     illu = openspim_illumination(
-        simu_size=1024, npix_fov=256, oversample=8, rel_thresh=1e-6)
+        simu_size=1024, npix_fov=256, oversample=8, rel_thresh=1e-6
+    )
 
     viewer = napari.view_image(s_psf)
     viewer.add_image(illu)

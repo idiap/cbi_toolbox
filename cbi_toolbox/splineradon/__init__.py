@@ -77,10 +77,19 @@ def is_cuda_available(verbose=False):
         return False
 
 
-def radon(image, theta=None, angledeg=True, n=None,
-          b_spline_deg=(2, 3), sampling_steps=(1, 1),
-          center=None, captors_center=None, circle=False,
-          nt=200, use_cuda=False):
+def radon(
+    image,
+    theta=None,
+    angledeg=True,
+    n=None,
+    b_spline_deg=(2, 3),
+    sampling_steps=(1, 1),
+    center=None,
+    captors_center=None,
+    circle=False,
+    nt=200,
+    use_cuda=False,
+):
     """
     Perform a radon transform on the image.
 
@@ -122,18 +131,38 @@ def radon(image, theta=None, angledeg=True, n=None,
         theta = np.arange(180)
 
     spline_image = radon_pre(image, b_spline_deg[0])
-    sinogram = radon_inner(spline_image, theta, angledeg, n, b_spline_deg, sampling_steps,
-                           center, captors_center, circle, nt, use_cuda=use_cuda)
+    sinogram = radon_inner(
+        spline_image,
+        theta,
+        angledeg,
+        n,
+        b_spline_deg,
+        sampling_steps,
+        center,
+        captors_center,
+        circle,
+        nt,
+        use_cuda=use_cuda,
+    )
 
     sinogram = radon_post(sinogram, b_spline_deg[1])
 
     return sinogram
 
 
-def iradon(sinogram, theta=None, angledeg=True, filter_type='RAM-LAK',
-           b_spline_deg=(2, 3), sampling_steps=(1, 1),
-           center=None, captors_center=None, circle=False,
-           nt=200, use_cuda=False):
+def iradon(
+    sinogram,
+    theta=None,
+    angledeg=True,
+    filter_type="RAM-LAK",
+    b_spline_deg=(2, 3),
+    sampling_steps=(1, 1),
+    center=None,
+    captors_center=None,
+    circle=False,
+    nt=200,
+    use_cuda=False,
+):
     """
     Perform a filtered back projection on the sinogram.
 
@@ -174,8 +203,17 @@ def iradon(sinogram, theta=None, angledeg=True, filter_type='RAM-LAK',
 
     sinogram = iradon_pre(sinogram, b_spline_deg[1], filter_type, circle)
 
-    image, theta = iradon_inner(sinogram, theta, angledeg, b_spline_deg, sampling_steps,
-                                center, captors_center, nt, use_cuda=use_cuda)
+    image, theta = iradon_inner(
+        sinogram,
+        theta,
+        angledeg,
+        b_spline_deg,
+        sampling_steps,
+        center,
+        captors_center,
+        nt,
+        use_cuda=use_cuda,
+    )
     image = iradon_post(image, theta, b_spline_deg[0])
 
     return image
@@ -199,14 +237,24 @@ def radon_pre(image, ni=2):
         The projected image.
     """
 
-    return change_basis(image, 'cardinal', 'b-spline', ni, (0, 1),
-                        boundary_condition='periodic')
+    return change_basis(
+        image, "cardinal", "b-spline", ni, (0, 1), boundary_condition="periodic"
+    )
 
 
-def radon_inner(spline_image, theta=None, angledeg=True, n=None,
-                b_spline_deg=(2, 3), sampling_steps=(1, 1),
-                center=None, captors_center=None, circle=False,
-                nt=200, use_cuda=False):
+def radon_inner(
+    spline_image,
+    theta=None,
+    angledeg=True,
+    n=None,
+    b_spline_deg=(2, 3),
+    sampling_steps=(1, 1),
+    center=None,
+    captors_center=None,
+    circle=False,
+    nt=200,
+    use_cuda=False,
+):
     """
     Raw radon transform, requires pre and post-processing (projections onto
     bspline bases). This can be run in parallel by splitting theta.
@@ -258,7 +306,7 @@ def radon_inner(spline_image, theta=None, angledeg=True, n=None,
     shape = np.max(spline_image.shape[0:2])
     if not circle:
         nc = int(np.ceil(shape * np.sqrt(2)))
-        nc += (nc % 2 != shape % 2)
+        nc += nc % 2 != shape % 2
 
     else:
         nc = shape
@@ -296,7 +344,7 @@ def radon_inner(spline_image, theta=None, angledeg=True, n=None,
         s,
         ns,
         captors_center,
-        use_cuda
+        use_cuda,
     )
 
     if squeeze:
@@ -324,12 +372,19 @@ def radon_post(sinogram, ns=3):
     """
 
     if ns > -1:
-        sinogram = change_basis(sinogram, 'dual', 'cardinal',
-                                ns, 1, boundary_condition='periodic', in_place=True)
+        sinogram = change_basis(
+            sinogram,
+            "dual",
+            "cardinal",
+            ns,
+            1,
+            boundary_condition="periodic",
+            in_place=True,
+        )
     return sinogram
 
 
-def iradon_pre(sinogram, ns=3, filter_type='RAM-LAK', circle=False):
+def iradon_pre(sinogram, ns=3, filter_type="RAM-LAK", circle=False):
     """
     Pre-processing for the inverse radon transform.
     Filters the sinogram and projects it onto a bspline basis.
@@ -356,24 +411,32 @@ def iradon_pre(sinogram, ns=3, filter_type='RAM-LAK', circle=False):
     if circle:
         shape = sinogram.shape[1]
         nc = np.ceil(shape * np.sqrt(2))
-        nc += (nc % 2 != shape % 2)
+        nc += nc % 2 != shape % 2
         pad = int((nc - shape) // 2)
-        padding = [(0, )] * sinogram.ndim
-        padding[1] = (pad, )
+        padding = [(0,)] * sinogram.ndim
+        padding[1] = (pad,)
         sinogram = np.pad(sinogram, padding)
 
     sinogram, pre_filter = filter_sinogram(sinogram, filter_type, ns)
 
     if pre_filter:
-        sinogram = change_basis(sinogram, 'CARDINAL', 'B-SPLINE', ns, 1,
-                                boundary_condition='periodic')
+        sinogram = change_basis(
+            sinogram, "CARDINAL", "B-SPLINE", ns, 1, boundary_condition="periodic"
+        )
     return sinogram
 
 
-def iradon_inner(sinogram_filtered, theta=None, angledeg=True,
-                 b_spline_deg=(2, 3), sampling_steps=(1, 1),
-                 center=None, captors_center=None,
-                 nt=200, use_cuda=False):
+def iradon_inner(
+    sinogram_filtered,
+    theta=None,
+    angledeg=True,
+    b_spline_deg=(2, 3),
+    sampling_steps=(1, 1),
+    center=None,
+    captors_center=None,
+    nt=200,
+    use_cuda=False,
+):
     """
     Raw inverse radon transform, requires pre and post-processing for sinogram
     filtering and change to bspline basis.
@@ -431,7 +494,7 @@ def iradon_inner(sinogram_filtered, theta=None, angledeg=True,
     kernel = get_kernel_table(nt, ni, ns, h, s, -theta, degree=False)
 
     nx = int(np.floor(nc / np.sqrt(2)))
-    nx -= (nx % 2 != nc % 2)
+    nx -= nx % 2 != nc % 2
     nz = nx
 
     if center is None:
@@ -459,7 +522,7 @@ def iradon_inner(sinogram_filtered, theta=None, angledeg=True,
         ni,
         center[0],
         center[1],
-        use_cuda
+        use_cuda,
     )
 
     if squeeze:
@@ -489,8 +552,15 @@ def iradon_post(image, theta, ni=2):
     """
 
     if ni > -1:
-        image = change_basis(image, 'DUAL', 'CARDINAL', ni,
-                             (0, 1), boundary_condition='periodic', in_place=True)
+        image = change_basis(
+            image,
+            "DUAL",
+            "CARDINAL",
+            ni,
+            (0, 1),
+            boundary_condition="periodic",
+            in_place=True,
+        )
 
     if theta.size > 1:
         image = image * np.pi / (2 * theta.size)

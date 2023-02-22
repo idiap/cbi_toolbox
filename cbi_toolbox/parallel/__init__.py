@@ -140,17 +140,17 @@ def parallelize(func, size, workers=None):
     """
 
     try:
-        omp_threads = int(os.environ['OMP_NUM_THREADS'])
+        omp_threads = int(os.environ["OMP_NUM_THREADS"])
     except KeyError:
         omp_threads = os.cpu_count()
 
     uworkers = os.cpu_count() if workers is None else workers
-    
+
     try:
         affinity = len(os.sched_getaffinity(0))
     except AttributeError:
         affinity = uworkers
-        
+
     workers = min(omp_threads, affinity, size, uworkers)
 
     if workers == 1:

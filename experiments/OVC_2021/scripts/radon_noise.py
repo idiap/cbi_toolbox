@@ -24,18 +24,18 @@ from cbi_toolbox.simu import imaging
 
 photons = 1e4
 
-path = os.environ['OVC_PATH']
+path = os.environ["OVC_PATH"]
 
-ipath = os.path.join(path, 'imaging')
-npath = os.path.join(path, 'noise')
+ipath = os.path.join(path, "imaging")
+npath = os.path.join(path, "noise")
 
 theta = np.linspace(0, 180, 360, endpoint=False)
 
-radon = np.load(os.path.join(ipath, 'radon.npy'))
+radon = np.load(os.path.join(ipath, "radon.npy"))
 radon[radon < 0] = 0
 
 radon = imaging.noise(radon, seed=0, in_place=True, photons=photons)
 
 iradon = spl.iradon(radon, theta=theta, circle=True)
-np.save(os.path.join(npath, 'iradon.npy'), iradon)
-print('iradon saved')
+np.save(os.path.join(npath, "iradon.npy"), iradon)
+print("iradon saved")

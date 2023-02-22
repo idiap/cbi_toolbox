@@ -20,19 +20,19 @@ import os
 import numpy as np
 import argparse
 
-from cbi_toolbox import utils
+from cbi_toolbox.utils import ome
 from cbi_toolbox.reconstruct import deconv
 from cbi_toolbox.simu import optics
 
 
-path = os.environ['OVC_PATH']
+path = os.environ["OVC_PATH"]
 
 
-ipath = os.path.join(path, 'imaging')
-dpath = os.path.join(path, 'deconv')
+ipath = os.path.join(path, "imaging")
+dpath = os.path.join(path, "deconv")
 
 parser = argparse.ArgumentParser()
-parser.add_argument('id', type=int)
+parser.add_argument("id", type=int)
 
 args = parser.parse_args()
 id = args.id - 1
@@ -43,19 +43,17 @@ dna = id % 19
 na = (30, 50, 80)[na]
 dna = 10 + 5 * dna
 
-fps_opt = np.load(os.path.join(ipath, 'fpsopt_{:03d}.npy'.format(na)))
-print('NA: {}'.format(na))
+fps_opt = np.load(os.path.join(ipath, "fpsopt_{:03d}.npy".format(na)))
+print("NA: {}".format(na))
 
-psf, _ = utils.load_ome_tiff(os.path.join(
-    path, 'psf', 'BW_{:03d}.tif'.format(dna)))
+psf, _ = ome.load_ome_tiff(os.path.join(path, "psf", "BW_{:03d}.tif".format(dna)))
 
-fpsf = optics.gaussian_psf(
-    psf.shape[1], psf.shape[0], numerical_aperture=dna/100)
+fpsf = optics.gaussian_psf(psf.shape[1], psf.shape[0], numerical_aperture=dna / 100)
 
 deco = deconv.deconvolve_sinogram(fps_opt, psf, l=0.01)
-np.save(os.path.join(dpath, '{:03d}_{:03d}.npy'.format(na, dna)), deco)
-print('saved {:03d}_{:03d}.npy'.format(na, dna))
+np.save(os.path.join(dpath, "{:03d}_{:03d}.npy".format(na, dna)), deco)
+print("saved {:03d}_{:03d}.npy".format(na, dna))
 
 fdeco = deconv.deconvolve_sinogram(fps_opt, fpsf, l=0.01)
-np.save(os.path.join(dpath, '{:03d}_{:03d}f.npy'.format(na, dna)), fdeco)
-print('saved {:03d}_{:03d}f.npy'.format(na, dna))
+np.save(os.path.join(dpath, "{:03d}_{:03d}f.npy".format(na, dna)), fdeco)
+print("saved {:03d}_{:03d}f.npy".format(na, dna))

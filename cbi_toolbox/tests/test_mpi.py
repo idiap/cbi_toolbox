@@ -21,8 +21,10 @@ import os
 import unittest
 import numpy as np
 from cbi_toolbox import utils
+
 try:
     from cbi_toolbox.parallel import mpi
+
     MPI_AVAILABLE = True
 except ImportError:
     mpi = None
@@ -41,7 +43,7 @@ def check_distributed_array(reference, array, axis):
 
     s_index, b_size = mpi.distribute_mpi(reference.shape[axis])
     check_mat = utils.transpose_dim_to(reference, axis, 0)
-    check_mat = check_mat[s_index:s_index + b_size]
+    check_mat = check_mat[s_index : s_index + b_size]
     check_mat = utils.transpose_dim_to(check_mat, 0, axis)
     return np.all(check_mat == array)
 
@@ -57,8 +59,8 @@ def test_distributed_save(file_name, reference, array, axis):
 
 @unittest.skipUnless(MPI_AVAILABLE, "MPI optional dependency not installed.")
 class TestDistributedArrays(unittest.TestCase):
-    ref_file = 'test_source.npy'
-    tmp_file = 'test_save.npy'
+    ref_file = "test_source.npy"
+    tmp_file = "test_save.npy"
     reference = None
     dims = [2, 3, 4, 5]
     ndims = None
@@ -67,8 +69,7 @@ class TestDistributedArrays(unittest.TestCase):
     def setUpClass(cls):
         cls.ndims = len(cls.dims)
         cls.reference = np.empty(cls.dims, dtype=np.float64)
-        cls.reference.flat = np.arange(
-            int(np.prod(cls.dims)), dtype=np.float64)
+        cls.reference.flat = np.arange(int(np.prod(cls.dims)), dtype=np.float64)
 
         if mpi.is_root_process():
             np.save(cls.ref_file, cls.reference)
@@ -81,35 +82,34 @@ class TestDistributedArrays(unittest.TestCase):
 
     def test_load_array(self):
         for axis in range(TestDistributedArrays.ndims):
-            sl_array, f_shape = mpi.load(
-                TestDistributedArrays.ref_file, axis)
-            self.assertTrue(np.array_equal(
-                f_shape, TestDistributedArrays.dims))
-            self.assertTrue(check_distributed_array(
-                TestDistributedArrays.reference, sl_array, axis))
+            sl_array, f_shape = mpi.load(TestDistributedArrays.ref_file, axis)
+            self.assertTrue(np.array_equal(f_shape, TestDistributedArrays.dims))
+            self.assertTrue(
+                check_distributed_array(TestDistributedArrays.reference, sl_array, axis)
+            )
 
     def test_distribute_array(self):
         for src_axis in range(TestDistributedArrays.ndims):
-            sl_array, f_shape = mpi.load(
-                TestDistributedArrays.ref_file, src_axis)
+            sl_array, f_shape = mpi.load(TestDistributedArrays.ref_file, src_axis)
 
             for tgt_axis in range(TestDistributedArrays.ndims):
-                temp_array = mpi.redistribute(
-                    sl_array, src_axis, tgt_axis, f_shape)
-                self.assertTrue(check_distributed_array(
-                    TestDistributedArrays.reference, temp_array, tgt_axis))
+                temp_array = mpi.redistribute(sl_array, src_axis, tgt_axis, f_shape)
+                self.assertTrue(
+                    check_distributed_array(
+                        TestDistributedArrays.reference, temp_array, tgt_axis
+                    )
+                )
 
     def test_save_array(self):
         for axis in range(TestDistributedArrays.ndims):
-            sl_array, f_shape = mpi.load(
-                TestDistributedArrays.ref_file, axis)
-            mpi.save(TestDistributedArrays.tmp_file,
-                     sl_array, axis, f_shape)
+            sl_array, f_shape = mpi.load(TestDistributedArrays.ref_file, axis)
+            mpi.save(TestDistributedArrays.tmp_file, sl_array, axis, f_shape)
 
             if mpi.is_root_process():
                 reloaded_array = np.load(TestDistributedArrays.tmp_file)
-                self.assertTrue(np.array_equal(
-                    TestDistributedArrays.reference, reloaded_array))
+                self.assertTrue(
+                    np.array_equal(TestDistributedArrays.reference, reloaded_array)
+                )
                 os.remove(TestDistributedArrays.tmp_file)
 
 

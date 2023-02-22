@@ -31,9 +31,9 @@ image[35, 35, :] = 1
 
 use_cuda = spl.is_cuda_available()
 if use_cuda:
-    print('Running with GPU acceleration')
+    print("Running with GPU acceleration")
 else:
-    print('Running on CPU')
+    print("Running on CPU")
 
 sinogram = spl.radon(image, use_cuda=use_cuda)
 

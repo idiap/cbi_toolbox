@@ -27,13 +27,23 @@ This module implements change of basis for bsplines.
 
 import numpy as np
 
-from ._interpolation_conversion import convert_to_samples, convert_to_interpolation_coefficients
+from ._interpolation_conversion import (
+    convert_to_samples,
+    convert_to_interpolation_coefficients,
+)
 from cbi_toolbox.utils import transpose_dim_to
 
 
-def change_basis(in_array, from_basis, to_basis, degree, axes=(0,),
-                 tolerance=1e-9, boundary_condition='Mirror',
-                 in_place=False):
+def change_basis(
+    in_array,
+    from_basis,
+    to_basis,
+    degree,
+    axes=(0,),
+    tolerance=1e-9,
+    boundary_condition="Mirror",
+    in_place=False,
+):
     """
     Change the basis along the provided axes
     (e.g. to convert a 2D signal, use axes=(0, 1)).
@@ -70,18 +80,27 @@ def change_basis(in_array, from_basis, to_basis, degree, axes=(0,),
     try:
         for ax in axes:
             in_array = change_basis(
-                in_array, from_basis, to_basis, degree, ax, tolerance, boundary_condition)
+                in_array,
+                from_basis,
+                to_basis,
+                degree,
+                ax,
+                tolerance,
+                boundary_condition,
+            )
     except TypeError:
         in_array = transpose_dim_to(in_array, axes, 0)
         in_array = change_basis_inner(
-            in_array, from_basis, to_basis, degree, tolerance, boundary_condition)
+            in_array, from_basis, to_basis, degree, tolerance, boundary_condition
+        )
         in_array = transpose_dim_to(in_array, 0, axes)
 
     return in_array
 
 
-def change_basis_inner(in_array, from_basis, to_basis, degree, tolerance=1e-9,
-                       boundary_condition='Mirror'):
+def change_basis_inner(
+    in_array, from_basis, to_basis, degree, tolerance=1e-9, boundary_condition="Mirror"
+):
     """
     Inner implementation of the change the basis.
     Applies only on the first axis, and always in-place.
@@ -111,42 +130,80 @@ def change_basis_inner(in_array, from_basis, to_basis, degree, tolerance=1e-9,
     from_basis = from_basis.upper()
     to_basis = to_basis.upper()
 
-    if from_basis == 'CARDINAL':
-        if to_basis == 'CARDINAL':
+    if from_basis == "CARDINAL":
+        if to_basis == "CARDINAL":
             return in_array
-        elif to_basis == 'B-SPLINE':
-            output = convert_to_interpolation_coefficients(in_array, degree, tolerance,
-                                                           boundary_condition=boundary_condition)
-        elif to_basis == 'DUAL':
-            output = change_basis_inner(in_array, 'cardinal', 'b-spline', degree, tolerance=tolerance,
-                                        boundary_condition=boundary_condition)
-            output = change_basis_inner(output, 'b-spline', 'dual', degree, tolerance=tolerance,
-                                        boundary_condition=boundary_condition)
+        elif to_basis == "B-SPLINE":
+            output = convert_to_interpolation_coefficients(
+                in_array, degree, tolerance, boundary_condition=boundary_condition
+            )
+        elif to_basis == "DUAL":
+            output = change_basis_inner(
+                in_array,
+                "cardinal",
+                "b-spline",
+                degree,
+                tolerance=tolerance,
+                boundary_condition=boundary_condition,
+            )
+            output = change_basis_inner(
+                output,
+                "b-spline",
+                "dual",
+                degree,
+                tolerance=tolerance,
+                boundary_condition=boundary_condition,
+            )
         else:
             raise ValueError("Illegal to_basis : {0}".format(to_basis))
 
-    elif from_basis == 'B-SPLINE':
-        if to_basis == 'CARDINAL':
-            output = convert_to_samples(in_array, degree,
-                                        boundary_condition=boundary_condition)
-        elif to_basis == 'B-SPLINE':
+    elif from_basis == "B-SPLINE":
+        if to_basis == "CARDINAL":
+            output = convert_to_samples(
+                in_array, degree, boundary_condition=boundary_condition
+            )
+        elif to_basis == "B-SPLINE":
             return in_array
-        elif to_basis == 'DUAL':
-            output = change_basis_inner(in_array, 'b-spline', 'cardinal', 2 * degree + 1, tolerance=tolerance,
-                                        boundary_condition=boundary_condition)
+        elif to_basis == "DUAL":
+            output = change_basis_inner(
+                in_array,
+                "b-spline",
+                "cardinal",
+                2 * degree + 1,
+                tolerance=tolerance,
+                boundary_condition=boundary_condition,
+            )
         else:
             raise ValueError("Illegal to_basis : {0}".format(to_basis))
 
-    elif from_basis == 'DUAL':
-        if to_basis == 'CARDINAL':
-            output = change_basis_inner(in_array, 'dual', 'b-spline', degree, tolerance=tolerance,
-                                        boundary_condition=boundary_condition)
-            output = change_basis_inner(output, 'b-spline', 'cardinal', degree, tolerance=tolerance,
-                                        boundary_condition=boundary_condition)
-        elif to_basis == 'B-SPLINE':
-            output = change_basis_inner(in_array, 'cardinal', 'b-spline', 2 * degree + 1, tolerance=tolerance,
-                                        boundary_condition=boundary_condition)
-        elif to_basis == 'DUAL':
+    elif from_basis == "DUAL":
+        if to_basis == "CARDINAL":
+            output = change_basis_inner(
+                in_array,
+                "dual",
+                "b-spline",
+                degree,
+                tolerance=tolerance,
+                boundary_condition=boundary_condition,
+            )
+            output = change_basis_inner(
+                output,
+                "b-spline",
+                "cardinal",
+                degree,
+                tolerance=tolerance,
+                boundary_condition=boundary_condition,
+            )
+        elif to_basis == "B-SPLINE":
+            output = change_basis_inner(
+                in_array,
+                "cardinal",
+                "b-spline",
+                2 * degree + 1,
+                tolerance=tolerance,
+                boundary_condition=boundary_condition,
+            )
+        elif to_basis == "DUAL":
             return in_array
         else:
             raise ValueError("Illegal to_basis : {0}".format(to_basis))
@@ -163,13 +220,27 @@ if __name__ == "__main__":
     toleranc = 1e-12
     degre = 3
     axe = (0, 1)
-    condition = 'periodic'
+    condition = "periodic"
 
-    c_out = change_basis(data, 'cardinal', 'dual', degre, axes=axe, tolerance=toleranc, boundary_condition=condition,
-                         in_place=False)
-    ar = change_basis(c_out, 'dual', 'cardinal', degre, axes=axe,
-                      tolerance=toleranc, boundary_condition=condition)
+    c_out = change_basis(
+        data,
+        "cardinal",
+        "dual",
+        degre,
+        axes=axe,
+        tolerance=toleranc,
+        boundary_condition=condition,
+        in_place=False,
+    )
+    ar = change_basis(
+        c_out,
+        "dual",
+        "cardinal",
+        degre,
+        axes=axe,
+        tolerance=toleranc,
+        boundary_condition=condition,
+    )
 
-    print('Relative error is ', np.max(
-        np.linalg.norm((data - ar) / np.abs(data))))
-    print('are samples back to signal? ', np.allclose(data, ar))
+    print("Relative error is ", np.max(np.linalg.norm((data - ar) / np.abs(data))))
+    print("are samples back to signal? ", np.allclose(data, ar))

@@ -20,9 +20,9 @@
 
 from cbi_toolbox import __version__
 
-project = 'CBI Toolbox'
-copyright = '2020, François Marelli'
-author = 'François Marelli'
+project = "CBI Toolbox"
+copyright = "2020, François Marelli"
+author = "François Marelli"
 version = __version__
 release = __version__
 
@@ -30,33 +30,33 @@ release = __version__
 # -- General configuration ---------------------------------------------------
 
 extensions = [
-    'sphinx.ext.mathjax',
-    'sphinx.ext.coverage',
-    'sphinx.ext.autodoc',
-    'sphinx.ext.viewcode',
-    'sphinx.ext.napoleon',
-    'sphinxcontrib.apidoc',
+    "sphinx.ext.mathjax",
+    "sphinx.ext.coverage",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.viewcode",
+    "sphinx.ext.napoleon",
+    "sphinxcontrib.apidoc",
 ]
 
-apidoc_module_dir = '../cbi_toolbox'
-apidoc_output_dir = 'api'
-apidoc_excluded_paths = ['../cbi_toolbox/tests/']
+apidoc_module_dir = "../cbi_toolbox"
+apidoc_output_dir = "api"
+apidoc_excluded_paths = ["../cbi_toolbox/tests/"]
 apidoc_separate_modules = True
 apidoc_toc_file = False
-apidoc_extra_args = ['-d', '5', '-t',  '_templates/']
+apidoc_extra_args = ["-d", "5", "-t", "_templates/"]
 
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
-highlight_language = 'python3'
+highlight_language = "python3"
 
 # -- Options for HTML output -------------------------------------------------
 
-html_theme = 'sphinx_rtd_theme'
+html_theme = "sphinx_rtd_theme"
 
 html_theme_options = {
-    'collapse_navigation': False,
-    'sticky_navigation': False,
-    'navigation_depth': 5,
+    "collapse_navigation": False,
+    "sticky_navigation": False,
+    "navigation_depth": 5,
 }

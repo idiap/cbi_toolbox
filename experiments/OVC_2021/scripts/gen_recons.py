@@ -22,28 +22,28 @@ import numpy as np
 import cbi_toolbox.splineradon as spl
 
 
-path = os.environ['OVC_PATH']
+path = os.environ["OVC_PATH"]
 
-ipath = os.path.join(path, 'imaging')
-rpath = os.path.join(path, 'reconstruct')
+ipath = os.path.join(path, "imaging")
+rpath = os.path.join(path, "reconstruct")
 
 theta = np.linspace(0, 180, 360, endpoint=False)
 
-radon = np.load(os.path.join(ipath, 'radon.npy'))
+radon = np.load(os.path.join(ipath, "radon.npy"))
 iradon = spl.iradon(radon, theta=theta, circle=True)
-np.save(os.path.join(rpath, 'iradon.npy'), iradon)
-print('iradon saved')
+np.save(os.path.join(rpath, "iradon.npy"), iradon)
+print("iradon saved")
 del iradon, radon
 
 for na in (30, 50, 80):
-    fps_opt = np.load(os.path.join(ipath, 'fpsopt_{:03d}.npy'.format(na)))
+    fps_opt = np.load(os.path.join(ipath, "fpsopt_{:03d}.npy".format(na)))
     iradon = spl.iradon(fps_opt, theta=theta, circle=True)
-    np.save(os.path.join(rpath, 'fpsopt_{:03d}.npy'.format(na)), iradon)
-    print('fpsopt saved')
+    np.save(os.path.join(rpath, "fpsopt_{:03d}.npy".format(na)), iradon)
+    print("fpsopt saved")
     del iradon, fps_opt
 
-    fss_opt = np.load(os.path.join(ipath, 'fssopt_{:03d}.npy'.format(na)))
+    fss_opt = np.load(os.path.join(ipath, "fssopt_{:03d}.npy".format(na)))
     iradon = spl.iradon(fss_opt, theta=theta, circle=True)
-    np.save(os.path.join(rpath, 'fssopt_{:03d}.npy'.format(na)), iradon)
-    print('fssopt saved')
+    np.save(os.path.join(rpath, "fssopt_{:03d}.npy".format(na)), iradon)
+    print("fssopt saved")
     del iradon, fss_opt

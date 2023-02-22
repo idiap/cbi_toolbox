@@ -93,7 +93,7 @@ def _bspline00(x):
     idx = np.abs(x) == 0.5
     y[idx] = 0.5
     idx = np.abs(x) < 0.5
-    y[idx] = 1.
+    y[idx] = 1.0
 
     return y
 
@@ -160,10 +160,10 @@ def _bspline03(x):
     """
 
     y = zeros(x.shape)
-    idx = np.abs(x) < 1.
-    y[idx] = 0.5 * (power(np.abs(x[idx]), 3) - 2. * power(x[idx], 2)) + 2. / 3.
-    idx = (np.abs(x) < 2.) & (np.abs(x) >= 1.)
-    y[idx] = -1. / 6. * (power(np.abs(x[idx]) - 2, 3))
+    idx = np.abs(x) < 1.0
+    y[idx] = 0.5 * (power(np.abs(x[idx]), 3) - 2.0 * power(x[idx], 2)) + 2.0 / 3.0
+    idx = (np.abs(x) < 2.0) & (np.abs(x) >= 1.0)
+    y[idx] = -1.0 / 6.0 * (power(np.abs(x[idx]) - 2, 3))
 
     return y
 
@@ -186,13 +186,23 @@ def _bspline04(x):
     y = zeros(x.shape)
     a = power(x, 2)
     idx = np.abs(x) < 0.5
-    y[idx] = (multiply(a[idx], a[idx] * 0.25 - 5. / 8.) + 115. / 192)
+    y[idx] = multiply(a[idx], a[idx] * 0.25 - 5.0 / 8.0) + 115.0 / 192
     idx = (np.abs(x) < 1.5) & (np.abs(x) >= 0.5)
-    y[idx] = (multiply(np.abs(x[idx]), multiply(np.abs(x[idx]), multiply(np.abs(x[idx]), 5. / 6. - np.abs(
-        x[idx]) * 1. / 6.) - 5. / 4.) + 5. / 24.) + 55. / 96.)
+    y[idx] = (
+        multiply(
+            np.abs(x[idx]),
+            multiply(
+                np.abs(x[idx]),
+                multiply(np.abs(x[idx]), 5.0 / 6.0 - np.abs(x[idx]) * 1.0 / 6.0)
+                - 5.0 / 4.0,
+            )
+            + 5.0 / 24.0,
+        )
+        + 55.0 / 96.0
+    )
     idx = (np.abs(x) < 2.5) & (np.abs(x) >= 1.5)
-    a = power(np.abs(x) - 5. / 2., 4)
-    y[idx] = (a[idx] * 1. / 24.)
+    a = power(np.abs(x) - 5.0 / 2.0, 4)
+    y[idx] = a[idx] * 1.0 / 24.0
 
     return y
 
@@ -214,16 +224,34 @@ def _bspline05(x):
 
     y = zeros(x.shape)
     a = power(x, 2)
-    idx = np.abs(x) < 1.
-    y[idx] = (multiply(a[idx], multiply(a[idx], 1. / 4. -
-                                        np.abs(x[idx]) * 1. / 12.) - 1. / 2.) + 11. / 20.0)
-    idx = (np.abs(x) < 2.) & (np.abs(x) >= 1.)
+    idx = np.abs(x) < 1.0
+    y[idx] = (
+        multiply(
+            a[idx],
+            multiply(a[idx], 1.0 / 4.0 - np.abs(x[idx]) * 1.0 / 12.0) - 1.0 / 2.0,
+        )
+        + 11.0 / 20.0
+    )
+    idx = (np.abs(x) < 2.0) & (np.abs(x) >= 1.0)
     a = np.abs(x)
-    y[idx] = (multiply(a[idx], multiply(a[idx], multiply(a[idx], multiply(a[idx], a[
-        idx] * 1.0 / 24.0 - 3. / 8.) + 5. / 4.) - 7. / 4.) + 5. / 8.) + 17. / 40.)
-    idx = (np.abs(x) < 3.) & (np.abs(x) >= 2.)
-    a = 3. - np.abs(x)
-    y[idx] = (power(a[idx], 5) * 1. / 120.)
+    y[idx] = (
+        multiply(
+            a[idx],
+            multiply(
+                a[idx],
+                multiply(
+                    a[idx],
+                    multiply(a[idx], a[idx] * 1.0 / 24.0 - 3.0 / 8.0) + 5.0 / 4.0,
+                )
+                - 7.0 / 4.0,
+            )
+            + 5.0 / 8.0,
+        )
+        + 17.0 / 40.0
+    )
+    idx = (np.abs(x) < 3.0) & (np.abs(x) >= 2.0)
+    a = 3.0 - np.abs(x)
+    y[idx] = power(a[idx], 5) * 1.0 / 120.0
 
     return y
 
@@ -246,17 +274,57 @@ def _bspline06(x):
     y = zeros(x.shape)
     idx = np.abs(x) < 0.5
     a = power(x, 2)
-    y[idx] = (multiply(a[idx], multiply(
-        a[idx], (7. / 48. - a[idx] * 1. / 36)) - 77. / 192.) + 5887. / 11520.)
+    y[idx] = (
+        multiply(
+            a[idx], multiply(a[idx], (7.0 / 48.0 - a[idx] * 1.0 / 36)) - 77.0 / 192.0
+        )
+        + 5887.0 / 11520.0
+    )
     idx = (np.abs(x) < 1.5) & (np.abs(x) >= 0.5)
     a = np.abs(x)
-    y[idx] = (multiply(a[idx], multiply(a[idx], multiply(a[idx], multiply(a[idx], multiply(a[idx], a[
-        idx] * 1. / 48. - 7. / 48.) + 21. / 64.) - 35. / 288.) - 91. / 256) - 7. / 768.) + 7861. / 15360.)
+    y[idx] = (
+        multiply(
+            a[idx],
+            multiply(
+                a[idx],
+                multiply(
+                    a[idx],
+                    multiply(
+                        a[idx],
+                        multiply(a[idx], a[idx] * 1.0 / 48.0 - 7.0 / 48.0)
+                        + 21.0 / 64.0,
+                    )
+                    - 35.0 / 288.0,
+                )
+                - 91.0 / 256,
+            )
+            - 7.0 / 768.0,
+        )
+        + 7861.0 / 15360.0
+    )
     idx = (np.abs(x) < 2.5) & (np.abs(x) >= 1.5)
-    y[idx] = (multiply(a[idx], multiply(a[idx], multiply(a[idx], multiply(a[idx], multiply(a[idx], 7. / 60. - a[
-        idx] * 1. / 120.) - 21. / 32.) + 133. / 72.) - 329. / 128.0) + 1267. / 960.) + 1379. / 7680.)
+    y[idx] = (
+        multiply(
+            a[idx],
+            multiply(
+                a[idx],
+                multiply(
+                    a[idx],
+                    multiply(
+                        a[idx],
+                        multiply(a[idx], 7.0 / 60.0 - a[idx] * 1.0 / 120.0)
+                        - 21.0 / 32.0,
+                    )
+                    + 133.0 / 72.0,
+                )
+                - 329.0 / 128.0,
+            )
+            + 1267.0 / 960.0,
+        )
+        + 1379.0 / 7680.0
+    )
     idx = (np.abs(x) < 3.5) & (np.abs(x) >= 2.5)
-    y[idx] = (power(a[idx] - 7. / 2., 6) * 1. / 720.)
+    y[idx] = power(a[idx] - 7.0 / 2.0, 6) * 1.0 / 720.0
 
     return y
 
@@ -278,18 +346,70 @@ def _bspline07(x):
 
     y = zeros(x.shape)
     a = power(x, 2)
-    idx = np.abs(x) < 1.
-    y[idx] = (multiply(a[idx], multiply(a[idx], multiply(a[idx], np.abs(
-        x[idx]) * 1. / 144. - 1. / 36.) + 1. / 9.) - 1. / 3.) + 151. / 315.)
-    idx = (np.abs(x) < 2.) & (np.abs(x) >= 1.)
+    idx = np.abs(x) < 1.0
+    y[idx] = (
+        multiply(
+            a[idx],
+            multiply(
+                a[idx],
+                multiply(a[idx], np.abs(x[idx]) * 1.0 / 144.0 - 1.0 / 36.0) + 1.0 / 9.0,
+            )
+            - 1.0 / 3.0,
+        )
+        + 151.0 / 315.0
+    )
+    idx = (np.abs(x) < 2.0) & (np.abs(x) >= 1.0)
     a = np.abs(x)
-    y[idx] = (multiply(a[idx], multiply(a[idx], multiply(a[idx], multiply(a[idx], multiply(a[idx], multiply(a[idx],
-                                                                                                            1. / 20. -
-                                                                                                            a[idx] * 1. / 240.) - 7. / 30.) + 1. / 2.) - 7. / 18.) - 1. / 10.) - 7. / 90.) + 103. / 210.)
-    idx = (np.abs(x) < 3.) & (np.abs(x) >= 2.)
-    y[idx] = (multiply(a[idx], multiply(a[idx], multiply(a[idx], multiply(a[idx], multiply(a[idx], multiply(a[idx], a[
-        idx] * 1. / 720. - 1. / 36.) + 7. / 30.) - 19. / 18.) + 49. / 18.) - 23. / 6.) + 217. / 90.) - 139. / 630.)
-    idx = (np.abs(x) < 4.) & (np.abs(x) >= 3)
-    y[idx] = power(4. - a[idx], 7) * 1. / 5040.
+    y[idx] = (
+        multiply(
+            a[idx],
+            multiply(
+                a[idx],
+                multiply(
+                    a[idx],
+                    multiply(
+                        a[idx],
+                        multiply(
+                            a[idx],
+                            multiply(a[idx], 1.0 / 20.0 - a[idx] * 1.0 / 240.0)
+                            - 7.0 / 30.0,
+                        )
+                        + 1.0 / 2.0,
+                    )
+                    - 7.0 / 18.0,
+                )
+                - 1.0 / 10.0,
+            )
+            - 7.0 / 90.0,
+        )
+        + 103.0 / 210.0
+    )
+    idx = (np.abs(x) < 3.0) & (np.abs(x) >= 2.0)
+    y[idx] = (
+        multiply(
+            a[idx],
+            multiply(
+                a[idx],
+                multiply(
+                    a[idx],
+                    multiply(
+                        a[idx],
+                        multiply(
+                            a[idx],
+                            multiply(a[idx], a[idx] * 1.0 / 720.0 - 1.0 / 36.0)
+                            + 7.0 / 30.0,
+                        )
+                        - 19.0 / 18.0,
+                    )
+                    + 49.0 / 18.0,
+                )
+                - 23.0 / 6.0,
+            )
+            + 217.0 / 90.0,
+        )
+        - 139.0 / 630.0
+    )
+    idx = (np.abs(x) < 4.0) & (np.abs(x) >= 3)
+    y[idx] = power(4.0 - a[idx], 7) * 1.0 / 5040.0
 
     return y

@@ -47,8 +47,8 @@ def roll_array(array, shifts, axis):
     axis -= 1
     rolled = np.empty_like(array)
 
-    for index, array_2D in enumerate(array):
-        rolled[index, ...] = np.roll(array_2D, shifts[index], axis=axis)
+    for index, array_2d in enumerate(array):
+        rolled[index, ...] = np.roll(array_2d, shifts[index], axis=axis)
 
     return rolled
 
@@ -106,8 +106,8 @@ def make_broadcastable(array, target):
         raise ValueError("Target array must have equal or more dimensions.")
 
     broadcast_shape = np.ones(target.ndim, dtype=int)
-    for ax, dim in enumerate(array.shape):
-        broadcast_shape[ax] = dim
+    for ax_index, dim in enumerate(array.shape):
+        broadcast_shape[ax_index] = dim
     return array.reshape(broadcast_shape)
 
 
@@ -184,7 +184,7 @@ def threshold_crop(array, threshold, axis, summed=False):
     thresh = np.nonzero(amplitude > threshold)[0]
 
     slices = [slice(None)] * array.ndim
-    slices[axis] = slice(thresh[0], thresh[-1]+1)
+    slices[axis] = slice(thresh[0], thresh[-1] + 1)
     slices = tuple(slices)
     return array[slices]
 
@@ -213,8 +213,7 @@ def positive_index(index, size):
     """
 
     if not -size <= index <= size:
-        raise ValueError(
-            "Invalid index {} for size {}".format(index, size))
+        raise ValueError("Invalid index {} for size {}".format(index, size))
 
     if index < 0:
         index = size + index

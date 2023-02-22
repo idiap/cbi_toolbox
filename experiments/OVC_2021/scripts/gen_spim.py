@@ -21,11 +21,10 @@ import os
 from cbi_toolbox.simu import optics
 
 
-path = os.environ['OVC_PATH']
-apath = os.path.join(path, 'arrays')
+path = os.environ["OVC_PATH"]
+apath = os.path.join(path, "arrays")
 
-illu = optics.openspim_illumination(
-    npix_fov=256, rel_thresh=1e-6)
+illu = optics.openspim_illumination(npix_fov=256, rel_thresh=1e-6)
 
 print(illu.shape)
-np.save(os.path.join(apath, 'spim.npy'), illu)
+np.save(os.path.join(apath, "spim.npy"), illu)

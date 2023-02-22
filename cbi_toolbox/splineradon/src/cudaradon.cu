@@ -331,8 +331,6 @@ py::array_t<double, py::array::c_style> radon_cuda(
 
     checkCuda(cudaFree(cuda_trigo));
 
-    // TODO use streams to accelerate data loading
-    // TODO combine implementations with radon and iradon (very similar!)
     double *cuda_image = numpy_to_cuda(image_info);
     double *cuda_kernel = numpy_to_cuda(kernel_info);
 
@@ -456,7 +454,6 @@ py::array_t<double, py::array::c_style> iradon_cuda(
 
     checkCuda(cudaFree(cuda_trigo));
 
-    // TODO use streams to accelerate data loading
     double *cuda_sinogram = numpy_to_cuda(sinogram_info);
     double *cuda_kernel = numpy_to_cuda(kernel_info);
 

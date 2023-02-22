@@ -14,12 +14,12 @@ Using pip
 
 Pip >=10 is highly recommended to ensure the install works.
 
-- Run pip install: ``pip install cbi-toolbox[mpi,plots,docs]`` (choose optional packages according to your needs)
+- Run pip install: ``pip install cbi-toolbox[mpi,plots,docs,ome]`` (choose optional packages according to your needs)
 
 Install from sources:
 
 - Clone the project with its submodules: ``git clone --recursive <url>``
-- Run pip install in the root folder: ``pip install .[mpi,plots,docs]`` (choose optional packages according to your needs)
+- Run pip install in the root folder: ``pip install .[mpi,plots,docs,ome]`` (choose optional packages according to your needs)
 
 
 Optional dependencies
@@ -32,6 +32,7 @@ the install (in the square brackets):
   requires a functional MPI installation
 - **plots**: installs tools to visualize 3D objects easily
 - **docs**: installs tools used to generate the documentation
+- **ome**: installs tools to read and write ome-tiff images
 
 
 Using conda

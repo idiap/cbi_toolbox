@@ -30,7 +30,7 @@ from cbi_toolbox import utils
 
 from . import distribute_bin, distribute_bin_all
 
-_MPI_dtypes = {'float64': MPI.DOUBLE}
+_MPI_dtypes = {"float64": MPI.DOUBLE}
 
 
 def get_size(mpi_comm=MPI.COMM_WORLD):
@@ -171,8 +171,7 @@ def to_mpi_datatype(np_datatype):
     try:
         return _MPI_dtypes[dtype]
     except KeyError:
-        raise NotImplementedError(
-            'Type not in conversion table: {}'.format(dtype))
+        raise NotImplementedError("Type not in conversion table: {}".format(dtype))
 
 
 def create_slice_view(axis, n_slices, array=None, shape=None, dtype=None):
@@ -216,7 +215,7 @@ def create_slice_view(axis, n_slices, array=None, shape=None, dtype=None):
 
     base_type = to_mpi_datatype(dtype)
     stride = np.prod(shape[axis:], dtype=int)
-    block = np.prod(shape[axis + 1:], dtype=int) * n_slices
+    block = np.prod(shape[axis + 1 :], dtype=int) * n_slices
     count = np.prod(shape[:axis], dtype=int)
     extent = block * base_type.extent
 
@@ -260,11 +259,12 @@ def compute_vector_extent(axis, array=None, shape=None, dtype=None):
     axis = utils.positive_index(axis, ndims)
 
     base_type = to_mpi_datatype(dtype)
-    return np.prod(shape[axis + 1:], dtype=int) * base_type.extent
+    return np.prod(shape[axis + 1 :], dtype=int) * base_type.extent
 
 
-def create_vector_type(src_axis, tgt_axis, array=None, shape=None, dtype=None,
-                       block_size=1):
+def create_vector_type(
+    src_axis, tgt_axis, array=None, shape=None, dtype=None, block_size=1
+):
     """
     Create a MPI vector datatype to communicate a distributed array and split it
     along a different axis.
@@ -314,44 +314,47 @@ def create_vector_type(src_axis, tgt_axis, array=None, shape=None, dtype=None,
 
     if src_axis == tgt_axis:
         raise ValueError(
-            "Source and target are identical, no communication should be "
-            "performed")
+            "Source and target are identical, no communication should be " "performed"
+        )
 
     if len(shape) > 4:
         raise NotImplementedError(
             "This has never been tested for arrays with more than 4 axes.\n"
             "It will probably work, but please run a test before"
-            "(and if works, tell me!)")
+            "(and if works, tell me!)"
+        )
 
     if block_size > shape[src_axis]:
         raise ValueError(
-            "Block size cannot be bigger than the dimension of the source axis")
+            "Block size cannot be bigger than the dimension of the source axis"
+        )
 
     base_type = to_mpi_datatype(dtype)
 
     min_axis = min(src_axis, tgt_axis)
     max_axis = max(src_axis, tgt_axis)
 
-    i_count = np.prod(shape[min_axis + 1:max_axis], dtype=int)
-    i_block = np.prod(shape[max_axis + 1:], dtype=int)
+    i_count = np.prod(shape[min_axis + 1 : max_axis], dtype=int)
+    i_block = np.prod(shape[max_axis + 1 :], dtype=int)
     i_stride = np.prod(shape[max_axis:], dtype=int)
-    i_extent = np.prod(shape[src_axis + 1:], dtype=int) * base_type.extent
+    i_extent = np.prod(shape[src_axis + 1 :], dtype=int) * base_type.extent
 
     # only happens if the array is empty, avoid division by zero warnings
     if i_extent == 0:
         i_extent = 1
 
-    inner_stride = base_type.Create_vector(
-        i_count, i_block, i_stride).Create_resized(0, i_extent)
+    inner_stride = base_type.Create_vector(i_count, i_block, i_stride).Create_resized(
+        0, i_extent
+    )
 
     o_count = np.prod(shape[:min_axis], dtype=int)
     o_block = block_size
-    o_stride = (np.prod(shape[min_axis:], dtype=int)
-                * base_type.extent) // i_extent
-    o_extent = np.prod(shape[tgt_axis + 1:], dtype=int) * base_type.extent
+    o_stride = (np.prod(shape[min_axis:], dtype=int) * base_type.extent) // i_extent
+    o_extent = np.prod(shape[tgt_axis + 1 :], dtype=int) * base_type.extent
 
     outer_stride = inner_stride.Create_vector(
-        o_count, o_block, o_stride).Create_resized(0, o_extent)
+        o_count, o_block, o_stride
+    ).Create_resized(0, o_extent)
 
     return outer_stride
 
@@ -408,7 +411,7 @@ def load(file_name, axis, mpi_comm=MPI.COMM_WORLD):
 
     header = None
     if is_root_process(mpi_comm):
-        with open(file_name, 'rb') as fp:
+        with open(file_name, "rb") as fp:
             version, _ = npformat.read_magic(fp)
 
             if version == 1:
@@ -416,8 +419,7 @@ def load(file_name, axis, mpi_comm=MPI.COMM_WORLD):
             elif version == 2:
                 header = npformat.read_array_header_2_0(fp)
             else:
-                raise ValueError(
-                    "Invalid numpy format version: {}".format(version))
+                raise ValueError("Invalid numpy format version: {}".format(version))
 
             header = *header, fp.tell()
 
@@ -426,7 +428,8 @@ def load(file_name, axis, mpi_comm=MPI.COMM_WORLD):
 
     if fortran:
         raise NotImplementedError(
-            "Fortran-ordered (column-major) arrays are not supported")
+            "Fortran-ordered (column-major) arrays are not supported"
+        )
 
     ndims = len(full_shape)
     axis = utils.positive_index(axis, ndims)
@@ -438,8 +441,7 @@ def load(file_name, axis, mpi_comm=MPI.COMM_WORLD):
 
     l_array = np.empty(l_shape, dtype=dtype)
 
-    slice_type = create_slice_view(
-        axis, bin_size, shape=full_shape, dtype=dtype)
+    slice_type = create_slice_view(axis, bin_size, shape=full_shape, dtype=dtype)
     slice_type.Commit()
 
     single_slice_extent = slice_type.extent
@@ -485,11 +487,13 @@ def save(file_name, array, axis, full_shape=None, mpi_comm=MPI.COMM_WORLD):
 
     header_offset = None
     if is_root_process(mpi_comm):
-        header_dict = {'shape': full_shape,
-                       'fortran_order': False,
-                       'descr': npformat.dtype_to_descr(array.dtype)}
+        header_dict = {
+            "shape": full_shape,
+            "fortran_order": False,
+            "descr": npformat.dtype_to_descr(array.dtype),
+        }
 
-        with open(file_name, 'wb') as fp:
+        with open(file_name, "wb") as fp:
             try:
                 npformat.write_array_header_1_0(fp, header_dict)
             except ValueError:
@@ -500,8 +504,7 @@ def save(file_name, array, axis, full_shape=None, mpi_comm=MPI.COMM_WORLD):
 
     i_start, bin_size = distribute_mpi(full_shape[axis], mpi_comm)
 
-    slice_type = create_slice_view(
-        axis, bin_size, shape=full_shape, dtype=array.dtype)
+    slice_type = create_slice_view(axis, bin_size, shape=full_shape, dtype=array.dtype)
     slice_type.Commit()
 
     single_slice_extent = slice_type.extent
@@ -519,8 +522,7 @@ def save(file_name, array, axis, full_shape=None, mpi_comm=MPI.COMM_WORLD):
     slice_type.Free()
 
 
-def redistribute(array, src_axis, tgt_axis, full_shape=None,
-                 mpi_comm=MPI.COMM_WORLD):
+def redistribute(array, src_axis, tgt_axis, full_shape=None, mpi_comm=MPI.COMM_WORLD):
     """
     Redistribute an array along a different dimension.
 
@@ -572,10 +574,12 @@ def redistribute(array, src_axis, tgt_axis, full_shape=None,
     send_datatypes = []
     recv_datatypes = []
     for ji in range(size):
-        send_datatypes.append(create_vector_type(
-            src_axis, tgt_axis, array, block_size=src_bins[rank]))
-        recv_datatypes.append(create_vector_type(
-            src_axis, tgt_axis, n_array, block_size=src_bins[ji]))
+        send_datatypes.append(
+            create_vector_type(src_axis, tgt_axis, array, block_size=src_bins[rank])
+        )
+        recv_datatypes.append(
+            create_vector_type(src_axis, tgt_axis, n_array, block_size=src_bins[ji])
+        )
 
     send_extent = compute_vector_extent(tgt_axis, array)
     recv_extent = compute_vector_extent(src_axis, n_array)
