@@ -57,7 +57,7 @@ def process_data(sample, outdir, data_dir):
 
     path = pathlib.Path(data_dir)
 
-    measure_ = ome.load_ome_tiff(str(path / sample / "mssr" / "mssr.ome.tif"))[0]
+    measure_ = ome.load_ome_tiff(str(path / sample / "ommt" / "ommt.ome.tif"))[0]
     reference_ = ome.load_ome_tiff(str(path / sample / "spim" / "spim.ome.tif"))[0]
     illumination = np.load(path / "illumination.npy")
 
