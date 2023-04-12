@@ -202,7 +202,7 @@ def convert_to_interpolation_coefficients(
         return output
 
     if not in_place:
-        c = c.copy()
+        c = np.array(c)
 
     if degree == 6:
         z = [

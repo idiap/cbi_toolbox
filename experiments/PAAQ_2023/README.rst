@@ -1,5 +1,5 @@
 PAAQ_2023
-----------
+---------
 
 This directory contains scripts to reproduce results published in 
 
@@ -7,6 +7,7 @@ This directory contains scripts to reproduce results published in
     Alternating Acquisitions for Virtual High Framerate Multichannel Cardiac
     Fluorescence Microscopy"* 
 
+To run the experiments, first set the following environment variables:
 
 * ``PAAQ_PATH``: full path to the directory in which you want the experiments to run
 * ``PAAQ_PYTHON``: full path to the python executable that will be used for the experiments

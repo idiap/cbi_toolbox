@@ -193,7 +193,7 @@ def unfold_phases(phases, threshold=-0.25, in_place=False):
     """
 
     if not in_place:
-        phases = phases.copy()
+        phases = np.array(phases)
 
     for idx, phase in enumerate(phases[1:]):
         if phase - phases[idx] < threshold:
@@ -229,7 +229,7 @@ def orient_phases(phases, seq_lengths=None, in_place=False):
     """
 
     if not in_place:
-        phases = phases.copy()
+        phases = np.array(phases)
 
     if seq_lengths is None:
         seq_lengths = (phases.size,)

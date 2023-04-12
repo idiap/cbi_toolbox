@@ -25,7 +25,7 @@ as well as preprocessing tools and performance scores.
 import numpy as np
 
 
-def psnr(ref, target, norm=None, limit=None):
+def psnr(ref, target, norm=None, limit=None, in_place=False):
     """
     Computes the Peak Signal-to-Noise Ratio:
     PSNR = 10 log( limit ^ 2 / MSE(ref, target) )
@@ -41,6 +41,8 @@ def psnr(ref, target, norm=None, limit=None):
     limit: float, optional
         The maximum pixel value used for PSNR computation,
         default is None (max(ref)).
+    in_place : bool, optional
+        Perform normalizations in-place, by default False.
 
     Returns
     -------
@@ -51,10 +53,10 @@ def psnr(ref, target, norm=None, limit=None):
     if norm is None:
         pass
     elif norm == "mse":
-        scale_to_mse(ref, target)
+        target = scale_to_mse(ref, target, in_place)
     else:
-        normalize(ref)
-        normalize(target)
+        ref = normalize(ref, in_place)
+        target = normalize(target, in_place)
 
     if limit is None:
         limit = ref.max()
@@ -82,7 +84,7 @@ def mse(ref, target):
     return np.square(np.subtract(ref, target)).mean()
 
 
-def normalize(image, mode="std"):
+def normalize(image, mode="std", in_place=False):
     """
     Normalize an image according to the given criterion.
 
@@ -93,6 +95,8 @@ def normalize(image, mode="std"):
     mode : str, optional
         Type of normalization to use, by default 'std'.
         Allowed: ['std', 'max', 'sum']
+    in_place : bool, optional
+        Perform computations in-place, by default False.
 
     Returns
     -------
@@ -114,11 +118,15 @@ def normalize(image, mode="std"):
     else:
         raise ValueError("Invalid norm: {}".format(mode))
 
-    image /= f
+    if not in_place:
+        image = image / f
+    else:
+        image /= f
+
     return image
 
 
-def scale_to_mse(ref, target):
+def scale_to_mse(ref, target, in_place=False):
     """
     Scale a target array to minimise MSE with reference
 
@@ -127,15 +135,22 @@ def scale_to_mse(ref, target):
     ref : numpy.ndarray
         The reference for MSE.
     target : numpy.ndarray
-        The array to rescale (will be done in-place).
+        The array to rescale.
+    in_place : bool, optional
+        Perform computations in-place, by default False.
 
     Returns
     -------
     numpy.ndarray
         The rescaled target.
     """
+
     w = np.sum(ref * target) / np.sum(target**2)
-    target *= w
+
+    if not in_place:
+        target = target * w
+    else:
+        target *= w
 
     return target
 

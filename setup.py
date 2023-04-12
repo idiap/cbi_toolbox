@@ -32,7 +32,7 @@ import glob
 from setuptools import setup, Extension, find_packages
 from setuptools.command.build_ext import build_ext
 
-__version__ = "1.3.1"
+__version__ = "1.4"
 
 requires = [
     "numpy>=1.17",
@@ -45,17 +45,18 @@ requires = [
     "jax",
     "jaxlib",
     "optax",
-    "pycsou",
     # Posix-specific dependencies
     'noise;platform_system!="Windows"',
-    'pyconcorde @ git+https://github.com/FrailHand/pyconcorde ;platform_system!="Windows"',
+    'pyconcorde @ git+https://github.com/jvkersch/pyconcorde ;platform_system!="Windows"',
 ]
 
 extras_require = {
     "plots": ["napari>=0.4", "matplotlib"],
     "mpi": ["mpi4py"],
     "docs": ["sphinx>=4", "sphinxcontrib-apidoc", "sphinx_rtd_theme"],
-    "ome": ["apeer-ometiff-library @ git+https://github.com/FrailHand/apeer-ometiff-library"],
+    "ome": [
+        "apeer-ometiff-library @ git+https://github.com/FrailHand/apeer-ometiff-library"
+    ],
 }
 
 

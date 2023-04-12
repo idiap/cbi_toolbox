@@ -75,7 +75,7 @@ def change_basis(
     """
 
     if not in_place:
-        in_array = in_array.copy()
+        in_array = np.array(in_array)
 
     try:
         for ax in axes:

@@ -14,9 +14,11 @@ Using pip
 
 Pip >=10 is highly recommended to ensure the install works.
 
-- Run pip install: ``pip install cbi-toolbox[mpi,plots,docs,ome]`` (choose optional packages according to your needs)
+- Run pip install: ``pip install cbi-toolbox[mpi,plots,docs,ome] @ git+https://github.com/idiap/cbi_toolbox.git`` (choose optional packages according to your needs)
 
-Install from sources:
+**PyPI hosted version is capped to 1.1.0 due to the addition of non PyPI hosted dependencies**
+
+Manual install from sources:
 
 - Clone the project with its submodules: ``git clone --recursive <url>``
 - Run pip install in the root folder: ``pip install .[mpi,plots,docs,ome]`` (choose optional packages according to your needs)

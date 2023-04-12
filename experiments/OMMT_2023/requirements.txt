@@ -1,0 +1,2 @@
+cbi-toolbox[ome] @ git+https://github.com/idiap/cbi_toolbox.git
+scico @ git+https://github.com/lanl/scico.git

@@ -496,6 +496,42 @@ def phantom(size, scale=1, antialias=2):
     return full_mat
 
 
+def fiber(
+    size, point, direction, radius, section="circle", antialias=2, dtype=np.float64
+):
+    if antialias < 1 or not isinstance(antialias, int):
+        raise ValueError("Antialias must be a positive integer")
+
+    size *= antialias
+    radius *= antialias
+    point = np.array(point) * antialias
+
+    x, y, z = np.ogrid[:size, :size, :size]
+
+    lam = (z - point[-1]) / direction[-1]
+
+    x_z = point[0] + lam * direction[0]
+    y_z = point[1] + lam * direction[1]
+
+    if section == "circle":
+        volume = (x - x_z) ** 2 + (y - y_z) ** 2 < radius**2
+    elif section == "diamond":
+        volume = np.abs(x - x_z) + np.abs(y - y_z) < radius
+    elif section == "square":
+        dx = np.abs(x - x_z)
+        dy = np.abs(y - y_z)
+
+        volume = (dx < radius) & (dy < radius)
+    else:
+        raise ValueError(f"Invalid section type: {section}")
+    volume = volume.astype(dtype)
+
+    if antialias > 1:
+        volume = skimage.transform.rescale(volume, 1 / antialias, mode="constant")
+
+    return volume
+
+
 def forward_ellipse(
     coordinates, center, radius, thickness=0.1, smoothing=0.5, solid=False
 ):

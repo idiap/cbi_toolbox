@@ -378,7 +378,7 @@ def noise(
     seed : int, optional
         the seed for rng, by default None
     in_place: bool, optional
-        perform computations in-place and store the results in the input array,
+        perform computations in-place, modifying the input array to save space,
         by default False
 
     Returns
@@ -387,14 +387,16 @@ def noise(
         the noisy image
     """
 
-    if not in_place:
-        image = image.copy()
-
     if max_amp is None:
         max_amp = image.max()
 
-    image *= (photons - background) / max_amp
-    image += background
+    if in_place:
+        image *= (photons - background) / max_amp
+        image += background
+    else:
+        image = image * (photons - background) / max_amp
+        image = image + background
+
     rng = random.default_rng(seed)
     poisson = rng.poisson(image)
 
