@@ -32,11 +32,10 @@ import glob
 from setuptools import setup, Extension, find_packages
 from setuptools.command.build_ext import build_ext
 
-__version__ = "1.4"
+__version__ = "1.5"
 
 requires = [
     "numpy>=1.17",
-    "opencv-python",
     "scipy>=1.6.0",
     "scikit-image>=0.19",
     "poppy",

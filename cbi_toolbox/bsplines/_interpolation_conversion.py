@@ -109,7 +109,7 @@ def initial_causal_coefficient(coeff, z, tolerance, boundary_condition="mirror")
 
             # compute sum c[k]*z**k
             c = c1[0, ...] + np.sum(np.multiply(c1[1:, ...], z_exp), axis=0) / (
-                1 - z ** n
+                1 - z**n
             )
 
     else:
@@ -127,7 +127,7 @@ def initial_anticausal_coefficient(c, z, boundary_condition="Mirror"):
     (1D computations).
     """
     if boundary_condition.upper() == "MIRROR":
-        c0 = -z * (c[-1, ...] + z * c[-2, ...]) / (1 - z ** 2)
+        c0 = -z * (c[-1, ...] + z * c[-2, ...]) / (1 - z**2)
     elif boundary_condition.upper() == "PERIODIC":
         n = c.shape[0]
         z_exp = np.ones(n) * z
@@ -143,7 +143,7 @@ def initial_anticausal_coefficient(c, z, boundary_condition="Mirror"):
 
         z_exp = make_broadcastable(z_exp, c1)
 
-        c0 = (1.0 / (z ** n - 1.0)) * np.sum(np.multiply(c1, z_exp), axis=0)
+        c0 = (1.0 / (z**n - 1.0)) * np.sum(np.multiply(c1, z_exp), axis=0)
     else:
         raise ValueError(
             "Illegal boundary condition: {}".format(boundary_condition.upper())
@@ -170,6 +170,8 @@ def convert_to_interpolation_coefficients(
             mode = "mirror"
         elif boundary_condition.upper() == "PERIODIC":
             mode = "grid-wrap"
+        elif boundary_condition.upper() == "CONSTANT":
+            mode = "grid-constant"
         else:
             raise ValueError(
                 "Invalid boundary condition: {}".format(boundary_condition)

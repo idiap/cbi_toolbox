@@ -120,6 +120,7 @@ def change_basis_inner(
     boundary_condition : str, optional
         Boundary conditions, one of ['mirror', 'periodic'], by default 'Mirror'.
         (case insensitive)
+        'constant' also works for small degrees (raises error if not).
 
     Returns
     -------
@@ -215,7 +216,6 @@ def change_basis_inner(
 
 
 if __name__ == "__main__":
-
     data = np.random.default_rng().random((100, 100))
     toleranc = 1e-12
     degre = 3

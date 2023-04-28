@@ -72,6 +72,7 @@ no. 11, pp. 5349-5358, 2017.
 # Technology & Industry Alliances at 805-893-5180 or info@tia.ucsb.edu.
 
 from scipy import fft
+from scipy.optimize import least_squares
 import numpy as np
 from cbi_toolbox.utils import fft_size
 
@@ -170,6 +171,55 @@ def deconvolve_sinogram(sinogram, psf, l=20, mode="laplacian", clip=True):
         np.clip(i_fft, 0, None, out=i_fft)
 
     return i_fft
+
+
+def transmission_to_absorption(image_array, max_value=4096):
+    """
+    Convert a transmission image into an absorption one.
+    This inverses the black-white contrast.
+
+    Parameters
+    ----------
+    image_array : numpy.ndarray
+        The absorption image.
+    max_value : float, optional
+        The max value for scaling the original image, by default 4096.
+
+    Returns
+    -------
+    numpy.ndarray
+        The absorption contrast image.
+    """
+
+    scaled_array = image_array / max_value
+
+    absorption = np.log(1 / scaled_array)
+
+    return absorption
+
+
+def find_sinogram_center(sinogram, theta):
+    sinogram = np.atleast_3d(sinogram)
+    coords = np.arange(sinogram.shape[1])[None, :, None]
+    masses = (sinogram * coords).sum(1) / sinogram.sum(1)
+
+    rangles = np.deg2rad(theta)
+
+    def model(param):
+        phases = param[:3]
+        amplitudes = param[3:6]
+        phases = phases[None, :]
+        amplitudes = amplitudes[None, :]
+        center = param[-1]
+        return np.sin(rangles[:, None] + phases) * amplitudes + center
+
+    def loss(param):
+        error = model(param) - masses
+        return error.reshape(-1)
+
+    guess = np.atleast_1d([0, 0, 0, 0, 0, 0, sinogram.shape[1] / 2])
+    res = least_squares(loss, guess)
+    return res["x"][-1]
 
 
 if __name__ == "__main__":

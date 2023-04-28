@@ -1,0 +1,2 @@
+cbi-toolbox[ome] @ git+https://github.com/idiap/cbi_toolbox.git
+opencv-python

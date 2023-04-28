@@ -7,6 +7,11 @@ This directory contains scripts to reproduce results published in
     Alternating Acquisitions for Virtual High Framerate Multichannel Cardiac
     Fluorescence Microscopy"* 
 
+You will need to setup a python environment with the requirements listed in
+``requirements.txt``.
+
+``pip install -r requirements.txt``
+
 To run the experiments, first set the following environment variables:
 
 * ``PAAQ_PATH``: full path to the directory in which you want the experiments to run

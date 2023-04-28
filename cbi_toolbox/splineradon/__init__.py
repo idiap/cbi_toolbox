@@ -88,6 +88,7 @@ def radon(
     captors_center=None,
     circle=False,
     nt=200,
+    mode="mirror",
     use_cuda=False,
 ):
     """
@@ -118,6 +119,8 @@ def radon(
         sinogram with same width as the image), by default False.
     nt : int, optional
         Number of points stored in the spline kernel, by default 200.
+    mode : str, optional
+        The interpolation boundary mode ['mirror', 'periodic'].
     use_cuda : bool, optional
         Use CUDA GPU acceleration, by default False.
 
@@ -130,7 +133,12 @@ def radon(
     if theta is None:
         theta = np.arange(180)
 
-    spline_image = radon_pre(image, b_spline_deg[0])
+    if circle and (center is not None or captors_center is not None):
+        raise ValueError(
+            "radon: Circle option can only be used for centered rotations. Please set center and captors_center to None."
+        )
+
+    spline_image = radon_pre(image, b_spline_deg[0], mode)
     sinogram = radon_inner(
         spline_image,
         theta,
@@ -145,7 +153,7 @@ def radon(
         use_cuda=use_cuda,
     )
 
-    sinogram = radon_post(sinogram, b_spline_deg[1])
+    sinogram = radon_post(sinogram, b_spline_deg[1], mode)
 
     return sinogram
 
@@ -157,10 +165,11 @@ def iradon(
     filter_type="RAM-LAK",
     b_spline_deg=(2, 3),
     sampling_steps=(1, 1),
-    center=None,
     captors_center=None,
+    centered=True,
     circle=False,
     nt=200,
+    mode="mirror",
     use_cuda=False,
 ):
     """
@@ -183,15 +192,18 @@ def iradon(
         by default (2, 3).
     sampling_steps : tuple, optional
         Pixel sampling steps on the image and the sinogram, by default (1, 1).
-    center : tuple, optional
-        (z, x) the center of rotation of the image, by default None (centered).
     captors_center : float, optional
         The position of the center of rotation in the sinogram, by default None.
+    centered : bool, optional
+        Whether the rotation axis is centered in the reconstructed image.
+        Default : True.
     circle : bool, optional
         If the object is contained in the inner circle/cylinder (will produce a
         sinogram with same width as the image), by default False.
     nt : int, optional
         Number of points stored in the spline kernel, by default 200.
+    mode : str, optional
+        The interpolation boundary mode ['mirror', 'periodic'].
     use_cuda : bool, optional
         Use CUDA GPU acceleration, by default False.
 
@@ -201,7 +213,10 @@ def iradon(
         The reconstructed image.
     """
 
-    sinogram = iradon_pre(sinogram, b_spline_deg[1], filter_type, circle)
+    if circle and not centered:
+        raise ValueError("iradon: must be a centered sinogram to use the circle option")
+
+    sinogram = iradon_pre(sinogram, b_spline_deg[1], filter_type, mode)
 
     image, theta = iradon_inner(
         sinogram,
@@ -209,17 +224,18 @@ def iradon(
         angledeg,
         b_spline_deg,
         sampling_steps,
-        center,
         captors_center,
+        centered,
+        circle,
         nt,
         use_cuda=use_cuda,
     )
-    image = iradon_post(image, theta, b_spline_deg[0])
+    image = iradon_post(image, theta, b_spline_deg[0], mode)
 
     return image
 
 
-def radon_pre(image, ni=2):
+def radon_pre(image, ni=2, mode="mirror"):
     """
     Pre-processing step for radon transform.
     Projects the image onto a bspline basis.
@@ -230,6 +246,8 @@ def radon_pre(image, ni=2):
         The raw input image.
     ni : tuple, optional
         The degree of the image bspline basis, by default 2.
+    mode : str, optional
+        The interpolation boundary mode ['mirror', 'periodic'].
 
     Returns
     -------
@@ -238,7 +256,7 @@ def radon_pre(image, ni=2):
     """
 
     return change_basis(
-        image, "cardinal", "b-spline", ni, (0, 1), boundary_condition="periodic"
+        image, "cardinal", "b-spline", ni, (0, 1), boundary_condition=mode
     )
 
 
@@ -293,6 +311,11 @@ def radon_inner(
         The computed sinogram in a bspline basis.
     """
 
+    if circle and (center is not None or captors_center is not None):
+        raise ValueError(
+            "radon: Circle option can only be used for centered rotations. Please set center and captors_center to None."
+        )
+
     if theta is None:
         theta = np.arange(180)
 
@@ -303,23 +326,36 @@ def radon_inner(
     ni = b_spline_deg[0]
     ns = b_spline_deg[1]
 
-    shape = np.max(spline_image.shape[0:2])
-    if not circle:
-        nc = int(np.ceil(shape * np.sqrt(2)))
-        nc += nc % 2 != shape % 2
-
-    else:
-        nc = shape
-
-    if n is not None:
-        s = (nc - 1) / (n - 1)
-        nc = n
-
     if center is None:
         center = (nz - 1) / 2, (nx - 1) / 2
+    center = np.atleast_1d(center)
+
+    shape = np.max(spline_image.shape[0:2])
+
+    if not circle:
+        corners = np.array([[0, 0], [0, nz - 1], [nx - 1, 0], [nx - 1, nz - 1]])
+
+        dist = np.max(np.sqrt(((center - corners) ** 2).sum(1)))
+
+        nc_ = int(np.ceil(dist * 2))
+        nc = int(np.ceil(dist * 2 / s))
+
+    else:
+        nc = int(np.ceil(shape / s))
+        nc_ = shape
+
+    nc += nc % 2 != shape % 2
+    nc_ += nc_ % 2 != shape % 2
+
+    if n is not None:
+        s = (nc_ - 1) / (n - 1)
+        nc = n
 
     if captors_center is None:
-        captors_center = s * (nc - 1) / 2
+        captors_center = (nc - 1) / 2
+
+    captors_center *= s
+    center = h * center
 
     if angledeg:
         theta = np.deg2rad(theta)
@@ -353,7 +389,7 @@ def radon_inner(
     return sinogram
 
 
-def radon_post(sinogram, ns=3):
+def radon_post(sinogram, ns=3, mode="mirror"):
     """
     Post-processing for the radon transform.
     Projects the sinogram back from a bspline basis.
@@ -364,6 +400,8 @@ def radon_post(sinogram, ns=3):
         The sinogram in bspline basis.
     ns : tuple, optional
         The degree of the sinogram bspline basis, by default 3
+    mode : str, optional
+        The interpolation boundary mode ['mirror', 'periodic'].
 
     Returns
     -------
@@ -378,13 +416,13 @@ def radon_post(sinogram, ns=3):
             "cardinal",
             ns,
             1,
-            boundary_condition="periodic",
+            boundary_condition=mode,
             in_place=True,
         )
     return sinogram
 
 
-def iradon_pre(sinogram, ns=3, filter_type="RAM-LAK", circle=False):
+def iradon_pre(sinogram, ns=3, filter_type="RAM-LAK", mode="mirror"):
     """
     Pre-processing for the inverse radon transform.
     Filters the sinogram and projects it onto a bspline basis.
@@ -398,9 +436,8 @@ def iradon_pre(sinogram, ns=3, filter_type="RAM-LAK", circle=False):
     filter_type : str, optional
         The type of filter used for FBP, by default 'RAM-LAK'.
         Can be one of ['None', 'Ram-Lak', 'Shepp-Logan', 'Cosine'].
-    circle : bool, optional
-        If the object is contained in the inner circle/cylinder (will produce a
-        sinogram with same width as the image), by default False.
+    mode : str, optional
+        The interpolation boundary mode ['mirror', 'periodic'].
 
     Returns
     -------
@@ -408,20 +445,11 @@ def iradon_pre(sinogram, ns=3, filter_type="RAM-LAK", circle=False):
         The filtered and projected sinogram.
     """
 
-    if circle:
-        shape = sinogram.shape[1]
-        nc = np.ceil(shape * np.sqrt(2))
-        nc += nc % 2 != shape % 2
-        pad = int((nc - shape) // 2)
-        padding = [(0,)] * sinogram.ndim
-        padding[1] = (pad,)
-        sinogram = np.pad(sinogram, padding)
-
     sinogram, pre_filter = filter_sinogram(sinogram, filter_type, ns)
 
     if pre_filter:
         sinogram = change_basis(
-            sinogram, "CARDINAL", "B-SPLINE", ns, 1, boundary_condition="periodic"
+            sinogram, "CARDINAL", "B-SPLINE", ns, 1, boundary_condition=mode
         )
     return sinogram
 
@@ -432,8 +460,9 @@ def iradon_inner(
     angledeg=True,
     b_spline_deg=(2, 3),
     sampling_steps=(1, 1),
-    center=None,
     captors_center=None,
+    centered=True,
+    circle=False,
     nt=200,
     use_cuda=False,
 ):
@@ -456,10 +485,14 @@ def iradon_inner(
         by default (2, 3).
     sampling_steps : tuple, optional
         Pixel sampling steps on the image and the sinogram, by default (1, 1).
-    center : tuple, optional
-        (z, x) the center of rotation of the image, by default None (centered).
     captors_center : float, optional
         The position of the center of rotation in the sinogram, by default None.
+    centered : bool, optional
+        Whether the rotation axis is centered in the reconstructed image.
+        Default : True.
+    circle : bool, optional
+        If the object is contained in the inner circle/cylinder (will produce a
+        sinogram with same width as the image), by default False.
     nt : int, optional
         Number of points stored in the spline kernel, by default 200.
     use_cuda : bool, optional
@@ -470,6 +503,9 @@ def iradon_inner(
     numpy.ndarray
         The image in bspline basis.
     """
+
+    if circle and not centered:
+        raise ValueError("iradon: must be a centered sinogram to use the circle option")
 
     nc = sinogram_filtered.shape[1]
     na = sinogram_filtered.shape[0]
@@ -493,15 +529,23 @@ def iradon_inner(
 
     kernel = get_kernel_table(nt, ni, ns, h, s, -theta, degree=False)
 
-    nx = int(np.floor(nc / np.sqrt(2)))
-    nx -= nx % 2 != nc % 2
+    if circle:
+        shape = int(np.floor(nc * s))
+    elif centered:
+        shape = int(np.floor(nc / (np.sqrt(2)) * s))
+    else:
+        shape = int(np.floor(nc * 2 / (np.sqrt(5)) * s))
+
+    nx = shape
+    nx += nx % 2 != nc % 2
     nz = nx
 
-    if center is None:
-        center = (nz - 1) / 2, (nx - 1) / 2
+    center = h * (nz - 1) / 2, h * (nx - 1) / 2
 
     if captors_center is None:
-        captors_center = s * (nc - 1) / 2
+        captors_center = (nc - 1) / 2
+
+    captors_center *= s
 
     squeeze = False
     if sinogram_filtered.ndim < 3:
@@ -531,7 +575,7 @@ def iradon_inner(
     return image, theta
 
 
-def iradon_post(image, theta, ni=2):
+def iradon_post(image, theta, ni=2, mode="mirror"):
     """
     Post-processing for the inverse Radon transform.
     Projects the image back from a bspline basis and normalizes it.
@@ -544,6 +588,8 @@ def iradon_post(image, theta, ni=2):
         The projection angles of the sinogram.
     ni : tuple, optional
         The degree of the image bspline basis, by default 2.
+    mode : str, optional
+        The interpolation boundary mode ['mirror', 'periodic'].
 
     Returns
     -------
@@ -558,7 +604,7 @@ def iradon_post(image, theta, ni=2):
             "CARDINAL",
             ni,
             (0, 1),
-            boundary_condition="periodic",
+            boundary_condition=mode,
             in_place=True,
         )
 
