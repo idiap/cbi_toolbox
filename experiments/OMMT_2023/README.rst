@@ -3,9 +3,10 @@ OMMT_2023
 
 This directory contains scripts to reproduce results published in 
 
-    Marelli, F. and Liebling, M. *"Efficient Compressed Sensing Reconstruction
-    for 3D Fluorescence Microscopy Using OptoMechanical Modulation Tomography
-    (OMMT) with a 1+2D Regularization "* 
+    François Marelli and Michael Liebling, *"Efficient compressed sensing 
+    reconstruction for 3D fluorescence microscopy using OptoMechanical Modulation 
+    Tomography (OMMT) with a 1+2D regularization"*, Opt. Express 31, 31718-31733 
+    (2023) https://doi.org/10.1364/OE.493611
 
 
 You will need to setup a python 3.8 environment with the requirements listed in
@@ -17,7 +18,7 @@ To run the experiments, first set the following environment variables:
 
 * ``OMMT_PATH``: full path to the directory in which you want the experiments to run
 * ``OMMT_PYTHON``: full path to the python executable that will be used for the experiments
-* ``OMMT_DATA``: full path to the dataset (download from https://www.idiap.ch/en/dataset/OMMT-fiber)
+* ``OMMT_DATA``: full path to the dataset (download from https://www.idiap.ch/en/dataset/ommt-fibre)
   
 The script ``run_simus.sh`` runs all the simulations and generates results per
 type of experiment in files named ``results.npz`` and ``lsurface.npz``. They

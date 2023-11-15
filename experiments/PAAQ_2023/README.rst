@@ -5,7 +5,8 @@ This directory contains scripts to reproduce results published in
 
     Marelli, F. and Ernst, A. and Mercader, N. and Liebling, M. *"PAAQ: Paired
     Alternating Acquisitions for Virtual High Framerate Multichannel Cardiac
-    Fluorescence Microscopy"* 
+    Fluorescence Microscopy"*, Biological Imaging (2023) 
+    https://doi.org/10.1017/S2633903X23000223
 
 You will need to setup a python environment with the requirements listed in
 ``requirements.txt``.
@@ -16,7 +17,7 @@ To run the experiments, first set the following environment variables:
 
 * ``PAAQ_PATH``: full path to the directory in which you want the experiments to run
 * ``PAAQ_PYTHON``: full path to the python executable that will be used for the experiments
-* ``PAAQ_DATA``: full path to the dataset (download from https://www.idiap.ch/en/dataset/PAAQ-Heart)
+* ``PAAQ_DATA``: full path to the dataset (download from https://www.idiap.ch/en/dataset/paaq-heart)
 * ``PAAQ_DATA_B``: full path to the high-speed dataset (if available)
   
 The script ``run_simus.sh`` runs all the simulations and generates results per type of experiment in files named ``results.npz``. They contain the phase and frequency errors, as well as metrics from the minimization algorithm in the different simulated scenarios. The outputs will be located under ``$PAAQ_PATH/simu`` and ``$PAAQ_PATH/mutual`` for sorting-based and mutual info-based results, each of the subdirectories representing one varying parameter in the experiment and containing a result file.

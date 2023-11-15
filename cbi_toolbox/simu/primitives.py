@@ -598,6 +598,73 @@ def forward_ellipse(
     return np.exp(-(temp**2) / (smoothing / 5) ** 2)
 
 
+def forward_ellipse_3(
+    coordinates, center, radius, thickness=0.1, smoothing=0.5, solid=False
+):
+    """
+    Compute a smoothed 3D ellipsoid on the given coordinates.
+
+    Parameters
+    ----------
+    coordinates : array
+        the coordinates at which the ellipse is computed
+        can be a meshgrid (4D array [2, w, h, d]) or a list of meshgrids (5D array [N, 2, w, h, d])
+    center : tuple (float, float, float)
+        coordinates of the center of the ellipse
+    radius : tuple (float, float, float)
+        radius of the ellipse
+    thickness : float, optional
+        relative thickness of the ellipse curve, by default 0.1
+    smoothing : float, optional
+        width of gaussian smoothing, by default 0.5
+    solid : bool, optional
+        fill the ellipse, by default False
+
+    Returns
+    -------
+    array
+        the values of the ellipse at each point
+
+    Raises
+    ------
+    ValueError
+        if the coordinates are in an invalid format
+    NotImplementedError
+        if non 2D ellipses are asked
+    """
+    if coordinates.ndim not in (4, 5):
+        raise ValueError(
+            "Coordinates ndim can only be 4 or 5 (meshgrid or list of meshgrids)"
+        )
+
+    ndim = coordinates.shape[0] if coordinates.ndim == 4 else coordinates.shape[1]
+
+    if not ndim == 3:
+        raise NotImplementedError("Only 3D coordinate arrays are implemented")
+
+    x0, y0, z0 = center
+
+    rx, ry, rz = radius
+
+    if coordinates.ndim == 5:
+        coordinates = utils.transpose_dim_to(coordinates, 1, 0)
+
+    temp = (
+        (coordinates[0, ...] - x0) ** 2.0 / rx**2
+        + (coordinates[1, ...] - y0) ** 2.0 / ry**2
+        + (coordinates[2, ...] - z0) ** 2.0 / rz**2
+        - 1
+    )
+
+    if not solid:
+        temp = np.abs(temp)
+
+    temp -= thickness
+    temp[temp < 0] = 0
+
+    return np.exp(-(temp**2) / (smoothing / 5) ** 2)
+
+
 if __name__ == "__main__":
     import napari
 

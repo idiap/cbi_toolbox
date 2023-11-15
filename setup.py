@@ -32,7 +32,7 @@ import glob
 from setuptools import setup, Extension, find_packages
 from setuptools.command.build_ext import build_ext
 
-__version__ = "1.5"
+__version__ = "1.6"
 
 requires = [
     "numpy>=1.17",
@@ -40,12 +40,12 @@ requires = [
     "scikit-image>=0.19",
     "poppy",
     "opensimplex>=0.4",
+    "numba>=0.57",
     "scs",
     "jax",
     "jaxlib",
     "optax",
     # Posix-specific dependencies
-    'noise;platform_system!="Windows"',
     'pyconcorde @ git+https://github.com/jvkersch/pyconcorde ;platform_system!="Windows"',
 ]
 

@@ -199,6 +199,23 @@ def transmission_to_absorption(image_array, max_value=4096):
 
 
 def find_sinogram_center(sinogram, theta):
+    """
+    Find the rotation center of a misaligned sinogram.
+    This uses least-squares fitting on the center-of-mass of the sinogram.
+
+    Parameters
+    ----------
+    sinogram : numpy.ndarray [TPY]
+        The sinogram
+    theta : numpy.ndarray [T]
+        The angles corresponding to the sinogram (in degrees).
+
+    Returns
+    -------
+    float
+        The coordinate of the sinogram center.
+        Use as captors_center in iradon to get good reconstruction.
+    """
     sinogram = np.atleast_3d(sinogram)
     coords = np.arange(sinogram.shape[1])[None, :, None]
     masses = (sinogram * coords).sum(1) / sinogram.sum(1)

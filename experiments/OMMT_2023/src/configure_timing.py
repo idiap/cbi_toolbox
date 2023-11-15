@@ -46,7 +46,7 @@ def gen_lsurface(base_conf, x_var, y_var, outdir, device):
 if __name__ == "__main__":
     default_conf = {
         "width": 128,
-        "compression": 8,
+        "compression": 2,
         "niter": 2,
         "denoise": "TV2",
         "warmup": 2,
@@ -60,27 +60,27 @@ if __name__ == "__main__":
 
     outdir = pathlib.Path(args.outdir)
 
-    width = ("width", (128, 256, 512, 1024))
-    compress = ("compression", (8, 4, 2))
+    width = ("width", (64, 96, 128, 192, 256, 384, 512))
+    compress = ("compression", (2,))
 
-    out_ = outdir / f"t_TV"
+    out_ = outdir / "t_TV"
     default_conf["denoise"] = "TV2"
     gen_lsurface(default_conf, width, compress, out_, "cpu")
-    out_ = outdir / f"t_TV_cuda"
+    out_ = outdir / "t_TV_cuda"
     gen_lsurface(default_conf, width, compress, out_, "cuda")
 
-    out_ = outdir / f"t_TV1"
+    out_ = outdir / "t_TV1"
     default_conf["denoise"] = "TV"
     gen_lsurface(default_conf, width, compress, out_, "cpu")
-    out_ = outdir / f"t_TV1_cuda"
+    out_ = outdir / "t_TV1_cuda"
     gen_lsurface(default_conf, width, compress, out_, "cuda")
 
-    out_ = outdir / f"t_L1"
+    out_ = outdir / "t_L1"
     default_conf["denoise"] = "L1"
     gen_lsurface(default_conf, width, compress, out_, "cpu")
-    out_ = outdir / f"t_L1_cuda"
+    out_ = outdir / "t_L1_cuda"
     gen_lsurface(default_conf, width, compress, out_, "cuda")
 
-    out_ = outdir / f"t_BM"
+    out_ = outdir / "t_BM"
     default_conf["denoise"] = "BM4D"
     gen_lsurface(default_conf, width, compress, out_, "cpu")

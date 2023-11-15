@@ -173,6 +173,137 @@ def sigsin_beat(
     return transformed[:, :2, ...]
 
 
+def sigsin_beat_3(
+    phase,
+    size,
+    sigsin_slopes=(5, 9, 9),
+    sigsin_saturations=(0.95, 0.8, 0.7),
+    sigsin_init_phases=(np.pi / 18, np.pi / 20, 0),
+    sigsin_amplitudes=(0.7, 0.9, np.pi / 8),
+    wavelength=2,
+    phase_0=np.pi * 4 / 5,
+    beat_center=(0.48, 0.49),
+    rotate_first=False,
+    dtype=np.float64,
+):
+    """
+    Generate 3D coordinate grids transformed using sigsin functions.
+    If used to generate a tube, this resembles a beating heart.
+    The sigsins control respectively the following transforms: scaling in Z,
+    scaling in X, and rotation.
+
+    Y is defined as the direction of propagation of the sigsins.
+
+    Parameters
+    ----------
+    phase : float or np.ndarray(float) [N]
+        Unitless phase(s) at which to compute the coordinates.
+        The unitless phase varies in [0, 1[.
+    size : int
+        Size of the coordinate grids.
+    sigsin_slopes : tuple, optional
+        Slopes of the sigsins, by default (5, 9, 9)
+    sigsin_saturations : tuple, optional
+        Saturations of the sigsins, by default (0.95, 0.8, 0.7)
+    sigsin_init_phases : tuple, optional
+        Initial phase shifts of the sigsins in radians,
+        by default (np.pi / 18, 0, np.pi / 20)
+    sigsin_amplitudes : tuple, optional
+        Amplitude of the sigsins, by default (0.4, 0.9, np.pi / 10)
+    wavelength : float, optional
+        Wavelength of the contraction pulse in the Y dimension, by default 2.
+    phase_0 : float, optional
+        Initial phase in radians that corresponds to the unitless phase of 0,
+        by default np.pi*4/5. This is used to delay all the sigsins simultaneously.
+    beat_center : tuple, optional
+        Center of the Z and Y scaling, by default (0.48, 0.49)
+    rotate_first : bool, optional
+        Whether to compute the rotation before the scalings, by default False
+    dtype : numpy type
+        The array type to use for coordinates, by default numpy.float64.
+
+    Returns
+    -------
+    np.ndarray [N, 3, size, size, size]
+        The array of coordinates in the transformed space.
+        For each of the N phases, a [3, size, size, size] coordinates meshgrid is given.
+    """
+
+    beat_center = np.array(beat_center)
+    phase = np.atleast_1d(phase)
+    slopes = np.atleast_1d(sigsin_slopes)
+    sats = np.atleast_1d(sigsin_saturations)
+    phases = np.atleast_1d(sigsin_init_phases) + phase_0
+    amps = np.atleast_1d(sigsin_amplitudes)
+
+    coords = np.mgrid[:size, :size, :size] / (size - 1)
+    coords = np.vstack((coords, np.ones_like(coords[0:1])))
+
+    y_coords = np.arange(size) / size
+
+    phases_ = (
+        y_coords[None, None, :] / wavelength + phase[None, :, None]
+    ) * 2 * np.pi + phases[:, None, None]
+
+    sigsins = amps[:, None, None] * sigsin(
+        phases_, slopes[:, None, None], sats[:, None, None]
+    )
+
+    zeros = np.zeros_like(sigsins[0])
+    ones = np.ones_like(sigsins[0])
+    sin = np.sin(-sigsins[2])
+    cos = np.cos(-sigsins[2])
+    scale_z = 1 + sigsins[0]
+    scale_x = 1 + sigsins[1]
+    center_z = beat_center[0]
+    center_x = beat_center[1]
+
+    if not rotate_first:
+        fullmat = np.array(
+            [
+                [
+                    scale_z * cos,
+                    -scale_z * sin,
+                    zeros,
+                    center_z + scale_z * (center_x * sin - center_z * cos),
+                ],
+                [
+                    scale_x * sin,
+                    scale_x * cos,
+                    zeros,
+                    center_x - scale_x * (center_z * sin + center_x * cos),
+                ],
+                [zeros, zeros, ones, zeros],
+                [zeros, zeros, zeros, ones],
+            ]
+        )
+    else:
+        fullmat = np.array(
+            [
+                [
+                    scale_z * cos,
+                    -scale_x * sin,
+                    zeros,
+                    center_z - center_z * scale_z * cos + center_x * scale_x * sin,
+                ],
+                [
+                    scale_z * sin,
+                    scale_x * cos,
+                    zeros,
+                    center_x - center_z * scale_z * sin - center_x * scale_x * cos,
+                ],
+                [zeros, zeros, ones, zeros],
+                [zeros, zeros, zeros, ones],
+            ]
+        )
+
+    transformed = np.einsum(
+        "nmty,mzxy->tnzxy", fullmat.astype(dtype), coords.astype(dtype), dtype=dtype
+    )
+
+    return transformed[:, :-1, ...]
+
+
 def sample_phases(
     n_phases,
     f_signal=np.pi,
@@ -267,7 +398,6 @@ def sample_phases(
 
         for index in range(n_phases):
             for jndex, d_pat in enumerate(d_pattern):
-
                 phases[len(pattern) * index + jndex] = phase
 
                 delta_phase += rng.normal(scale=loc_sigma_acc[jndex])
@@ -279,11 +409,17 @@ def sample_phases(
 
 if __name__ == "__main__":
     import napari
-    from cbi_toolbox.simu.primitives import forward_ellipse
+    from cbi_toolbox.simu import primitives
 
     phases = sample_phases(20, 1, 20)
-    beat = sigsin_beat(phases, 64)
+    beat = sigsin_beat(phases, 32)
+    beat = primitives.forward_ellipse(beat, (0.5, 0.5), (0.3, 0.4))
 
-    beat = forward_ellipse(beat, (0.5, 0.5), (0.4, 0.4))
+    napari.view_image(beat)
+    napari.run()
+
+    beat = sigsin_beat_3(phases, 32)
+    beat = primitives.forward_ellipse_3(beat, (0.5, 0.5, 0.5), (0.3, 0.4, 0.4))
+
     napari.view_image(beat)
     napari.run()

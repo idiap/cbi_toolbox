@@ -22,13 +22,9 @@ The textures module allows to generate 3D textures for synthetic samples
 
 import numpy as np
 import opensimplex
+from opensimplex.internals import _noise2, _noise3
+from numba import njit, prange
 
-try:
-    import noise
-
-    SIMPLEX_BACKEND = "noise"
-except ImportError:
-    SIMPLEX_BACKEND = "opensimplex"
 from cbi_toolbox.simu import primitives
 
 
@@ -122,48 +118,34 @@ def simplex(shape, scale=1, seed=None):
             f"Only 2D and 3D textures can be generated, got ndim={len(shape)}"
         )
 
-    volume = np.empty(shape, dtype=np.float32)
+    opensimplex.seed(seed)
+    x = np.arange(shape[0]) / max(shape) * scale
+    y = np.arange(shape[1]) / max(shape) * scale
 
-    if SIMPLEX_BACKEND == "opensimplex":
-        opensimplex.seed(seed)
+    if len(shape) == 3:
+        z = np.arange(shape[2]) / max(shape) * scale
+        volume = opensimplex.noise3array(x, y, z)
+
     else:
-        scale /= 2
-
-    for idx, x in enumerate(np.arange(shape[0]) / max(shape)):
-        for idy, y in enumerate(np.arange(shape[1]) / max(shape)):
-            if len(shape) == 2:
-                if SIMPLEX_BACKEND == "opensimplex":
-                    volume[idx, idy] = opensimplex.noise2(x * scale, y * scale)
-                else:
-                    volume[idx, idy] = noise.snoise2(
-                        (seed + x) * scale, (seed + y) * scale
-                    )
-
-            elif len(shape) == 3:
-                for idz, z in enumerate(np.arange(shape[2]) / max(shape)):
-                    if SIMPLEX_BACKEND == "opensimplex":
-                        volume[idx, idy, idz] = opensimplex.noise3(
-                            x * scale, y * scale, z * scale
-                        )
-                    else:
-                        volume[idx, idy, idz] = noise.snoise3(
-                            (seed + x) * scale, (seed + y) * scale, (seed + z) * scale
-                        )
+        volume = opensimplex.noise2array(x, y)
 
     return volume
 
 
-def forward_simplex(coordinates, scale=1, out=None, seed=None):
+def forward_simplex(coordinates, scale=1, time=False, out=None, seed=None):
     """
     Computes simplex noise over given coordinates
     Noise values are in [-1, 1]
+    Uses Numba acceleration
 
     Parameters
     ----------
-    coordinates : np.ndarray [D, W, H, <Z>]
+    coordinates : np.ndarray [D, W, H, <Z>], or [T, D, W, H, <Z>] fore time series
         coordinates where the noise must be computed (meshgrid)
     scale : int, optional
         scale of the noise, by default 1
+    time : bool, optional
+        if the input corresponds to a time series of coordinates, by default False
     out: array, optional
         output array, by default None
     seed : int, optional
@@ -171,16 +153,19 @@ def forward_simplex(coordinates, scale=1, out=None, seed=None):
 
     Returns
     -------
-    np.ndarray [W, H, <Z>]
+    np.ndarray [W, H, <Z>], or [T, W, H, <Z>] for time series
         the simplex noise computed at the given coordinates
     """
 
     if seed is None:
         seed = np.random.default_rng().integers(2**10)
 
-    ndim = coordinates.shape[0]
+    if time:
+        ndim = coordinates.shape[1]
+    else:
+        ndim = coordinates.shape[0]
 
-    if coordinates.ndim != ndim + 1:
+    if coordinates.ndim != ndim + 1 + time:
         raise ValueError(
             "Coordinates should be in a meshgrid, but the size "
             "of the first dimension plus one does not match the dimensions of the whole array. "
@@ -191,39 +176,94 @@ def forward_simplex(coordinates, scale=1, out=None, seed=None):
             "Only 2D and 3D coordinate arrays are implemented (3D and 4D meshgrids)"
         )
 
-    if out is None:
-        out = np.empty(coordinates.shape[1:])
+    generator = opensimplex.OpenSimplex(seed)
 
-    elif out.shape != coordinates.shape[1:]:
-        raise ValueError("Output shape does not match coordinates. ")
+    if time:
+        shape = (coordinates.shape[0], *coordinates.shape[2:])
 
-    if SIMPLEX_BACKEND == "opensimplex":
-        opensimplex.seed(seed)
     else:
-        scale /= 2
+        shape = coordinates.shape[1:]
 
+    if out is None:
+        out = np.empty(shape)
+
+    elif out.shape != shape:
+        raise ValueError("Output shape does not match coordinates.")
+
+    if time:
+        if ndim == 2:
+            return _forward_simplex_inner2t(coordinates, scale, out, generator._perm)
+        elif ndim == 3:
+            return _forward_simplex_inner3t(
+                coordinates, scale, out, generator._perm, generator._perm_grad_index3
+            )
+    else:
+        if ndim == 2:
+            return _forward_simplex_inner2(coordinates, scale, out, generator._perm)
+        elif ndim == 3:
+            return _forward_simplex_inner3(
+                coordinates, scale, out, generator._perm, generator._perm_grad_index3
+            )
+
+
+@njit(parallel=True)
+def _forward_simplex_inner3t(coordinates, scale, out, perm, perm_grad_index3):
+    """
+    Inner implementation of the simplex noise computation over given coordinates
+    For 3D + time arrays
+    Uses Numba acceleration
+    """
+    for kt in prange(coordinates.shape[0]):
+        _forward_simplex_inner3(
+            coordinates[kt, ...], scale, out[kt, ...], perm, perm_grad_index3
+        )
+    # for kt, coord in enumerate(coordinates):
+    #     _forward_simplex_inner3(coord, scale, out[kt, ...], perm, perm_grad_index3)
+    return out
+
+
+@njit
+def _forward_simplex_inner3(coordinates, scale, out, perm, perm_grad_index3):
+    """
+    Inner implementation of the simplex noise computation over given coordinates
+    For 3D arrays
+    Uses Numba acceleration
+    """
     for kx, row in enumerate(coordinates.T):
         for ky, col in enumerate(row):
-            if ndim == 2:
-                if SIMPLEX_BACKEND == "opensimplex":
-                    out[ky, kx] = opensimplex.noise2(col[0] * scale, col[1] * scale)
-                else:
-                    out[ky, kx] = noise.snoise2(
-                        (seed + col[0]) * scale, (seed + col[1]) * scale
-                    )
-            elif ndim == 3:
-                for kz, dep in enumerate(col):
-                    if SIMPLEX_BACKEND == "opensimplex":
-                        out[kz, ky, kx] = opensimplex.noise3(
-                            dep[0] * scale, dep[1] * scale, dep[2] * scale
-                        )
-                    else:
-                        out[kz, ky, kx] = noise.snoise3(
-                            (seed + dep[0]) * scale,
-                            (seed + dep[1]) * scale,
-                            (seed + dep[2]) * scale,
-                        )
+            for kz, dep in enumerate(col):
+                out[kz, ky, kx] = _noise3(
+                    dep[0] * scale,
+                    dep[1] * scale,
+                    dep[2] * scale,
+                    perm,
+                    perm_grad_index3,
+                )
+    return out
 
+
+@njit(parallel=True)
+def _forward_simplex_inner2t(coordinates, scale, out, perm):
+    """
+    Inner implementation of the simplex noise computation over given coordinates
+    For 2D + time arrays
+    Uses Numba acceleration
+    """
+    for kt in prange(coordinates.shape[0]):
+        _forward_simplex_inner2(coordinates[kt, ...], scale, out[kt, ...], perm)
+    return out
+
+
+@njit
+def _forward_simplex_inner2(coordinates, scale, out, perm):
+    """
+    Inner implementation of the simplex noise computation over given coordinates
+    For 2D arrays
+    Uses Numba acceleration
+    """
+    for kx, row in enumerate(coordinates.T):
+        for ky, col in enumerate(row):
+            out[ky, kx] = _noise2(col[0] * scale, col[1] * scale, perm)
     return out
 
 
@@ -236,10 +276,5 @@ if __name__ == "__main__":
 
     viewer = napari.view_image(s_spheres)
     viewer.add_image(s_simplex)
-
-    if SIMPLEX_BACKEND != "opensimplex":
-        SIMPLEX_BACKEND = "opensimplex"
-        s_simplex2 = simplex(TEST_SHAPE, scale=8)
-        viewer.add_image(s_simplex2)
 
     napari.run()
